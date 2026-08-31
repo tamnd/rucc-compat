@@ -276,13 +276,13 @@ pub fn compare(case: &Case, settings: &Settings, agree: &[String]) -> Status {
     let ours = normalize(&ours);
     let theirs = normalize(&theirs);
     if ours.text != theirs.text {
-        return Status::Text(first_difference(&ours.spacing, &theirs.spacing));
+        return Status::Text(first_difference(&ours, &theirs, By::Tokens));
     }
     if ours.spacing != theirs.spacing {
-        return Status::Spacing(first_difference(&ours.spacing, &theirs.spacing));
+        return Status::Spacing(first_difference(&ours, &theirs, By::Spacing));
     }
     if settings.markers && ours.markers != theirs.markers {
-        return Status::Markers(first_difference(&ours.markers, &theirs.markers));
+        return Status::Markers(first_difference(&ours, &theirs, By::Markers));
     }
     Status::Same
 }
@@ -343,6 +343,11 @@ pub struct Normalized {
     pub text: String,
     /// The non marker lines, blank ones dropped and runs of spaces collapsed.
     pub spacing: Vec<String>,
+    /// The same lines as `spacing`, as their tokens rather than as their text. This is what
+    /// says which line a token difference is on, and `spacing` is what gets printed for it: a
+    /// reader wants the line as it was written, and a search over the collapsed text would
+    /// stop at the first line whose spacing differs, which is not the same line at all.
+    pub tokens: Vec<String>,
     /// The line marker lines.
     pub markers: Vec<String>,
 }
@@ -352,6 +357,7 @@ pub struct Normalized {
 pub fn normalize(out: &str) -> Normalized {
     let mut text = String::with_capacity(out.len());
     let mut spacing = Vec::new();
+    let mut tokens = Vec::new();
     let mut markers = Vec::new();
     for line in out.lines() {
         let line = line.trim_end();
@@ -369,15 +375,21 @@ pub fn normalize(out: &str) -> Normalized {
         if line.trim().is_empty() {
             continue;
         }
+        let mut line_tokens = String::new();
         for token in lexer::tokens(line) {
             if !text.is_empty() {
                 text.push(SEPARATOR);
             }
             text.push_str(&token);
+            if !line_tokens.is_empty() {
+                line_tokens.push(SEPARATOR);
+            }
+            line_tokens.push_str(&token);
         }
+        tokens.push(line_tokens);
         spacing.push(collapse(line));
     }
-    Normalized { text, spacing, markers }
+    Normalized { text, spacing, tokens, markers }
 }
 
 /// A line marker, which is the only `#` line that survives preprocessing.
@@ -400,17 +412,42 @@ fn collapse(line: &str) -> String {
     out
 }
 
-/// The first line the two disagree on.
-fn first_difference(ours: &[String], theirs: &[String]) -> Diff {
+/// The first line the two disagree on, found in `by` and printed from `show`.
+///
+/// Two arrays because the question and the answer are not the same text. A token difference is
+/// located by comparing tokens, since a search over the collapsed lines would stop at the
+/// first line whose spacing differs and report a missing space as though it were the bug. What
+/// gets printed is still the line, because that is what a reader can act on.
+///
+/// `by` and `show` are the same length and line up, so an index found in one is valid in the
+/// other.
+fn first_difference(ours: &Normalized, theirs: &Normalized, by: By) -> Diff {
+    let (mine, yours) = match by {
+        By::Tokens => (&ours.tokens, &theirs.tokens),
+        By::Spacing => (&ours.spacing, &theirs.spacing),
+        By::Markers => (&ours.markers, &theirs.markers),
+    };
     let mut at = 0;
-    while at < ours.len() && at < theirs.len() && ours[at] == theirs[at] {
+    while at < mine.len() && at < yours.len() && mine[at] == yours[at] {
         at += 1;
     }
+    let (show_ours, show_theirs) = match by {
+        By::Markers => (&ours.markers, &theirs.markers),
+        By::Tokens | By::Spacing => (&ours.spacing, &theirs.spacing),
+    };
     Diff {
         line: at + 1,
-        ours: ours.get(at).cloned().unwrap_or_else(|| "<end of output>".to_owned()),
-        theirs: theirs.get(at).cloned().unwrap_or_else(|| "<end of output>".to_owned()),
+        ours: show_ours.get(at).cloned().unwrap_or_else(|| "<end of output>".to_owned()),
+        theirs: show_theirs.get(at).cloned().unwrap_or_else(|| "<end of output>".to_owned()),
     }
+}
+
+/// Which of the three forms a search runs over.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum By {
+    Tokens,
+    Spacing,
+    Markers,
 }
 
 /// The flags that make rucc configured the way the reference compiler already is.
@@ -418,52 +455,107 @@ fn first_difference(ours: &[String], theirs: &[String]) -> Diff {
 /// A difference between two compilers only means something if they were asked the same
 /// question. These are the parts of the question that the reference answers for itself and
 /// that we would otherwise have to guess, so they are read off the reference rather than
-/// written down: the headers it reads and the compiler it says it is.
+/// written down: the headers it reads, the compiler it says it is, and the language it thinks
+/// it is compiling.
 #[must_use]
 pub fn agreement(cc: &Path) -> Vec<String> {
     let mut flags = system_includes(cc);
-    if let Some(version) = gnuc_version(cc) {
+    flags.extend(predefined(cc));
+    flags
+}
+
+/// The flags read out of the reference compiler's own `-dM` dump.
+///
+/// One subprocess, because both answers are in the same output and running the compiler twice
+/// to read one macro each would be two chances for them to disagree.
+fn predefined(cc: &Path) -> Vec<String> {
+    let Ok(output) = Command::new(cc).args(["-dM", "-E", "-x", "c", "/dev/null"]).output() else {
+        return Vec::new();
+    };
+    let text = String::from_utf8_lossy(&output.stdout);
+    let dump = Dump::read(&text);
+    let mut flags = Vec::new();
+    if let Some(version) = dump.gnuc_version() {
         flags.push(format!("-fgnuc-version={version}"));
+    }
+    if let Some(std) = dump.std() {
+        flags.push(format!("-std={std}"));
     }
     flags
 }
 
-/// What the reference compiler answers `__GNUC_PREREQ` with, as `major.minor.patch`.
+/// A `-dM` dump, as the questions we ask it.
 ///
-/// This is not cosmetic. glibc's `sys/cdefs.h` gates most of what it hands a caller on
-/// `__GNUC_PREREQ`, so two compilers claiming different versions are handed different headers
-/// and are no longer preprocessing the same program. Comparing them then measures the version
-/// claim and nothing else, which is what the glibc run was doing before this.
-///
-/// `None` when the reference does not define `__GNUC__` at all, which means it is not
-/// pretending to be GCC and neither should we make it.
-#[must_use]
-pub fn gnuc_version(cc: &Path) -> Option<String> {
-    let output = Command::new(cc).args(["-dM", "-E", "-x", "c", "/dev/null"]).output().ok()?;
-    read_gnuc_version(&String::from_utf8_lossy(&output.stdout))
+/// Split from the subprocess so that the tests run against a dump written down in the test
+/// rather than against whichever compiler the machine running them happens to have.
+struct Dump<'a> {
+    lines: Vec<(&'a str, &'a str)>,
 }
 
-/// Picks the three components out of a `-dM` dump.
-///
-/// Split out from the subprocess so that it can be tested against a dump we wrote down rather
-/// than against whichever compiler the machine running the tests happens to have.
-#[must_use]
-fn read_gnuc_version(text: &str) -> Option<String> {
-    let mut parts = [None, None, None];
-    for line in text.lines() {
-        let Some(rest) = line.strip_prefix("#define __GNUC") else { continue };
-        let at = match rest.split_once(' ') {
-            Some(("__", value)) => (0, value),
-            Some(("_MINOR__", value)) => (1, value),
-            Some(("_PATCHLEVEL__", value)) => (2, value),
-            _ => continue,
-        };
-        parts[at.0] = at.1.trim().parse::<u32>().ok();
+impl<'a> Dump<'a> {
+    fn read(text: &'a str) -> Dump<'a> {
+        let lines = text
+            .lines()
+            .filter_map(|line| line.strip_prefix("#define "))
+            // A function-like macro has no space before its parenthesis, so this splits its
+            // name off with the parameters attached, and none of the macros asked about here
+            // are function-like.
+            .map(|rest| rest.split_once(' ').unwrap_or((rest, "")))
+            .collect();
+        Dump { lines }
     }
-    // The major has to be there. A minor or a patchlevel that is missing is zero, the way GCC
-    // treats a release that has none.
-    let major = parts[0]?;
-    Some(format!("{major}.{}.{}", parts[1].unwrap_or(0), parts[2].unwrap_or(0)))
+
+    fn get(&self, name: &str) -> Option<&'a str> {
+        self.lines.iter().find(|(n, _)| *n == name).map(|(_, value)| value.trim())
+    }
+
+    fn number(&self, name: &str) -> Option<u32> {
+        self.get(name)?.parse().ok()
+    }
+
+    /// What the reference answers `__GNUC_PREREQ` with, as `major.minor.patch`.
+    ///
+    /// This is not cosmetic. glibc's `sys/cdefs.h` gates most of what it hands a caller on
+    /// `__GNUC_PREREQ`, so two compilers claiming different versions are handed different
+    /// headers and are no longer preprocessing the same program.
+    ///
+    /// `None` when the reference does not define `__GNUC__` at all, which means it is not
+    /// pretending to be GCC and neither should we make it.
+    fn gnuc_version(&self) -> Option<String> {
+        // The major has to be there. A minor or a patchlevel that is missing is zero, the way
+        // GCC treats a release that has none.
+        let major = self.number("__GNUC__")?;
+        let minor = self.number("__GNUC_MINOR__").unwrap_or(0);
+        let patch = self.number("__GNUC_PATCHLEVEL__").unwrap_or(0);
+        Some(format!("{major}.{minor}.{patch}"))
+    }
+
+    /// The `-std=` argument that asks for the language the reference is already compiling.
+    ///
+    /// The default dialect is not the same across compilers and it is not the same across
+    /// releases of one compiler, so it cannot be written down. GCC 13 defaults to gnu17 and
+    /// rucc defaults to gnu23, and that difference alone gives us `nullptr_t` out of
+    /// `stddef.h` and `char8_t` out of `uchar.h` that the reference never sees.
+    ///
+    /// `__STRICT_ANSI__` is the extensions question, which is a separate axis from the year
+    /// and is exactly the difference between `c17` and `gnu17`.
+    fn std(&self) -> Option<String> {
+        let year = match self.get("__STDC_VERSION__") {
+            // No `__STDC_VERSION__` at all is C89, which never defined it.
+            None => "89",
+            Some("199409L") => "89",
+            Some("199901L") => "99",
+            Some("201112L") => "11",
+            Some("201710L") => "17",
+            Some("202311L") => "23",
+            // A version we do not have a spelling for. Saying nothing leaves our own default
+            // in place, which is wrong but is at least a difference the report will show,
+            // rather than a flag that asks for the wrong language.
+            Some(_) => return None,
+        };
+        let strict = self.get("__STRICT_ANSI__").is_some();
+        Some(format!("{}{year}", if strict { "c" } else { "gnu" }))
+    }
 }
 
 /// The directories the reference compiler searches for `#include <...>`, as `-isystem` flags.
@@ -714,16 +806,35 @@ mod tests {
 #define __GNUC__ 13
 #define __GNUC_EXECUTION_CHARSET_NAME \"UTF-8\"
 ";
-        assert_eq!(read_gnuc_version(dump).as_deref(), Some("13.3.0"));
+        assert_eq!(Dump::read(dump).gnuc_version().as_deref(), Some("13.3.0"));
     }
 
     #[test]
     fn a_reference_that_is_not_pretending_to_be_gcc_is_left_alone() {
         // No `__GNUC__` means no claim to copy, and inventing one would be us deciding what
         // the headers should see rather than matching what they already saw.
-        assert_eq!(read_gnuc_version("#define __SIZEOF_INT__ 4\n"), None);
+        assert_eq!(Dump::read("#define __SIZEOF_INT__ 4\n").gnuc_version(), None);
         // A claim with nothing after it is still a claim, and the rest is zero.
-        assert_eq!(read_gnuc_version("#define __GNUC__ 15\n").as_deref(), Some("15.0.0"));
+        assert_eq!(Dump::read("#define __GNUC__ 15\n").gnuc_version().as_deref(), Some("15.0.0"));
+    }
+
+    #[test]
+    fn the_dialect_is_read_off_the_reference_because_no_two_compilers_default_the_same_way() {
+        // GCC 13 defaults to gnu17 and rucc defaults to gnu23, and that difference alone gives
+        // us `nullptr_t` out of stddef.h and `char8_t` out of uchar.h that the reference never
+        // sees. The year and the extensions are two separate axes and both have to match.
+        let std = |text: &str| Dump::read(text).std();
+        assert_eq!(std("#define __STDC_VERSION__ 201710L\n").as_deref(), Some("gnu17"));
+        assert_eq!(
+            std("#define __STDC_VERSION__ 201710L\n#define __STRICT_ANSI__ 1\n").as_deref(),
+            Some("c17")
+        );
+        assert_eq!(std("#define __STDC_VERSION__ 202311L\n").as_deref(), Some("gnu23"));
+        // C89 never defined the macro, so its absence is an answer rather than a gap.
+        assert_eq!(std("#define __GNUC__ 13\n").as_deref(), Some("gnu89"));
+        // A year we have no spelling for leaves our default alone. That is wrong, and it shows
+        // up in the report as a difference, which beats asking for the wrong language.
+        assert_eq!(std("#define __STDC_VERSION__ 202900L\n"), None);
     }
 
     #[test]
@@ -780,21 +891,37 @@ mod tests {
 
     #[test]
     fn the_difference_is_the_first_line_they_disagree_on() {
-        let ours = vec!["a".to_owned(), "b".to_owned(), "c".to_owned()];
-        let theirs = vec!["a".to_owned(), "z".to_owned(), "c".to_owned()];
-        let diff = first_difference(&ours, &theirs);
+        let ours = normalize("int a;\nint b;\nint c;\n");
+        let theirs = normalize("int a;\nint z;\nint c;\n");
+        let diff = first_difference(&ours, &theirs, By::Tokens);
         assert_eq!(diff.line, 2);
-        assert_eq!(diff.ours, "b");
-        assert_eq!(diff.theirs, "z");
+        assert_eq!(diff.ours, "int b;");
+        assert_eq!(diff.theirs, "int z;");
     }
 
     #[test]
     fn one_output_running_out_early_is_a_difference_at_the_end() {
-        let ours = vec!["a".to_owned()];
-        let theirs = vec!["a".to_owned(), "b".to_owned()];
-        let diff = first_difference(&ours, &theirs);
+        let ours = normalize("int a;\n");
+        let theirs = normalize("int a;\nint b;\n");
+        let diff = first_difference(&ours, &theirs, By::Tokens);
         assert_eq!(diff.line, 2);
         assert_eq!(diff.ours, "<end of output>");
+    }
+
+    #[test]
+    fn a_token_difference_points_at_the_tokens_and_not_at_an_earlier_spacing_difference() {
+        // Both files say the same thing on line one and spell it differently, and differ in
+        // tokens on line two. Searching the collapsed lines would stop at line one and report
+        // a missing space as though it were the bug, which is what the glibc report was doing.
+        let ours = normalize("int a ;\nint b;\n");
+        let theirs = normalize("int a;\nint z;\n");
+        let diff = first_difference(&ours, &theirs, By::Tokens);
+        assert_eq!(diff.line, 2);
+        assert_eq!(diff.ours, "int b;");
+
+        // The spacing rule still stops at line one, because for that rule line one is the bug.
+        let diff = first_difference(&ours, &theirs, By::Spacing);
+        assert_eq!(diff.line, 1);
     }
 
     #[test]
