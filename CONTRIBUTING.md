@@ -71,7 +71,9 @@ An entry is a promise to remove the entry. When the issue closes, the entry goes
 - `differ.rs` runs both compilers and compares.
 - `main.rs` is the command line and nothing else.
 
-The compiler under test is told about the reference compiler's system include directories, which the harness asks the reference for, so a difference can never come from the two of them reading different headers.
+Before either compiler runs, the harness makes them agree about the things a difference must not come from. It asks the reference for its system include directories and passes them to the compiler under test as `-isystem`, so the two cannot be reading different headers. It asks the reference what `__GNUC__`, `__GNUC_MINOR__` and `__GNUC_PATCHLEVEL__` it defines and passes that as `-fgnuc-version=`, so the two cannot be handed different halves of a header that gates on `__GNUC_PREREQ`. glibc gates most of `sys/cdefs.h` that way, and a run without this measures the version claim rather than the preprocessor.
+
+Both are read off the reference rather than written down anywhere, because a value written down is a value that is right on the machine somebody wrote it on.
 
 ## Style
 

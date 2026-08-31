@@ -224,13 +224,11 @@ pub fn run(
     };
     let settings =
         &Settings { rucc: program(&settings.rucc), cc: program(&settings.cc), ..settings.clone() };
-    // rucc has no built in system include path, so it is told what the reference is using.
-    // Asking the reference is the only way to get this right on a machine we have not seen,
-    // and it is the same list, so a difference cannot come from looking at different headers.
-    let system = system_includes(&settings.cc);
+    // Everything that has to be the same on both sides before a difference means anything.
+    let agree = agreement(&settings.cc);
     let mut outcomes = Vec::with_capacity(cases.len());
     for case in cases {
-        let status = compare(case, settings, &system);
+        let status = compare(case, settings, &agree);
         let differing = status.differing_line();
         let accepted = status
             .rule()
@@ -266,12 +264,12 @@ fn program(path: &Path) -> PathBuf {
 
 /// Preprocesses one case both ways and says how they differed.
 #[must_use]
-pub fn compare(case: &Case, settings: &Settings, system: &[String]) -> Status {
+pub fn compare(case: &Case, settings: &Settings, agree: &[String]) -> Status {
     let theirs = match preprocess(&settings.cc, case, &[]) {
         Ok(text) => text,
         Err(why) => return Status::Unsupported(why),
     };
-    let ours = match preprocess(&settings.rucc, case, system) {
+    let ours = match preprocess(&settings.rucc, case, agree) {
         Ok(text) => text,
         Err(why) => return Status::Failed(why),
     };
@@ -413,6 +411,59 @@ fn first_difference(ours: &[String], theirs: &[String]) -> Diff {
         ours: ours.get(at).cloned().unwrap_or_else(|| "<end of output>".to_owned()),
         theirs: theirs.get(at).cloned().unwrap_or_else(|| "<end of output>".to_owned()),
     }
+}
+
+/// The flags that make rucc configured the way the reference compiler already is.
+///
+/// A difference between two compilers only means something if they were asked the same
+/// question. These are the parts of the question that the reference answers for itself and
+/// that we would otherwise have to guess, so they are read off the reference rather than
+/// written down: the headers it reads and the compiler it says it is.
+#[must_use]
+pub fn agreement(cc: &Path) -> Vec<String> {
+    let mut flags = system_includes(cc);
+    if let Some(version) = gnuc_version(cc) {
+        flags.push(format!("-fgnuc-version={version}"));
+    }
+    flags
+}
+
+/// What the reference compiler answers `__GNUC_PREREQ` with, as `major.minor.patch`.
+///
+/// This is not cosmetic. glibc's `sys/cdefs.h` gates most of what it hands a caller on
+/// `__GNUC_PREREQ`, so two compilers claiming different versions are handed different headers
+/// and are no longer preprocessing the same program. Comparing them then measures the version
+/// claim and nothing else, which is what the glibc run was doing before this.
+///
+/// `None` when the reference does not define `__GNUC__` at all, which means it is not
+/// pretending to be GCC and neither should we make it.
+#[must_use]
+pub fn gnuc_version(cc: &Path) -> Option<String> {
+    let output = Command::new(cc).args(["-dM", "-E", "-x", "c", "/dev/null"]).output().ok()?;
+    read_gnuc_version(&String::from_utf8_lossy(&output.stdout))
+}
+
+/// Picks the three components out of a `-dM` dump.
+///
+/// Split out from the subprocess so that it can be tested against a dump we wrote down rather
+/// than against whichever compiler the machine running the tests happens to have.
+#[must_use]
+fn read_gnuc_version(text: &str) -> Option<String> {
+    let mut parts = [None, None, None];
+    for line in text.lines() {
+        let Some(rest) = line.strip_prefix("#define __GNUC") else { continue };
+        let at = match rest.split_once(' ') {
+            Some(("__", value)) => (0, value),
+            Some(("_MINOR__", value)) => (1, value),
+            Some(("_PATCHLEVEL__", value)) => (2, value),
+            _ => continue,
+        };
+        parts[at.0] = at.1.trim().parse::<u32>().ok();
+    }
+    // The major has to be there. A minor or a patchlevel that is missing is zero, the way GCC
+    // treats a release that has none.
+    let major = parts[0]?;
+    Some(format!("{major}.{}.{}", parts[1].unwrap_or(0), parts[2].unwrap_or(0)))
 }
 
 /// The directories the reference compiler searches for `#include <...>`, as `-isystem` flags.
@@ -650,6 +701,30 @@ pub fn markdown(report: &Report, settings: &Settings, register: &Register) -> St
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_version_the_reference_claims_is_read_out_of_its_own_dump() {
+        // Real lines from `gcc -dM -E -x c /dev/null`, in the order and among the noise they
+        // actually come in, because the point of reading them is that we did not write them.
+        let dump = "\
+#define __SIZEOF_INT__ 4
+#define __GNUC_MINOR__ 3
+#define __GNUC_PATCHLEVEL__ 0
+#define __GNUC_STDC_INLINE__ 1
+#define __GNUC__ 13
+#define __GNUC_EXECUTION_CHARSET_NAME \"UTF-8\"
+";
+        assert_eq!(read_gnuc_version(dump).as_deref(), Some("13.3.0"));
+    }
+
+    #[test]
+    fn a_reference_that_is_not_pretending_to_be_gcc_is_left_alone() {
+        // No `__GNUC__` means no claim to copy, and inventing one would be us deciding what
+        // the headers should see rather than matching what they already saw.
+        assert_eq!(read_gnuc_version("#define __SIZEOF_INT__ 4\n"), None);
+        // A claim with nothing after it is still a claim, and the rest is zero.
+        assert_eq!(read_gnuc_version("#define __GNUC__ 15\n").as_deref(), Some("15.0.0"));
+    }
 
     #[test]
     fn markers_and_blank_lines_are_not_part_of_the_token_text() {
