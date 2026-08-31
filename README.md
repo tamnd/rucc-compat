@@ -46,7 +46,9 @@ The file is deliberately awkward to add to. A divergence with no reason on it do
 
 ## Where it stands
 
-The sqlite headers come out identical to what clang prints, token for token. The amalgamation does not, and neither does any glibc header, for the same reason in both cases: rucc does not predefine the target macros yet, so the first `#error Unsupported architecture` in a system header stops it. That is a compiler gap and it is what this harness is for, so it is written down here rather than worked around in the manifests.
+The sqlite corpus passes on macOS. All four cases, the eight megabyte amalgamation included, preprocess the same as Apple's clang, and the only difference left is one the register covers: the availability attribute, which Apple puts on nearly every declaration and which rucc drops because it does not implement it yet.
+
+Getting there took three compiler fixes, all found by running this and none of them guessed: Apple's spelling of the architecture, a signed `wint_t` on Darwin, and `__building_module`. The glibc and musl corpora are the next thing to get green, and they run in CI on every commit.
 
 Results land in `results/` as markdown, one file per corpus, written by `run --report`. CI keeps its own as an artifact, because a result is about the machine that produced it.
 

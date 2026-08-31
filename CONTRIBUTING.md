@@ -46,14 +46,17 @@ A manifest whose `sha256` is `unrecorded` loads, and every command that would us
 
 ```toml
 [[divergence]]
-id = "system-header-flag"
-what = "A line marker for a system header does not carry the 3 flag."
-why = "The printer does not know which directories are system directories yet."
-issue = "https://github.com/tamnd/rucc/issues/2"
-rule = "marker-flags"
+id = "darwin-availability"
+what = "A declaration in an Apple system header comes out without its availability attribute."
+why = "The attribute is not implemented, so __has_attribute answers no and the header takes its fallback path."
+issue = "https://github.com/tamnd/rucc/issues/31"
+rule = "token-text"
+matches = "__attribute__((availability("
 ```
 
-`what`, `why` and `issue` are required and the file does not load without them. `rule` names the comparison rule the entry suppresses, and the rules are in the harness rather than in the file, so an entry cannot quietly widen itself into ignoring something else. There are three rules and they are `token-text`, `spacing` and `markers`, in that order of severity.
+`id`, `what`, `why`, `issue` and `rule` are required and the file does not load without them. `rule` names the comparison rule the entry suppresses, and the rules are in the harness rather than in the file, so an entry cannot quietly widen itself into ignoring something else. There are three rules and they are `token-text`, `spacing` and `markers`, in that order of severity.
+
+`corpus`, `unit` and `matches` say where the entry applies, and every one an entry states has to hold for it to cover a difference. `matches` is text that has to appear in the differing line, either in what we printed or in what the reference printed. A `token-text` entry has to state at least one of the three, and the file does not load otherwise: an unscoped one would silence the rule that decides whether the output still compiles to the same program, in every corpus at once, and the run would go green while finding nothing.
 
 An entry is a promise to remove the entry. When the issue closes, the entry goes with it and the run gets stricter on its own.
 

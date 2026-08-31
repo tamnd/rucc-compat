@@ -232,6 +232,46 @@ pub struct Divergence {
     pub issue: String,
     /// Which comparison rule it suppresses.
     pub rule: String,
+    /// The corpus it is about, or every corpus when it is not set.
+    pub corpus: Option<String>,
+    /// The unit it is about, or every unit when it is not set.
+    pub unit: Option<String>,
+    /// Text that has to be somewhere in the differing line for the entry to cover it.
+    pub matches: Option<String>,
+}
+
+impl Divergence {
+    /// Whether this entry covers what is being asked about.
+    ///
+    /// Every condition the entry states has to hold, and a condition it does not state is not
+    /// a condition. An entry with none of the three is a statement about the whole run, which
+    /// is only ever right for a difference that is systematic.
+    #[must_use]
+    pub fn covers(&self, q: Question<'_>) -> bool {
+        self.rule == q.rule
+            && self.corpus.as_deref().is_none_or(|name| name == q.corpus)
+            && self.unit.as_deref().is_none_or(|name| name == q.unit)
+            && self.matches.as_deref().is_none_or(|text| q.text.contains(text))
+    }
+
+    /// Whether the entry says anything about where it applies.
+    #[must_use]
+    pub fn is_scoped(&self) -> bool {
+        self.corpus.is_some() || self.unit.is_some() || self.matches.is_some()
+    }
+}
+
+/// A difference, put to the register.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Question<'a> {
+    /// The comparison rule that fired.
+    pub rule: &'a str,
+    /// The corpus the case is in.
+    pub corpus: &'a str,
+    /// The unit the case is in.
+    pub unit: &'a str,
+    /// Both sides of the first differing line, which is what `matches` looks in.
+    pub text: &'a str,
 }
 
 /// The register.
@@ -242,10 +282,10 @@ pub struct Register {
 }
 
 impl Register {
-    /// The entry that covers `rule`, if there is one.
+    /// The first entry that covers the question, if there is one.
     #[must_use]
-    pub fn accepts(&self, rule: &str) -> Option<&Divergence> {
-        self.entries.iter().find(|d| d.rule == rule)
+    pub fn accepts(&self, q: Question<'_>) -> Option<&Divergence> {
+        self.entries.iter().find(|d| d.covers(q))
     }
 }
 
@@ -267,13 +307,30 @@ pub fn register(repo: &Path) -> Result<Register, Error> {
     let doc = toml::parse("divergences.toml", &text)?;
     let mut entries = Vec::new();
     for fields in doc.named("divergence") {
-        entries.push(Divergence {
+        let entry = Divergence {
             id: fields.need("id", "divergences.toml")?.to_owned(),
             what: fields.need("what", "divergences.toml")?.to_owned(),
             why: fields.need("why", "divergences.toml")?.to_owned(),
             issue: fields.need("issue", "divergences.toml")?.to_owned(),
             rule: fields.need("rule", "divergences.toml")?.to_owned(),
-        });
+            corpus: fields.str("corpus").map(str::to_owned),
+            unit: fields.str("unit").map(str::to_owned),
+            matches: fields.str("matches").map(str::to_owned),
+        };
+        // An unscoped entry is a statement about every case in every corpus. That is a fair
+        // thing to say about a printer difference, which is systematic by nature, and it is
+        // never a fair thing to say about a token difference: one line in one header would
+        // silence the rule that decides whether the output still compiles to the same
+        // program, everywhere, and the run would go green while finding nothing.
+        if entry.rule == "token-text" && !entry.is_scoped() {
+            return Err(Error {
+                message: format!(
+                    "divergences.toml: `{}` suppresses `token-text` everywhere. Give it a `corpus`, a `unit` or a `matches`.",
+                    entry.id
+                ),
+            });
+        }
+        entries.push(entry);
     }
     Ok(Register { entries })
 }
@@ -401,5 +458,58 @@ mod tests {
             assert!(!entry.why.is_empty(), "{} has no reason", entry.id);
             assert!(entry.issue.starts_with("https://"), "{} has no issue", entry.id);
         }
+    }
+
+    /// A register file in a fake repository.
+    fn register_from(name: &str, text: &str) -> Result<Register, Error> {
+        let fake = Fake::new(name);
+        fs::write(fake.root.join("divergences.toml"), text).unwrap();
+        register(&fake.root)
+    }
+
+    const ENTRY: &str = "[[divergence]]\nid = \"e\"\nwhat = \"w\"\nwhy = \"y\"\nissue = \"https://example.invalid/1\"\n";
+
+    #[test]
+    fn an_unscoped_token_text_entry_would_silence_the_whole_run_and_is_refused() {
+        let text = format!("{ENTRY}rule = \"token-text\"\n");
+        let e = register_from("unscoped", &text).unwrap_err();
+        assert!(e.message.contains("everywhere"), "{}", e.message);
+        // Scoped any of the three ways, it loads.
+        for scope in ["corpus = \"glibc\"", "unit = \"standard\"", "matches = \"__attribute__\""] {
+            let text = format!("{ENTRY}rule = \"token-text\"\n{scope}\n");
+            assert!(register_from("scoped", &text).is_ok(), "{scope} should be enough");
+        }
+    }
+
+    #[test]
+    fn a_printer_difference_is_systematic_so_an_unscoped_entry_is_allowed() {
+        let text = format!("{ENTRY}rule = \"spacing\"\n");
+        assert_eq!(register_from("spacing", &text).unwrap().entries.len(), 1);
+    }
+
+    #[test]
+    fn every_condition_an_entry_states_has_to_hold() {
+        let text = format!(
+            "{ENTRY}rule = \"token-text\"\ncorpus = \"sqlite\"\nunit = \"shell\"\nmatches = \"availability\"\n"
+        );
+        let register = register_from("conditions", &text).unwrap();
+        let ask = |corpus, unit, text| {
+            register.accepts(Question { rule: "token-text", corpus, unit, text }).is_some()
+        };
+        assert!(ask("sqlite", "shell", "int f(void) __attribute__((availability(x)));"));
+        assert!(!ask("glibc", "shell", "int f(void) __attribute__((availability(x)));"));
+        assert!(!ask("sqlite", "headers", "int f(void) __attribute__((availability(x)));"));
+        assert!(!ask("sqlite", "shell", "int f(void);"), "the text has to be in the line");
+        assert!(
+            register
+                .accepts(Question {
+                    rule: "spacing",
+                    corpus: "sqlite",
+                    unit: "shell",
+                    text: "availability"
+                })
+                .is_none(),
+            "an entry covers the one rule it names"
+        );
     }
 }
