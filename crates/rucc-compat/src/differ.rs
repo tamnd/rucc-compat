@@ -230,7 +230,7 @@ pub fn run(
 /// A bare name is left as it is, because that is a PATH lookup and the PATH does not care
 /// where we are.
 fn program(path: &Path) -> PathBuf {
-    if path.components().count() <= 1 {
+    if path.is_absolute() || path.components().count() <= 1 {
         return path.to_path_buf();
     }
     match std::env::current_dir() {
@@ -702,7 +702,11 @@ mod tests {
     fn a_relative_program_is_made_absolute_and_a_bare_name_is_not() {
         assert_eq!(program(Path::new("cc")), Path::new("cc"));
         assert!(program(Path::new("target/release/rucc")).is_absolute());
-        assert_eq!(program(Path::new("/usr/bin/cc")), Path::new("/usr/bin/cc"));
+        // Built rather than written out. A path that begins with a slash is absolute on Unix
+        // and is only rooted on Windows, where it still resolves against the current drive,
+        // so a literal one tests the platform rather than this function.
+        let already = std::env::current_dir().unwrap().join("cc");
+        assert_eq!(program(&already), already);
     }
 
     #[test]
