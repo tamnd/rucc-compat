@@ -1,0 +1,18 @@
+[package]
+name = "rucc-compat"
+description = "The compatibility harness for the rucc C compiler: corpora, the differential against GCC, and the register of accepted divergences."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+readme.workspace = true
+
+[lints]
+workspace = true
+
+# No dependencies, for the same reason the compiler has none. A harness that cannot build is
+# a harness nobody runs, and everything here is a subprocess, a file read or a hash.
+[dependencies]

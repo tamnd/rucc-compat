@@ -1,0 +1,58 @@
+name = "glibc"
+summary = "The GNU C Library headers as they are installed on this machine, which is what nearly all Linux code is compiled against."
+source = "installed"
+
+# glibc ships this and no other libc does, so a run on an Alpine container skips this corpus
+# instead of comparing musl against itself under the wrong name.
+probe = "/usr/include/gnu/libc-version.h"
+
+# The C standard headers. Several of these come from the compiler rather than from the C
+# library, which is the point: they use #include_next and __has_include and the header guard
+# tricks that a preprocessor either gets right or does not.
+[[unit]]
+name = "standard"
+kind = "headers"
+files = [
+  "assert.h", "complex.h", "ctype.h", "errno.h", "fenv.h", "float.h", "inttypes.h",
+  "iso646.h", "limits.h", "locale.h", "math.h", "setjmp.h", "signal.h", "stdalign.h",
+  "stdarg.h", "stdatomic.h", "stdbool.h", "stddef.h", "stdint.h", "stdio.h", "stdlib.h",
+  "stdnoreturn.h", "string.h", "tgmath.h", "threads.h", "time.h", "uchar.h", "wchar.h",
+  "wctype.h",
+]
+
+# The POSIX headers, which is where the interesting glibc macro machinery lives: feature test
+# macros, the large file and time64 redirections, and the bits headers underneath them.
+[[unit]]
+name = "posix"
+kind = "headers"
+files = [
+  "aio.h", "arpa/inet.h", "dirent.h", "dlfcn.h", "fcntl.h", "fnmatch.h", "ftw.h", "glob.h",
+  "grp.h", "iconv.h", "langinfo.h", "libgen.h", "monetary.h", "net/if.h", "netdb.h",
+  "netinet/in.h", "netinet/tcp.h", "nl_types.h", "poll.h", "pthread.h", "pwd.h", "regex.h",
+  "sched.h", "semaphore.h", "strings.h", "sys/mman.h", "sys/select.h", "sys/socket.h",
+  "sys/stat.h", "sys/statvfs.h", "sys/time.h", "sys/times.h", "sys/types.h", "sys/un.h",
+  "sys/utsname.h", "sys/wait.h", "syslog.h", "termios.h", "ucontext.h", "unistd.h",
+  "utime.h", "wordexp.h",
+]
+
+# Everything else the machine has, which is thousands of headers from every package that
+# installs one. Slow, and the place where the surprises are. Run it with --unit sweep.
+[[unit]]
+name = "sweep"
+kind = "headers"
+dir = "/usr/include"
+skip = [
+  # Headers that are included by other headers and are not meant to stand on their own. Both
+  # compilers refuse them, so comparing them says nothing and takes a minute to say it.
+  "bits",
+  "asm",
+  "asm-generic",
+  "gnu",
+  "linux",
+  # C++, which is not this compiler's problem.
+  "c++",
+  # The multiarch directory is on the search path already, so its headers are reached by
+  # their short names in the units above rather than through this prefix.
+  "x86_64-linux-gnu",
+  "aarch64-linux-gnu",
+]

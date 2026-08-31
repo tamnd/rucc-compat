@@ -1,0 +1,138 @@
+# The per-commit gate for the harness, and the sweep it exists to run.
+#
+# Two halves. The first is the harness itself, which is ordinary Rust and has to build and
+# pass everywhere. The second is the differential, which builds rucc from its main branch and
+# preprocesses a real header set with it. The second half is advisory today, because rucc
+# cannot get through a system header yet, and it becomes required the day it can.
+#
+# Actions are pinned to a patch version rather than a major tag, the same as in the compiler
+# repository. A major tag is a moving reference, and a run nobody can reproduce is a run
+# nobody can bisect.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  merge_group:
+  # The sweep is worth running on its own schedule, because it fails when rucc changes rather
+  # than when this repository does.
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: -D warnings
+  RUSTDOCFLAGS: -D warnings
+
+jobs:
+  quick:
+    name: format and lints
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: Swatinem/rust-cache@v2.9.2
+      - name: cargo fmt
+        run: cargo fmt --all --check
+      - name: cargo clippy
+        run: cargo clippy --workspace --all-targets
+      - name: cargo doc
+        run: cargo doc --workspace --no-deps
+
+  test:
+    name: test on ${{ matrix.name }}
+    needs: quick
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux x86-64
+            os: ubuntu-24.04
+          - name: macos arm64
+            os: macos-26
+          - name: windows x86-64
+            os: windows-2025
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: Swatinem/rust-cache@v2.9.2
+      - name: cargo test
+        run: cargo test --workspace
+      # The manifests are data and data that does not load is data nobody finds out about
+      # until the day they need it.
+      - name: the corpora load
+        run: cargo run --quiet -- list
+
+  # The sweep. Advisory until rucc gets through a system header, which is the M1 exit
+  # criterion this job exists to measure.
+  differential:
+    name: differential against ${{ matrix.libc }}
+    needs: quick
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - libc: glibc
+            container: ""
+          - libc: musl
+            container: alpine:3.22
+    container: ${{ matrix.container }}
+    steps:
+      - name: alpine needs a toolchain and a compiler to compare against
+        if: matrix.libc == 'musl'
+        run: apk add --no-cache cargo git build-base
+      - uses: actions/checkout@v7.0.1
+      - name: check out the compiler
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: tamnd/rucc
+          path: rucc
+      - name: build the compiler
+        run: cargo build --release --bin rucc --manifest-path rucc/Cargo.toml
+      - name: build the harness
+        run: cargo build --release
+      # The standard headers first, because they are the ones every program includes and the
+      # ones a report is worth reading about. The sweep over everything installed comes later,
+      # when the standard set is clean.
+      - name: run the standard headers
+        run: |
+          ./target/release/rucc-compat run ${{ matrix.libc }} \
+            --unit standard --rucc rucc/target/release/rucc --report
+      - name: run the posix headers
+        if: always()
+        run: |
+          ./target/release/rucc-compat run ${{ matrix.libc }} \
+            --unit posix --rucc rucc/target/release/rucc
+      - name: keep the report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: differential-${{ matrix.libc }}
+          path: results/
+          if-no-files-found: ignore
+
+  # A single required check, so branch protection does not have to list every job above. The
+  # differential is deliberately not in this list yet.
+  ci:
+    name: ci
+    if: always()
+    needs: [quick, test]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: fail if anything upstream failed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
+      - name: pass
+        run: echo "all required jobs succeeded"

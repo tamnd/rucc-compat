@@ -1,0 +1,46 @@
+name = "musl"
+summary = "The musl headers as they are installed on this machine, which is a second libc with very different macro habits from glibc."
+source = "installed"
+
+# musl puts every typedef in this one header and glibc has nothing like it, so this is how a
+# run on an Ubuntu runner skips the musl corpus.
+probe = "/usr/include/bits/alltypes.h"
+
+# musl is a much smaller header set than glibc and it leans on one included header for its
+# types rather than on feature test macros, so the same list exercises a different shape.
+[[unit]]
+name = "standard"
+kind = "headers"
+files = [
+  "assert.h", "complex.h", "ctype.h", "errno.h", "fenv.h", "float.h", "inttypes.h",
+  "iso646.h", "limits.h", "locale.h", "math.h", "setjmp.h", "signal.h", "stdalign.h",
+  "stdarg.h", "stdatomic.h", "stdbool.h", "stddef.h", "stdint.h", "stdio.h", "stdlib.h",
+  "stdnoreturn.h", "string.h", "tgmath.h", "threads.h", "time.h", "uchar.h", "wchar.h",
+  "wctype.h",
+]
+
+[[unit]]
+name = "posix"
+kind = "headers"
+files = [
+  "aio.h", "arpa/inet.h", "dirent.h", "dlfcn.h", "fcntl.h", "fnmatch.h", "ftw.h", "glob.h",
+  "grp.h", "iconv.h", "langinfo.h", "libgen.h", "monetary.h", "net/if.h", "netdb.h",
+  "netinet/in.h", "netinet/tcp.h", "nl_types.h", "poll.h", "pthread.h", "pwd.h", "regex.h",
+  "sched.h", "semaphore.h", "strings.h", "sys/mman.h", "sys/select.h", "sys/socket.h",
+  "sys/stat.h", "sys/statvfs.h", "sys/time.h", "sys/times.h", "sys/types.h", "sys/un.h",
+  "sys/utsname.h", "sys/wait.h", "syslog.h", "termios.h", "ucontext.h", "unistd.h",
+  "utime.h", "wordexp.h",
+]
+
+[[unit]]
+name = "sweep"
+kind = "headers"
+dir = "/usr/include"
+skip = [
+  # Included by the headers above rather than on their own.
+  "bits",
+  "asm",
+  "asm-generic",
+  "linux",
+  "c++",
+]

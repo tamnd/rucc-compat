@@ -1,0 +1,10 @@
+/target
+
+# Fetched corpora. Reproducible from the manifests, and far too large to keep in the history.
+/vendor
+
+# Editor and OS noise
+.DS_Store
+.idea/
+.vscode/
+*.swp

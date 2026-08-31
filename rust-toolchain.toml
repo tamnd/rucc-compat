@@ -1,0 +1,6 @@
+# Pinned so that a clippy or rustfmt release cannot turn a green CI red overnight, and kept
+# in step with the compiler repository so that one toolchain builds both.
+[toolchain]
+channel = "1.98.0"
+components = ["rustfmt", "clippy"]
+profile = "minimal"

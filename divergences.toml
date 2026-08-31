@@ -1,0 +1,12 @@
+# Differences between rucc and the reference compiler that we have decided to live with for
+# now. Anything listed here is counted and reported separately. Anything not listed here
+# fails the run.
+#
+# An entry needs what, why, issue and rule, and the file does not load without them. The rule
+# names the comparison it suppresses and the rules live in the harness, so an entry cannot
+# quietly widen itself. The rules are `token-text`, `spacing` and `markers`.
+#
+# Every entry is a promise to remove the entry. When the issue closes, the entry goes with it
+# and the run gets stricter on its own.
+#
+# There is nothing here yet, which is the state we would like to keep it in.

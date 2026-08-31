@@ -1,0 +1,39 @@
+name = "sqlite"
+summary = "The SQLite amalgamation, one translation unit of about eight megabytes and the first real program the compiler is aimed at."
+source = "tarball"
+upstream = "https://sqlite.org/2026/sqlite-autoconf-3530400.tar.gz"
+version = "3.53.4"
+sha256 = "0e9483900e92cd5de8fd48d16bf9200145a61f7fd5be542a5ac81d8a9516eb9c"
+root = "sqlite-autoconf-3530400"
+
+# SQLite is public domain and ships no separate license file. The blessing is at the top of
+# every source file it distributes, so the manifest points at the header, which is the file
+# a person reading the tree would look at first.
+license = "blessing"
+license-file = "sqlite-autoconf-3530400/sqlite3.h"
+
+# One file, a quarter of a million lines, and a configuration macro maze on top. It is the
+# throughput case and the correctness case at the same time.
+[[unit]]
+name = "amalgamation"
+kind = "source"
+files = ["sqlite3.c"]
+flags = ["-DSQLITE_THREADSAFE=0", "-DSQLITE_OMIT_LOAD_EXTENSION"]
+
+# The shell is ordinary application code that includes the library and the system headers,
+# which is a different mix from the amalgamation.
+[[unit]]
+name = "shell"
+kind = "source"
+files = ["shell.c"]
+flags = ["-I", "."]
+
+[[unit]]
+name = "headers"
+kind = "headers"
+dir = "."
+flags = ["-I", "."]
+skip = [
+  # A resource script header for the Windows build, and not a C header at all.
+  "sqlite3rc.h",
+]

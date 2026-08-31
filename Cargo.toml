@@ -1,0 +1,27 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85.0"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/tamnd/rucc-compat"
+homepage = "https://github.com/tamnd/rucc-compat"
+authors = ["tamnd <tamnd87@gmail.com>"]
+readme = "README.md"
+
+[workspace.lints.rust]
+missing_debug_implementations = "warn"
+rust_2018_idioms = "warn"
+unreachable_pub = "warn"
+unused_qualifications = "warn"
+
+[workspace.lints.clippy]
+doc_markdown = "allow"
+todo = "warn"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
