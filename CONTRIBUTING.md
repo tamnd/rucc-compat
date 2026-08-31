@@ -71,7 +71,11 @@ An entry is a promise to remove the entry. When the issue closes, the entry goes
 - `differ.rs` runs both compilers and compares.
 - `main.rs` is the command line and nothing else.
 
-Before either compiler runs, the harness makes them agree about the things a difference must not come from. It asks the reference for its system include directories and passes them to the compiler under test as `-isystem`, so the two cannot be reading different headers. It asks the reference what `__GNUC__`, `__GNUC_MINOR__` and `__GNUC_PATCHLEVEL__` it defines and passes that as `-fgnuc-version=`, so the two cannot be handed different halves of a header that gates on `__GNUC_PREREQ`. glibc gates most of `sys/cdefs.h` that way, and a run without this measures the version claim rather than the preprocessor.
+Before either compiler runs, `agreement` makes them agree about the things a difference must not come from.
+
+- The system include directories, asked for with `-E -v` and passed on as `-isystem`, so the two cannot be reading different headers.
+- The GCC version claimed, read out of the reference's own `-dM` dump and passed on as `-fgnuc-version=`, so the two cannot be handed different halves of a header that gates on `__GNUC_PREREQ`. glibc gates most of `sys/cdefs.h` that way, and a run without this measures the version claim rather than the preprocessor.
+- The dialect, read out of the same dump and passed on as `-std=`. No two compilers default to the same one and no compiler defaults to the same one across releases, so this cannot be written down. GCC 13 defaults to gnu17 and rucc defaults to gnu23, which alone gives us `nullptr_t` out of `stddef.h` and `char8_t` out of `uchar.h` that the reference never sees.
 
 Both are read off the reference rather than written down anywhere, because a value written down is a value that is right on the machine somebody wrote it on.
 

@@ -16,7 +16,7 @@ cargo build --release
 ./target/release/rucc-compat run --markers
 ```
 
-Before either compiler runs, the harness makes them agree about everything a difference must not come from. It asks the reference where it looks for headers and what GCC version it claims to be, and passes both to the compiler under test. The second one is not cosmetic: glibc gates most of `sys/cdefs.h` on `__GNUC_PREREQ`, so two compilers claiming different versions are handed different headers and are no longer preprocessing the same program.
+Before either compiler runs, the harness makes them agree about everything a difference must not come from. It asks the reference where it looks for headers, what GCC version it claims to be and what language it thinks it is compiling, and passes all three to the compiler under test. The last two are not cosmetic. glibc gates most of `sys/cdefs.h` on `__GNUC_PREREQ`, and `stddef.h` and `uchar.h` gate on `__STDC_VERSION__`, so two compilers that disagree about either one are handed different headers and are no longer preprocessing the same program.
 
 Both outputs are read back as preprocessing tokens and compared three ways, weakest last.
 
