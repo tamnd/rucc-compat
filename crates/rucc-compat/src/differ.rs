@@ -5,7 +5,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use crate::corpus::{Corpus, Register, Unit, UnitKind};
+use crate::corpus::{Corpus, Question, Register, Unit, UnitKind};
 use crate::lexer;
 use crate::toml::Error;
 
@@ -100,6 +100,20 @@ impl Status {
             Status::Spacing(_) => Some(rule::SPACING),
             Status::Markers(_) => Some(rule::MARKERS),
             _ => None,
+        }
+    }
+
+    /// Both sides of the first differing line, which is what a register entry matches in.
+    ///
+    /// Both rather than one, because a difference is as often something the reference printed
+    /// and we did not as the other way around, and an entry should be able to name either.
+    #[must_use]
+    pub fn differing_line(&self) -> String {
+        match self {
+            Status::Text(d) | Status::Spacing(d) | Status::Markers(d) => {
+                format!("{}\n{}", d.ours, d.theirs)
+            }
+            Status::Same | Status::Failed(_) | Status::Unsupported(_) => String::new(),
         }
     }
 
@@ -217,7 +231,18 @@ pub fn run(
     let mut outcomes = Vec::with_capacity(cases.len());
     for case in cases {
         let status = compare(case, settings, &system);
-        let accepted = status.rule().and_then(|rule| register.accepts(rule)).map(|d| d.id.clone());
+        let differing = status.differing_line();
+        let accepted = status
+            .rule()
+            .and_then(|rule| {
+                register.accepts(Question {
+                    rule,
+                    corpus: &corpus.name,
+                    unit: &case.unit,
+                    text: &differing,
+                })
+            })
+            .map(|d| d.id.clone());
         outcomes.push(Outcome { case: case.name.clone(), status, accepted });
     }
     Ok(Report { corpus: corpus.name.clone(), outcomes })
@@ -547,7 +572,7 @@ fn resolve(path: &str, tree: &Path) -> PathBuf {
 
 /// The report, as the markdown that lands in `results/`.
 #[must_use]
-pub fn markdown(report: &Report, settings: &Settings) -> String {
+pub fn markdown(report: &Report, settings: &Settings, register: &Register) -> String {
     let mut out = String::new();
     let _ = writeln!(out, "# {}\n", report.corpus);
     let _ = writeln!(out, "{}\n", report.summary());
@@ -585,11 +610,26 @@ pub fn markdown(report: &Report, settings: &Settings) -> String {
         let _ = writeln!(out, "## Accepted\n");
         let _ =
             writeln!(out, "Differences the register covers, each waiting on the issue it names.\n");
-        for outcome in accepted {
-            let id = outcome.accepted.as_deref().unwrap_or("");
-            let _ = writeln!(out, "- {} ({}, {id})", outcome.case, outcome.status.word());
+        // Grouped by entry rather than listed by case, so that the reason and the issue are
+        // written once and the list underneath is the evidence for how much the entry is
+        // holding up. An entry covering a hundred cases is a different thing from one
+        // covering one, and a flat list hides which it is.
+        let mut ids: Vec<&str> = Vec::new();
+        for id in accepted.iter().filter_map(|o| o.accepted.as_deref()) {
+            if !ids.contains(&id) {
+                ids.push(id);
+            }
         }
-        let _ = writeln!(out);
+        for id in ids {
+            let _ = writeln!(out, "### {id}\n");
+            if let Some(entry) = register.entries.iter().find(|d| d.id == id) {
+                let _ = writeln!(out, "{} {} Waiting on {}.\n", entry.what, entry.why, entry.issue);
+            }
+            for outcome in accepted.iter().filter(|o| o.accepted.as_deref() == Some(id)) {
+                let _ = writeln!(out, "- {} ({})", outcome.case, outcome.status.word());
+            }
+            let _ = writeln!(out);
+        }
     }
     let unsupported: Vec<&Outcome> =
         report.outcomes.iter().filter(|o| matches!(o.status, Status::Unsupported(_))).collect();
@@ -757,7 +797,7 @@ mod tests {
         };
         assert_eq!(report.count("same"), 1);
         assert_eq!(report.failures(), 1);
-        let text = markdown(&report, &Settings::default());
+        let text = markdown(&report, &Settings::default(), &Register::default());
         assert!(text.contains("### b.h (tokens)"), "{text}");
         assert!(text.contains("Line 3"), "{text}");
         assert!(text.contains("- c.h"), "{text}");

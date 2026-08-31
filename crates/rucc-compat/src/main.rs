@@ -173,7 +173,8 @@ fn run_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, St
             let dir = repo.join("results");
             fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
             let path = dir.join(format!("{}.md", corpus.name));
-            fs::write(&path, differ::markdown(&done, &settings)).map_err(|e| e.to_string())?;
+            fs::write(&path, differ::markdown(&done, &settings, &register))
+                .map_err(|e| e.to_string())?;
             println!("  wrote {}", path.display());
         }
         failures += done.failures();

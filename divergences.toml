@@ -2,11 +2,22 @@
 # now. Anything listed here is counted and reported separately. Anything not listed here
 # fails the run.
 #
-# An entry needs what, why, issue and rule, and the file does not load without them. The rule
-# names the comparison it suppresses and the rules live in the harness, so an entry cannot
-# quietly widen itself. The rules are `token-text`, `spacing` and `markers`.
+# An entry needs id, what, why, issue and rule, and the file does not load without them. The
+# rule names the comparison it suppresses and the rules live in the harness, so an entry
+# cannot quietly widen itself. The rules are `token-text`, `spacing` and `markers`.
+#
+# An entry may also say where it applies, with `corpus`, `unit` and `matches`, and every one
+# it states has to hold. A `token-text` entry has to state at least one of them, because an
+# unscoped one would silence the rule that decides whether the output still compiles to the
+# same program, in every corpus at once.
 #
 # Every entry is a promise to remove the entry. When the issue closes, the entry goes with it
 # and the run gets stricter on its own.
-#
-# There is nothing here yet, which is the state we would like to keep it in.
+
+[[divergence]]
+id = "darwin-availability"
+what = "A declaration in an Apple system header comes out without its availability attribute."
+why = "Apple's AvailabilityInternal.h defines the whole family behind __has_attribute(availability), which we answer no to because the attribute is not implemented, and answering no is the matrix working as intended: a header that asks gets the fallback path rather than syntax we cannot parse."
+issue = "https://github.com/tamnd/rucc/issues/31"
+rule = "token-text"
+matches = "__attribute__((availability("
