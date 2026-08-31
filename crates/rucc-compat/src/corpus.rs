@@ -82,12 +82,16 @@ pub struct Corpus {
     pub summary: String,
     /// Where the code comes from.
     pub source: Source,
-    /// A file that has to exist for this corpus to mean anything on this machine.
+    /// Files, any one of which has to exist for this corpus to mean anything on this machine.
     ///
     /// An installed corpus is the header set of the machine it runs on, and glibc and musl
     /// are never both that machine. The probe is how a run on a glibc runner skips the musl
     /// corpus instead of quietly comparing glibc against itself under the wrong name.
-    pub probe: Option<String>,
+    ///
+    /// Several paths rather than one, because the same libc is laid out differently by
+    /// different distributions and a probe that only knows one of them makes the corpus
+    /// silently stop running on the others.
+    pub probe: Vec<String>,
     /// What to preprocess.
     pub units: Vec<Unit>,
 }
@@ -108,10 +112,7 @@ impl Corpus {
     /// Whether this machine is one this corpus says anything about.
     #[must_use]
     pub fn applies(&self) -> bool {
-        match &self.probe {
-            Some(path) => Path::new(path).exists(),
-            None => true,
-        }
+        self.probe.is_empty() || self.probe.iter().any(|path| Path::new(path).exists())
     }
 
     /// Whether the tree is there, for [`Source::Tarball`].
@@ -192,7 +193,7 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
         name: name.to_owned(),
         summary: root.need("summary", &whose)?.to_owned(),
         source,
-        probe: root.str("probe").map(str::to_owned),
+        probe: root.list("probe"),
         units,
     })
 }
@@ -333,6 +334,24 @@ mod tests {
         assert!(!load(&fake.root, "sys").unwrap().applies());
         fake.corpus("sys", INSTALLED);
         assert!(load(&fake.root, "sys").unwrap().applies());
+    }
+
+    #[test]
+    fn a_probe_applies_when_any_one_of_its_paths_is_there() {
+        let fake = Fake::new("probe-list");
+        // Forward slashes even on Windows, which opens them either way, because a backslash
+        // in a quoted string is an escape and this test is about the probe, not about that.
+        let here = fake.root.join("corpus").display().to_string().replace('\\', "/");
+        let text = INSTALLED.replace(
+            "source = \"installed\"",
+            &format!(
+                "source = \"installed\"\nprobe = [\n  \"/there/is/no/such/file\",\n  \"{here}\",\n]"
+            ),
+        );
+        fake.corpus("sys", &text);
+        let corpus = load(&fake.root, "sys").unwrap();
+        assert_eq!(corpus.probe.len(), 2);
+        assert!(corpus.applies());
     }
 
     #[test]

@@ -3,8 +3,9 @@ summary = "The musl headers as they are installed on this machine, which is a se
 source = "installed"
 
 # musl puts every typedef in this one header and glibc has nothing like it, so this is how a
-# run on an Ubuntu runner skips the musl corpus.
-probe = "/usr/include/bits/alltypes.h"
+# run on an Ubuntu runner skips the musl corpus. A list for the same reason the glibc one is
+# a list, even though musl has only ever installed itself in the one place so far.
+probe = ["/usr/include/bits/alltypes.h"]
 
 # musl is a much smaller header set than glibc and it leans on one included header for its
 # types rather than on feature test macros, so the same list exercises a different shape.

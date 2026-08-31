@@ -26,7 +26,7 @@ The fields:
 
 - `name` and `summary`. The summary says why this corpus is worth the time it costs, in one sentence.
 - `source` is `tarball` or `installed`. A tarball is fetched and verified. An installed corpus is the header set of the machine the harness runs on, and has no upstream and no hash.
-- `probe` is optional and is a file that has to exist for the corpus to apply. An installed corpus needs one, because glibc and musl are never the same machine and a corpus that quietly compares the wrong headers is worse than one that does not run.
+- `probe` is optional and is a file, or a list of files, one of which has to exist for the corpus to apply. An installed corpus needs one, because glibc and musl are never the same machine and a corpus that quietly compares the wrong headers is worse than one that does not run. Write a list when the same library is laid out differently by different distributions, which is the usual case: Debian and Ubuntu put half of glibc under an architecture triplet and a probe that only knows the plain path skips the corpus on every machine that has it.
 - `upstream`, `version` and `sha256` for a tarball. The version is in the URL and in the directory name, and it is pinned so that a run today and a run in a year compare the same bytes.
 - `license` is the SPDX identifier. `license-file` is the path inside the tarball to the license text that came with it, and a fetch that unpacks a tree without that file fails, because vendored code with no license in it is not code we can keep. Some projects have no separate license file and put the terms at the top of every source file, and then this points at one of those files.
 - `root` is the directory the tarball unpacks into.

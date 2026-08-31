@@ -147,7 +147,7 @@ mod tests {
             name: "t".to_owned(),
             summary: "s".to_owned(),
             source,
-            probe: None,
+            probe: Vec::new(),
             units: vec![Unit {
                 name: "amalgamation".to_owned(),
                 kind: UnitKind::Source,
