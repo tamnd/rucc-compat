@@ -2,9 +2,17 @@ name = "glibc"
 summary = "The GNU C Library headers as they are installed on this machine, which is what nearly all Linux code is compiled against."
 source = "installed"
 
-# glibc ships this and no other libc does, so a run on an Alpine container skips this corpus
-# instead of comparing musl against itself under the wrong name.
-probe = "/usr/include/gnu/libc-version.h"
+# glibc ships this header and no other libc does, so a run on an Alpine container skips this
+# corpus instead of comparing musl against itself under the wrong name. Several paths because
+# Debian and Ubuntu put the architecture dependent half of the headers in a triplet directory
+# and the plain path is not there at all, so a probe that only knows the plain path makes this
+# corpus quietly stop running on the distributions most people use.
+probe = [
+  "/usr/include/gnu/libc-version.h",
+  "/usr/include/x86_64-linux-gnu/gnu/libc-version.h",
+  "/usr/include/aarch64-linux-gnu/gnu/libc-version.h",
+  "/usr/include/gnu/stubs.h",
+]
 
 # The C standard headers. Several of these come from the compiler rather than from the C
 # library, which is the point: they use #include_next and __has_include and the header guard

@@ -208,6 +208,8 @@ pub fn run(
         Some(limit) => &cases[..limit.min(cases.len())],
         None => &cases[..],
     };
+    let settings =
+        &Settings { rucc: program(&settings.rucc), cc: program(&settings.cc), ..settings.clone() };
     // rucc has no built in system include path, so it is told what the reference is using.
     // Asking the reference is the only way to get this right on a machine we have not seen,
     // and it is the same list, so a difference cannot come from looking at different headers.
@@ -219,6 +221,22 @@ pub fn run(
         outcomes.push(Outcome { case: case.name.clone(), status, accepted });
     }
     Ok(Report { corpus: corpus.name.clone(), outcomes })
+}
+
+/// A program path a subprocess can find from any directory.
+///
+/// The compilers are run in the corpus tree rather than in the directory the harness was
+/// started from, so `rucc/target/release/rucc` would be looked for in the tree and not found.
+/// A bare name is left as it is, because that is a PATH lookup and the PATH does not care
+/// where we are.
+fn program(path: &Path) -> PathBuf {
+    if path.is_absolute() || path.components().count() <= 1 {
+        return path.to_path_buf();
+    }
+    match std::env::current_dir() {
+        Ok(dir) => dir.join(path),
+        Err(_) => path.to_path_buf(),
+    }
 }
 
 /// Preprocesses one case both ways and says how they differed.
@@ -667,17 +685,28 @@ mod tests {
     #[test]
     fn include_paths_in_flags_are_resolved_against_the_tree() {
         let tree = Path::new("/vendor/t");
-        let flags = vec![
+        let flags =
+            vec!["-I".to_owned(), "include".to_owned(), "-Isrc".to_owned(), "-DA=1".to_owned()];
+        // Built with `join` rather than written out, because the separator is a backslash on
+        // Windows and the point of the test is the resolving, not the spelling.
+        let expected = [
             "-I".to_owned(),
-            "include".to_owned(),
-            "-Isrc".to_owned(),
+            tree.join("include").display().to_string(),
+            format!("-I{}", tree.join("src").display()),
             "-DA=1".to_owned(),
-            "-I/absolute".to_owned(),
         ];
-        assert_eq!(
-            absolute(&flags, tree),
-            ["-I", "/vendor/t/include", "-I/vendor/t/src", "-DA=1", "-I/absolute"]
-        );
+        assert_eq!(absolute(&flags, tree), expected);
+    }
+
+    #[test]
+    fn a_relative_program_is_made_absolute_and_a_bare_name_is_not() {
+        assert_eq!(program(Path::new("cc")), Path::new("cc"));
+        assert!(program(Path::new("target/release/rucc")).is_absolute());
+        // Built rather than written out. A path that begins with a slash is absolute on Unix
+        // and is only rooted on Windows, where it still resolves against the current drive,
+        // so a literal one tests the platform rather than this function.
+        let already = std::env::current_dir().unwrap().join("cc");
+        assert_eq!(program(&already), already);
     }
 
     #[test]
