@@ -16,6 +16,8 @@ cargo build --release
 ./target/release/rucc-compat run --markers
 ```
 
+Before either compiler runs, the harness makes them agree about everything a difference must not come from. It asks the reference where it looks for headers and what GCC version it claims to be, and passes both to the compiler under test. The second one is not cosmetic: glibc gates most of `sys/cdefs.h` on `__GNUC_PREREQ`, so two compilers claiming different versions are handed different headers and are no longer preprocessing the same program.
+
 Both outputs are read back as preprocessing tokens and compared three ways, weakest last.
 
 - `token-text` is the tokens themselves, in order. Whitespace does not count, and a missing space does, because `int x` and `intx` are not the same two tokens. This is the property that decides whether the output still compiles to the same program, and a difference here is a bug.
