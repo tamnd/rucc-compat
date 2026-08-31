@@ -296,9 +296,9 @@ fn why(stderr: &str) -> String {
 /// One output, in the three forms the three rules compare.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Normalized {
-    /// Every preprocessing token, in order, joined by [`SEPARATOR`]. This is what `token-text`
-    /// compares, and it is a string rather than a list because the amalgamation is two
-    /// million tokens and this way it costs about what the output itself costs.
+    /// Every preprocessing token, in order, joined by a byte no C source contains. This is
+    /// what the `token-text` rule compares, and it is a string rather than a list because the
+    /// amalgamation is two million tokens and this way it costs about what the output costs.
     pub text: String,
     /// The non marker lines, blank ones dropped and runs of spaces collapsed.
     pub spacing: Vec<String>,
