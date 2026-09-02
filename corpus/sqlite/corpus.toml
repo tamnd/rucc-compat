@@ -41,8 +41,3 @@ skip = [
 # One case rucc does not get through yet, naming the issue that will take it off this list. An
 # entry whose case has started passing fails the run, so the list shrinks as the work lands
 # rather than sitting here.
-
-[[exclude]]
-case = "shell/shell.c"
-issue = "https://github.com/tamnd/rucc/issues/172"
-why = "`__func__` is not declared, so every assert in the file is undeclared, E0500"
