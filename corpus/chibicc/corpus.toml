@@ -1,0 +1,79 @@
+name = "chibicc"
+summary = "The test suite of chibicc, forty odd programs written one per language feature by somebody building a C compiler, which is the same job from the other side."
+source = "tarball"
+upstream = "https://codeload.github.com/rui314/chibicc/tar.gz/90d1f7f199cc55b13c7fdb5839d1409806633fdb"
+version = "90d1f7f"
+sha256 = "cadb44e82354002000f6d2bbf41d3155f47a9b3e9abd50a309fdcd9b5ef791e0"
+root = "chibicc-90d1f7f199cc55b13c7fdb5839d1409806633fdb"
+license = "MIT"
+license-file = "chibicc-90d1f7f199cc55b13c7fdb5839d1409806633fdb/LICENSE"
+
+# A commit rather than a release, because chibicc has never cut one. The hash is over the
+# tarball GitHub builds from that commit, which is reproducible as long as the commit is.
+
+# What makes this suite worth the time is who wrote it and why. Every file is one person's
+# answer to the question of what a C compiler has to get right about one feature, written while
+# building the compiler rather than afterwards, so the cases sit exactly on the parts that are
+# easy to get wrong and nowhere else. The overlap with c-testsuite and tcc is small for the same
+# reason: those two are collections of programs, and this one is a checklist of language.
+[[unit]]
+name = "test"
+kind = "source"
+dir = "test"
+# chibicc is from 2020 and its `test.h` declares `int vsprintf();` after a full prototype for
+# the same function, which is the unprototyped declaration rule C23 removed. GCC 16 refuses
+# every file in the suite under its own default of gnu23, so the dialect is named here rather
+# than left to whatever each compiler defaults to.
+# The tree itself is on the include path because one of these writes `#include
+# "test/pragma-once.c"`, which is a path from the top of it. chibicc's own `include` directory
+# is deliberately not, because that holds the freestanding headers chibicc ships in place of
+# the machine's, and comparing a compiler against a corpus is more use when the corpus reads
+# the headers the compiler will meet in real work.
+flags = ["-std=gnu17", "-I", "."]
+skip = [
+  # A pointer given a value whose target type is something else. GCC 14 turned this from a
+  # warning into an error and chibicc was written in 2020, so more than half of the suite is
+  # on the wrong side of the change. The reference compiler refuses every one of these files
+  # under every dialect, which makes them nothing an exclusion could point an issue at.
+  "atomic.c",
+  "initializer.c",
+  "pointer.c",
+  "struct.c",
+  "unicode.c",
+  "varargs.c",
+  "variable.c",
+  "vla.c",
+  # The other three rules GCC 14 promoted at the same time: a call to a function nothing
+  # declared, an integer made from a pointer with no cast, and a declaration with no type in
+  # it at all.
+  "alloca.c",
+  "asm.c",
+  "const.c",
+  # A declaration of a standard function that disagrees with the one the machine's headers
+  # give. chibicc ships its own headers and these files were written against those, so what
+  # they say about `printf` and `vsprintf` is not what `stdio.h` here says.
+  "function.c",
+  "tls.c",
+  # Programs written on chibicc's rules rather than on the language's. A structure with two
+  # members of one name, `restrict` on something that is not a pointer, an initializer that
+  # is not constant, an assignment to something that is not an lvalue, an `f` suffix on an
+  # integer constant, `signed` twice in one specifier list, and a typedef name used again as
+  # something else in the same scope.
+  "bitfield.c",
+  "compat.c",
+  "constexpr.c",
+  "control.c",
+  "generic.c",
+  "literal.c",
+  "sizeof.c",
+  "typedef.c",
+  # Includes `include4.h`, which chibicc's makefile writes before it runs the suite and the
+  # tarball therefore does not carry.
+  "macro.c",
+  # A file that includes itself and stops the second read with `#pragma once` in the main
+  # file. GCC applies the line there and clang ignores it, so the two compilers that could be
+  # the reference give different output for this one file and the result says which of them
+  # ran rather than anything about the compiler under test. rucc follows GCC and covers it
+  # with an acceptance test of its own instead.
+  "pragma-once.c",
+]

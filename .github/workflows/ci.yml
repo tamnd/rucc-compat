@@ -167,7 +167,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        corpus: [c-testsuite, tcc]
+        corpus: [c-testsuite, chibicc, tcc]
     steps:
       - uses: actions/checkout@v7.0.1
       - name: check out the compiler
