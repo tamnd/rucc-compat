@@ -871,7 +871,3 @@ case = "execute/pr80692.c"
 issue = "https://github.com/tamnd/rucc/issues/207"
 why = "decimal floating constants are not supported"
 
-[[exclude]]
-case = "execute/991014-1.c"
-issue = "https://github.com/tamnd/rucc/issues/208"
-why = "a type is refused as too large well before the address space runs out, E0560"
