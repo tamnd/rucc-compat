@@ -127,19 +127,19 @@ jobs:
   # one. Every case that does not get through is named in a manifest with the issue it waits
   # on, so a red run here means something changed rather than something was always broken.
   #
-  # Advisory for now, and for one reason: rucc claims to be GCC 4.2.1 by default, so glibc
-  # takes the branch of bits/floatn-common.h that typedefs _Float32 and the rest, which rucc
-  # already has as keywords. Sixty of the c-testsuite cases include a system header and fail
-  # on that one line. It is tamnd/rucc#142, and this job stops being advisory the day it is
-  # fixed. The macOS numbers in the manifests are the real ones until then.
+  # This was advisory, for one reason: rucc claimed to be GCC 4.2.1, so glibc took the branch
+  # of bits/floatn-common.h that typedefs _Float32 and the rest over rucc's own keywords, and
+  # sixty of the c-testsuite cases failed on that one line no matter what else was true of
+  # them. tamnd/rucc#142 raised the claim to 7 and the manifests now say the same thing on
+  # Linux that they say on a Mac, so the job is red only when something changed.
   #
-  # It stays outside the required check below either way, because it builds rucc from its
-  # main branch and a change there should not block a pull request in this repository.
+  # It stays outside the required check below, because it builds rucc from its main branch and
+  # a regression there should not block a pull request in this repository. Red and visible is
+  # what it is for.
   pipeline:
     name: pipeline over ${{ matrix.corpus }}
     needs: quick
     runs-on: ubuntu-24.04
-    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -171,7 +171,8 @@ jobs:
           if-no-files-found: ignore
 
   # A single required check, so branch protection does not have to list every job above. The
-  # differential and the pipeline are deliberately not in this list yet.
+  # differential and the pipeline are deliberately not in this list: both build rucc from its
+  # main branch, and a pull request here is about this repository.
   ci:
     name: ci
     if: always()

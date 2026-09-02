@@ -1,5 +1,6 @@
 //! What a corpus is, and the register of divergences we accept.
 
+use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -7,6 +8,10 @@ use crate::toml::{self, Error, Fields};
 
 /// The placeholder a manifest carries until somebody has verified the hash.
 pub const UNRECORDED: &str = "unrecorded";
+
+/// What an exclusion's `when` is allowed to name, which is what `std::env::consts::OS` says on
+/// the three platforms this compiler is built for.
+pub const PLATFORMS: &[&str] = &["linux", "macos", "windows"];
 
 /// Where the code comes from.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -68,6 +73,21 @@ pub struct Exclusion {
     pub issue: String,
     /// What goes wrong, in one line, so the list can be read without opening anything.
     pub why: String,
+    /// The operating systems this excuses the case on, empty meaning all of them.
+    ///
+    /// Some gaps are one platform's: a structure passed to a variadic function is lowered on a
+    /// Mac and is not on Linux, so the same case fails on one machine and passes on the other.
+    /// An entry with no `when` would then be stale wherever it passes, and the run would be red
+    /// on one platform whichever way it was written.
+    pub when: Vec<String>,
+}
+
+impl Exclusion {
+    /// Whether this entry says anything about the machine it is being read on.
+    #[must_use]
+    pub fn here(&self) -> bool {
+        self.when.is_empty() || self.when.iter().any(|os| os == env::consts::OS)
+    }
 }
 
 /// One group of things to preprocess.
@@ -114,10 +134,10 @@ pub struct Corpus {
 }
 
 impl Corpus {
-    /// The entry that excuses this case, if there is one.
+    /// The entry that excuses this case on this machine, if there is one.
     #[must_use]
     pub fn excuse(&self, case: &str) -> Option<&Exclusion> {
-        self.excluded.iter().find(|e| e.case == case)
+        self.excluded.iter().find(|e| e.case == case && e.here())
     }
 
     /// The directory the code is in, given the repository root.
@@ -214,12 +234,27 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
     }
     let mut excluded = Vec::new();
     for fields in doc.named("exclude") {
+        let when = fields.list("when");
+        // Checked here rather than left to match nothing, because an entry naming an operating
+        // system that does not exist excuses a case on no machine at all and reads as though it
+        // excuses it on one.
+        for os in &when {
+            if !PLATFORMS.contains(&os.as_str()) {
+                return Err(Error {
+                    message: format!(
+                        "{whose}: `when` is `{os}`, which is not one of {}",
+                        PLATFORMS.join(", ")
+                    ),
+                });
+            }
+        }
         excluded.push(Exclusion {
             case: fields.need("case", &whose)?.to_owned(),
             // Required, and this is the rule that makes the list shrink rather than grow. An
             // exclusion with nowhere to point at is a decision nobody has to defend.
             issue: fields.need("issue", &whose)?.to_owned(),
             why: fields.need("why", &whose)?.to_owned(),
+            when,
         });
     }
     Ok(Corpus {
@@ -382,8 +417,7 @@ mod tests {
 
     impl Fake {
         fn new(name: &str) -> Fake {
-            let root =
-                std::env::temp_dir().join(format!("rucc-compat-{name}-{}", std::process::id()));
+            let root = env::temp_dir().join(format!("rucc-compat-{name}-{}", std::process::id()));
             let _ = fs::remove_dir_all(&root);
             fs::create_dir_all(root.join("corpus")).unwrap();
             Fake { root }
@@ -456,6 +490,39 @@ mod tests {
         assert_eq!(corpus.excluded.len(), 1);
         assert_eq!(corpus.excuse("standard/stdio.h").unwrap().issue, "#142");
         assert_eq!(corpus.excuse("standard/stdlib.h"), None);
+        assert!(corpus.excluded[0].when.is_empty(), "no `when` is every platform");
+    }
+
+    #[test]
+    fn an_exclusion_naming_a_platform_excuses_the_case_on_that_one_and_nowhere_else() {
+        let fake = Fake::new("exclude-when");
+        let other = PLATFORMS.iter().find(|os| **os != env::consts::OS).expect("three of them");
+        let entry = |os: &str| {
+            format!(
+                "[[exclude]]\ncase = \"standard/stdio.h\"\nissue = \"#159\"\nwhy = \"one platform's ABI\"\nwhen = [\"{os}\"]\n"
+            )
+        };
+
+        fake.corpus("sys", &format!("{INSTALLED}\n{}", entry(env::consts::OS)));
+        let corpus = load(&fake.root, "sys").unwrap();
+        assert!(corpus.excluded[0].here());
+        assert_eq!(corpus.excuse("standard/stdio.h").unwrap().issue, "#159");
+
+        fake.corpus("sys", &format!("{INSTALLED}\n{}", entry(other)));
+        let corpus = load(&fake.root, "sys").unwrap();
+        assert!(!corpus.excluded[0].here(), "still read, and it says nothing here");
+        assert_eq!(corpus.excuse("standard/stdio.h"), None);
+    }
+
+    #[test]
+    fn an_exclusion_naming_a_platform_that_does_not_exist_is_refused() {
+        let fake = Fake::new("exclude-when-unknown");
+        let text = format!(
+            "{INSTALLED}\n[[exclude]]\ncase = \"standard/stdio.h\"\nissue = \"#159\"\nwhy = \"it does not work\"\nwhen = [\"lunix\"]\n"
+        );
+        fake.corpus("sys", &text);
+        let said = load(&fake.root, "sys").unwrap_err().message;
+        assert!(said.contains("`lunix`"), "{said}");
     }
 
     #[test]

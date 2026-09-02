@@ -49,6 +49,18 @@ why = "a designated initializer out of order is read as one writing over another
 
 All three fields are required. `case` is the name the report prints, which is the unit and the file. `issue` is the issue that will take the entry off the list, written out in full the same way the register writes one, because this manifest lives in a different repository from the compiler it is about. `why` is one line, so the list can be read without opening anything.
 
+There is a fourth field, `when`, for the gaps that are one platform's:
+
+```toml
+[[exclude]]
+case = "single-exec/00140.c"
+issue = "https://github.com/tamnd/rucc/issues/159"
+why = "a structure passed in memory to a variadic function is refused, E0519"
+when = ["linux"]
+```
+
+It names the operating systems the entry excuses the case on, out of `linux`, `macos` and `windows`, and anything else fails the load. Leaving it out means every platform, which is what almost every entry wants. Reach for it only where the case really does pass on one machine and fail on another, since without it such an entry is stale wherever the case passes and the run comes out red on one platform whichever way it is written.
+
 A missing `issue` fails the load. An exclusion whose case has started passing fails the run, and so does one naming a case the corpus does not have, both only on a run of a whole corpus since a filtered run has no opinion about a case it never reached. Those three rules are the whole design: an exclusion list that only ever grows is a list that hides work instead of tracking it.
 
 Something the reference compiler refuses as well is not an exclusion. It is a `skip` on the unit, with a comment saying so, because there is no rucc bug there for an issue to point at.
