@@ -30,3 +30,11 @@ issue = "https://github.com/tamnd/rucc/issues/163"
 rule = "token-text"
 unit = "posix"
 matches = "__indirect_return__"
+
+[[divergence]]
+id = "system-header-macro-expansion"
+what = "A line holding an expansion of a macro defined in a system header comes out on one line where the reference breaks it into four."
+why = "GCC wraps such an expansion in a pair of line markers, the opening one carrying the `3` flag that says the tokens came from a system header, and the newlines around those markers stay in the output even in a run that is not comparing markers. rucc does not record which header an expansion's tokens came from, so it has nothing to write there. The tokens themselves are the same and in the same order, which is why this is a spacing entry and not a token-text one."
+issue = "https://github.com/tamnd/rucc/issues/195"
+rule = "spacing"
+corpus = "chibicc"
