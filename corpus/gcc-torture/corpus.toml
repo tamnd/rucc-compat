@@ -867,11 +867,6 @@ issue = "https://github.com/tamnd/rucc/issues/200"
 why = "a vector built with the vector_size attribute is not a type here, E0504"
 
 [[exclude]]
-case = "execute/pr19449.c"
-issue = "https://github.com/tamnd/rucc/issues/205"
-why = "__builtin_constant_p is not folded, so __builtin_choose_expr cannot read it, E0581"
-
-[[exclude]]
 case = "execute/pr80692.c"
 issue = "https://github.com/tamnd/rucc/issues/207"
 why = "decimal floating constants are not supported"
