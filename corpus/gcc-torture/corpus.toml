@@ -872,11 +872,6 @@ issue = "https://github.com/tamnd/rucc/issues/205"
 why = "__builtin_constant_p is not folded, so __builtin_choose_expr cannot read it, E0581"
 
 [[exclude]]
-case = "execute/20000227-1.c"
-issue = "https://github.com/tamnd/rucc/issues/206"
-why = "a byte that is not valid UTF-8 in a string literal is replaced rather than kept"
-
-[[exclude]]
 case = "execute/pr80692.c"
 issue = "https://github.com/tamnd/rucc/issues/207"
 why = "decimal floating constants are not supported"
