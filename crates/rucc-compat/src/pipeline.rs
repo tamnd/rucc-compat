@@ -447,6 +447,7 @@ mod tests {
             case: "t/gone.c".to_owned(),
             issue: "#142".to_owned(),
             why: "it was renamed upstream".to_owned(),
+            when: Vec::new(),
         };
         let report = Report {
             corpus: "c-testsuite".to_owned(),

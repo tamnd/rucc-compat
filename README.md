@@ -41,7 +41,7 @@ Each case is three runs of the compiler. `--emit=tast` is parsing and semantic a
 
 The round trip is the step worth explaining. A printer and a parser that disagree can each look right on its own, and a text that does not survive being read back is not a record of what the compiler decided. Comparing the second print against the first is the cheapest way to find that out and it costs one more run of a compiler that is already fast.
 
-Each manifest carries the cases that do not get through yet, as `[[exclude]]` entries. Every one of them names the issue that will take it off the list, and a manifest with an exclusion that has no issue on it does not load. The list is checked for going stale on every whole run: a case that starts passing while its entry is still there fails the run, and so does an entry naming a case the corpus does not have. That is what stops an exclusion list from becoming the place a regression goes to be quiet.
+Each manifest carries the cases that do not get through yet, as `[[exclude]]` entries. Every one of them names the issue that will take it off the list, and a manifest with an exclusion that has no issue on it does not load. The list is checked for going stale on every whole run: a case that starts passing while its entry is still there fails the run, and so does an entry naming a case the corpus does not have. That is what stops an exclusion list from becoming the place a regression goes to be quiet. An entry can carry a `when` naming the operating systems it applies to, for the gaps that are one platform's ABI rather than the compiler's everywhere.
 
 ## The corpora
 
