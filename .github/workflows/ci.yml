@@ -2,8 +2,9 @@
 #
 # Two halves. The first is the harness itself, which is ordinary Rust and has to build and
 # pass everywhere. The second is the differential, which builds rucc from its main branch and
-# preprocesses a real header set with it. The second half is advisory today, because rucc
-# cannot get through a system header yet, and it becomes required the day it can.
+# preprocesses a real header set with it. That half was advisory because rucc could not get
+# through a system header, and it is not advisory any more: the standard and posix units of
+# both libcs are clean against gcc 16, so a red run there means something changed.
 #
 # Actions are pinned to a patch version rather than a major tag, the same as in the compiler
 # repository. A major tag is a moving reference, and a run nobody can reproduce is a run
@@ -75,11 +76,18 @@ jobs:
 
   # The sweep. Advisory until rucc gets through a system header, which is the M1 exit
   # criterion this job exists to measure.
+  # No longer advisory. It went red on its own reasons rather than on rucc's for a long time,
+  # and the last of those closed with tamnd/rucc#160 and #161 moving the reference to gcc 16
+  # and fixing the three preprocessor differences that found. The one difference left is
+  # registered in divergences.toml against tamnd/rucc#163 rather than silenced here.
+  #
+  # It stays outside the required check below for the same reason the pipeline job does: it
+  # builds rucc from its main branch, and a regression there should not block a pull request
+  # in this repository. Red and visible is what it is for.
   differential:
     name: differential against ${{ matrix.libc }}
     needs: quick
     runs-on: ubuntu-24.04
-    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
