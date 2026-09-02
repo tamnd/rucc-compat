@@ -68,7 +68,7 @@ pub fn fetch(repo: &Path, corpus: &Corpus, record: bool) -> Result<Fetched, Erro
             ),
         });
     }
-    unpack(&archive, &into)?;
+    unpack(&archive, &into, &tarball.extract)?;
     let tree = corpus.tree(repo);
     if !tree.is_dir() {
         return Err(Error {
@@ -114,12 +114,19 @@ fn download(url: &str, into: &Path) -> Result<(), Error> {
     fs::rename(&part, into).map_err(|e| fail(into, &e))
 }
 
-fn unpack(archive: &Path, into: &Path) -> Result<(), Error> {
+/// Unpacks the archive, or the named paths inside it when the manifest names any.
+///
+/// `tar` takes the paths to extract after the options and reads the whole archive either way,
+/// so this is about what lands on disk rather than about how long it takes. For a tarball that
+/// is a whole compiler and a corpus that is one directory inside it, that is the difference
+/// between eight hundred megabytes and eight.
+fn unpack(archive: &Path, into: &Path, only: &[String]) -> Result<(), Error> {
     let status = Command::new("tar")
         .arg("-xf")
         .arg(archive)
         .arg("-C")
         .arg(into)
+        .args(only)
         .status()
         .map_err(|e| Error { message: format!("tar: {e}") })?;
     if status.success() {
@@ -187,6 +194,7 @@ mod tests {
             license: "MIT".to_owned(),
             license_file: "t-1/COPYING".to_owned(),
             root: "t-1".to_owned(),
+            extract: Vec::new(),
         };
         let e = licensed(&dir, &tarball, "t").unwrap_err();
         assert!(e.message.contains("t-1/COPYING"), "{}", e.message);

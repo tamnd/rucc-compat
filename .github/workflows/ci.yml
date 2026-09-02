@@ -167,7 +167,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        corpus: [c-testsuite, chibicc, tcc]
+        corpus: [c-testsuite, chibicc, gcc-torture, tcc]
     steps:
       - uses: actions/checkout@v7.0.1
       - name: check out the compiler
@@ -180,6 +180,22 @@ jobs:
         run: cargo build --release --bin rucc --manifest-path rucc/Cargo.toml
       - name: build the harness
         run: cargo build --release
+      # Keyed on the digest the manifest names rather than on the manifest, because the
+      # manifest changes every time an exclusion is added and the tarball it points at does
+      # not. The gcc-torture one is the whole of GCC and a hundred megabytes of it, so a key
+      # that turned over on every pull request would be a download on every pull request. Only
+      # the archive is kept: unpacking it again is seconds and caching a tree of eight thousand
+      # small files is not.
+      - name: name the cache after the tarball
+        id: tarball
+        run: |
+          sha=$(sed -n 's/^sha256 = "\(.*\)"$/\1/p' corpus/${{ matrix.corpus }}/corpus.toml)
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+      - name: reuse the download if we have it
+        uses: actions/cache@v6.1.0
+        with:
+          path: vendor/${{ matrix.corpus }}/*.tar.*
+          key: corpus-${{ matrix.corpus }}-${{ steps.tarball.outputs.sha }}
       - name: fetch the corpus
         run: ./target/release/rucc-compat fetch ${{ matrix.corpus }}
       - name: take it through the pipeline
