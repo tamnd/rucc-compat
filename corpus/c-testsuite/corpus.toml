@@ -44,15 +44,7 @@ case = "single-exec/00207.c"
 issue = "https://github.com/tamnd/rucc/issues/148"
 why = "a goto in a function with a variable length array is not lowered, E0519"
 
-[[exclude]]
-case = "single-exec/00210.c"
-issue = "https://github.com/tamnd/rucc/issues/149"
-why = "a type name for a function returning a function is refused instead of adjusted, E0541"
 
-[[exclude]]
-case = "single-exec/00213.c"
-issue = "https://github.com/tamnd/rucc/issues/150"
-why = "a conditional with one void arm is refused, E0518"
 
 [[exclude]]
 case = "single-exec/00216.c"
