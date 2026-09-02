@@ -27,9 +27,9 @@ skip = [
   "34_array_assignment.c",
 ]
 
-# Seven cases rucc does not get through yet, each one naming the issue that will take it off
-# this list. One of them is the compiler producing IR its own verifier refuses, which is the kind
-# of thing only running the whole pipeline finds.
+# Five cases rucc does not get through yet, each one naming the issue that will take it off
+# this list. Three of the five are one gap, which is an `asm` at file scope, and the other two
+# are one each.
 
 [[exclude]]
 case = "tests2/73_arm64.c"
@@ -42,19 +42,9 @@ issue = "https://github.com/tamnd/rucc/issues/148"
 why = "a goto in a function with a variable length array is not lowered, E0519"
 
 [[exclude]]
-case = "tests2/79_vla_continue.c"
-issue = "https://github.com/tamnd/rucc/issues/152"
-why = "stackrestore is emitted where the value it restores does not reach, E0652"
-
-[[exclude]]
 case = "tests2/85_asm-outside-function.c"
 issue = "https://github.com/tamnd/rucc/issues/155"
 why = "an asm at file scope is not accepted, E0519"
-
-[[exclude]]
-case = "tests2/90_struct-init.c"
-issue = "https://github.com/tamnd/rucc/issues/151"
-why = "a compound literal in a static initializer is called a non constant element, E0618"
 
 [[exclude]]
 case = "tests2/98_al_ax_extend.c"

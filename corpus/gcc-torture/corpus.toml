@@ -863,8 +863,8 @@ cases = [
   "execute/pr53645-2.c",
   "execute/pr53645.c",
 ]
-issue = "https://github.com/tamnd/rucc/issues/151"
-why = "a compound literal in a static initializer is called a non constant element, E0618"
+issue = "https://github.com/tamnd/rucc/issues/200"
+why = "a vector built with the vector_size attribute is not a type here, E0504"
 
 [[exclude]]
 case = "execute/pr19449.c"
