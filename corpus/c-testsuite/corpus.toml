@@ -23,7 +23,7 @@ dir = "tests/single-exec"
 # dialect to whatever each compiler defaults to measures the year rather than the compiler.
 flags = ["-std=gnu17"]
 
-# Four cases rucc does not get through yet, each one naming the issue that will take it off
+# Three cases rucc does not get through yet, each one naming the issue that will take it off
 # this list. An entry whose case has started passing fails the run, so the list shrinks as the
 # work lands rather than sitting here. One of them carries a `when`, because the gap it names is
 # one platform's ABI and the case passes on the other.
@@ -43,8 +43,3 @@ why = "va_arg of a structure or a union is not lowered, E0519"
 case = "single-exec/00207.c"
 issue = "https://github.com/tamnd/rucc/issues/148"
 why = "a goto in a function with a variable length array is not lowered, E0519"
-
-[[exclude]]
-case = "single-exec/00216.c"
-issue = "https://github.com/tamnd/rucc/issues/151"
-why = "a compound literal in a static initializer is called a non constant element, E0618"
