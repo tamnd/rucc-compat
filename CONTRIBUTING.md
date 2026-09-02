@@ -30,6 +30,7 @@ The fields:
 - `upstream`, `version` and `sha256` for a tarball. The version is in the URL and in the directory name, and it is pinned so that a run today and a run in a year compare the same bytes.
 - `license` is the SPDX identifier. `license-file` is the path inside the tarball to the license text that came with it, and a fetch that unpacks a tree without that file fails, because vendored code with no license in it is not code we can keep. Some projects have no separate license file and put the terms at the top of every source file, and then this points at one of those files.
 - `root` is the directory the tarball unpacks into.
+- `extract` is optional and is the list of paths inside the tarball to unpack, the rest being read past and left on the floor. For a corpus that is a directory inside a much larger release this is the difference between what the corpus costs and what the project it came from costs: the gcc-torture tarball is the whole of GCC at a hundred and seven megabytes and the tests in it are eight. Name the license file in it as well as the tests, since the fetch checks for the license in the unpacked tree and a tree without one fails.
 - One `[[unit]]` block per thing to preprocess, each with a `name` that `--unit` selects and that the case names begin with. `kind = "source"` names files in `files`, or takes every `.c` file under `dir`. `kind = "headers"` takes the headers in `files`, or every header under `dir`, and includes each one from a file of its own, which is how a header set is checked for standing up on its own. `skip` drops paths under `dir`, and each one wants a comment next to it saying why. `flags` are passed to both compilers unchanged, and a relative include path in them is resolved against the tree.
 
 A unit that names a `dir` is walked rather than listed, so a suite of two hundred programs is five lines of manifest rather than a list nobody updates when the pin moves. A file the manifest names is called after the tree it is in and a file found by walking is called after the directory the unit already named, so a walked case is `single-exec/00001.c` rather than repeating the directory in every one of two hundred names.
@@ -61,9 +62,22 @@ when = ["linux"]
 
 It names the operating systems the entry excuses the case on, out of `linux`, `macos` and `windows`, and anything else fails the load. Leaving it out means every platform, which is what almost every entry wants. Reach for it only where the case really does pass on one machine and fail on another, since without it such an entry is stale wherever the case passes and the run comes out red on one platform whichever way it is written.
 
+A single entry can name a list of cases instead of one, with `cases`, for the runs where one missing feature takes out hundreds of them:
+
+```toml
+[[exclude]]
+cases = ["execute/pr56982.c", "execute/pr64242.c"]
+issue = "https://github.com/tamnd/rucc/issues/204"
+why = "__builtin_setjmp is not implemented, E0602"
+```
+
+`case` and `cases` are the same field written two ways and an entry gives exactly one of them. Prefer `cases` where the reason is genuinely one reason, because five hundred copies of the same sentence is five hundred lines nobody reads and one line with five hundred names under it is a number somebody can watch go down.
+
 A missing `issue` fails the load. An exclusion whose case has started passing fails the run, and so does one naming a case the corpus does not have, both only on a run of a whole corpus since a filtered run has no opinion about a case it never reached. Those three rules are the whole design: an exclusion list that only ever grows is a list that hides work instead of tracking it.
 
 Something the reference compiler refuses as well is not an exclusion. It is a `skip` on the unit, with a comment saying so, because there is no rucc bug there for an issue to point at.
+
+Neither is a case that fails on an extension rucc has decided against. GNU's nested functions are the one there is a settled answer on, and the answer is no, so the twenty three torture cases that use them are a `skip` with the reason written above them. The test for which of the two a case belongs in is whether an issue could ever close it. An exclusion waits for work somebody will do. A skip is for a case where nobody will, either because the reference refuses it too or because the feature it needs is one this compiler is not going to have, and an exclusion pointing at an issue that will never close is an exclusion nobody will ever remove.
 
 ### Recording the hash
 

@@ -27,9 +27,9 @@ skip = [
   "34_array_assignment.c",
 ]
 
-# Nine cases rucc does not get through yet, each one naming the issue that will take it off
-# this list. Three of them are the compiler producing IR its own verifier refuses, which is the
-# kind of thing only running the whole pipeline finds.
+# Seven cases rucc does not get through yet, each one naming the issue that will take it off
+# this list. One of them is the compiler producing IR its own verifier refuses, which is the kind
+# of thing only running the whole pipeline finds.
 
 [[exclude]]
 case = "tests2/73_arm64.c"
@@ -45,16 +45,6 @@ why = "a goto in a function with a variable length array is not lowered, E0519"
 case = "tests2/79_vla_continue.c"
 issue = "https://github.com/tamnd/rucc/issues/152"
 why = "stackrestore is emitted where the value it restores does not reach, E0652"
-
-[[exclude]]
-case = "tests2/80_flexarray.c"
-issue = "https://github.com/tamnd/rucc/issues/153"
-why = "a flexible array member initializer makes an image larger than the global, E0652"
-
-[[exclude]]
-case = "tests2/83_utf8_in_identifiers.c"
-issue = "https://github.com/tamnd/rucc/issues/154"
-why = "an identifier that is not ASCII does not survive the IR round trip"
 
 [[exclude]]
 case = "tests2/85_asm-outside-function.c"

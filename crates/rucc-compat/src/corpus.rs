@@ -40,6 +40,13 @@ pub struct Tarball {
     pub license_file: String,
     /// The directory the tarball unpacks into.
     pub root: String,
+    /// The paths inside the tarball to unpack, empty meaning all of it.
+    ///
+    /// Most corpora are the size of what they test. GCC's own test suite is not: the tarball it
+    /// comes in is the whole compiler, and unpacking eight hundred megabytes of source to read
+    /// eight of tests is a cost paid on every machine that runs the harness. The license file
+    /// has to be in this list, since a tree we keep without one is a tree we cannot vendor.
+    pub extract: Vec<String>,
 }
 
 impl Tarball {
@@ -216,6 +223,7 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
             license: root.need("license", &whose)?.to_owned(),
             license_file: root.need("license-file", &whose)?.to_owned(),
             root: root.need("root", &whose)?.to_owned(),
+            extract: root.list("extract"),
         }),
         other => {
             return Err(Error {
@@ -248,14 +256,33 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
                 });
             }
         }
-        excluded.push(Exclusion {
-            case: fields.need("case", &whose)?.to_owned(),
-            // Required, and this is the rule that makes the list shrink rather than grow. An
-            // exclusion with nowhere to point at is a decision nobody has to defend.
-            issue: fields.need("issue", &whose)?.to_owned(),
-            why: fields.need("why", &whose)?.to_owned(),
-            when,
-        });
+        // One entry may name one case or a list of them. The list is for a corpus where one
+        // missing feature stops hundreds of files: writing the reason and the issue out three
+        // hundred times says nothing the first one did not, and a reader looking for what is
+        // wrong would have to find the three lines that differ. Every name in the list is still
+        // its own exclusion from here on, so a file that starts working is still stale on its
+        // own and still has to be taken out by hand.
+        let mut named = fields.list("cases");
+        if let Some(one) = fields.str("case") {
+            named.insert(0, one.to_owned());
+        }
+        if named.is_empty() {
+            return Err(Error {
+                message: format!("{whose}: an exclusion needs `case` or `cases`"),
+            });
+        }
+        // Required, and this is the rule that makes the list shrink rather than grow. An
+        // exclusion with nowhere to point at is a decision nobody has to defend.
+        let issue = fields.need("issue", &whose)?.to_owned();
+        let why = fields.need("why", &whose)?.to_owned();
+        for case in named {
+            excluded.push(Exclusion {
+                case,
+                issue: issue.clone(),
+                why: why.clone(),
+                when: when.clone(),
+            });
+        }
     }
     Ok(Corpus {
         name: name.to_owned(),
@@ -534,6 +561,55 @@ mod tests {
         fake.corpus("sys", &text);
         let e = load(&fake.root, "sys").unwrap_err();
         assert!(e.message.contains("issue"), "{}", e.message);
+    }
+
+    #[test]
+    fn an_exclusion_naming_a_list_of_cases_becomes_one_entry_for_each_of_them() {
+        let fake = Fake::new("exclude-cases");
+        let text = format!(
+            "{INSTALLED}\n[[exclude]]\ncases = [\n  \"standard/a.h\",\n  \"standard/b.h\",\n]\nissue = \"#204\"\nwhy = \"one missing builtin, several hundred files\"\n"
+        );
+        fake.corpus("sys", &text);
+        let corpus = load(&fake.root, "sys").unwrap();
+        assert_eq!(corpus.excluded.len(), 2);
+        assert_eq!(corpus.excuse("standard/a.h").unwrap().issue, "#204");
+        assert_eq!(corpus.excuse("standard/b.h").unwrap().why, corpus.excluded[0].why);
+        assert_eq!(corpus.excuse("standard/c.h"), None);
+    }
+
+    #[test]
+    fn an_exclusion_naming_no_case_at_all_is_refused() {
+        let fake = Fake::new("exclude-no-case");
+        let text =
+            format!("{INSTALLED}\n[[exclude]]\nissue = \"#1\"\nwhy = \"it does not work\"\n");
+        fake.corpus("sys", &text);
+        let e = load(&fake.root, "sys").unwrap_err();
+        assert!(e.message.contains("`case` or `cases`"), "{}", e.message);
+    }
+
+    #[test]
+    fn a_tarball_may_name_the_paths_inside_it_that_are_worth_unpacking() {
+        let fake = Fake::new("extract");
+        let text = format!(
+            "name = \"t\"\nsummary = \"s\"\nsource = \"tarball\"\nupstream = \"https://example.invalid/t.tar.xz\"\nversion = \"1\"\nsha256 = \"{}\"\nlicense = \"GPL-3.0-or-later\"\nlicense-file = \"t-1/COPYING\"\nroot = \"t-1/tests\"\nextract = [\n  \"t-1/COPYING\",\n  \"t-1/tests\",\n]\n\n[[unit]]\nname = \"suite\"\nkind = \"source\"\ndir = \".\"\n",
+            "0".repeat(64)
+        );
+        fake.corpus("t", &text);
+        let corpus = load(&fake.root, "t").unwrap();
+        let Source::Tarball(tarball) = &corpus.source else { panic!("expected a tarball") };
+        assert_eq!(tarball.extract, ["t-1/COPYING", "t-1/tests"]);
+    }
+
+    #[test]
+    fn a_tarball_that_names_nothing_to_extract_unpacks_all_of_itself() {
+        let fake = Fake::new("extract-none");
+        let text = format!(
+            "name = \"t\"\nsummary = \"s\"\nsource = \"tarball\"\nupstream = \"https://example.invalid/t.tar.gz\"\nversion = \"1\"\nsha256 = \"{UNRECORDED}\"\nlicense = \"MIT\"\nlicense-file = \"t-1/COPYING\"\nroot = \"t-1\"\n\n[[unit]]\nname = \"amalgamation\"\nkind = \"source\"\nfiles = [\"a.c\"]\n"
+        );
+        fake.corpus("t", &text);
+        let corpus = load(&fake.root, "t").unwrap();
+        let Source::Tarball(tarball) = &corpus.source else { panic!("expected a tarball") };
+        assert!(tarball.extract.is_empty());
     }
 
     #[test]
