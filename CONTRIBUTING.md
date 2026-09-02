@@ -107,7 +107,7 @@ Before either compiler runs, `agreement` makes them agree about the things a dif
 
 - The system include directories, asked for with `-E -v` and passed on as `-isystem`, so the two cannot be reading different headers.
 - The GCC version claimed, read out of the reference's own `-dM` dump and passed on as `-fgnuc-version=`, so the two cannot be handed different halves of a header that gates on `__GNUC_PREREQ`. glibc gates most of `sys/cdefs.h` that way, and a run without this measures the version claim rather than the preprocessor.
-- The dialect, read out of the same dump and passed on as `-std=`. No two compilers default to the same one and no compiler defaults to the same one across releases, so this cannot be written down. GCC 13 defaults to gnu17 and rucc defaults to gnu23, which alone gives us `nullptr_t` out of `stddef.h` and `char8_t` out of `uchar.h` that the reference never sees.
+- The dialect, read out of the same dump and passed on as `-std=`. No two compilers default to the same one and no compiler defaults to the same one across releases, so this cannot be written down. GCC 13 defaults to gnu17 and GCC 16 defaults to gnu23, which is the whole argument in one line: a value that was right about the reference two releases ago is a value that is wrong about it now.
 
 Both are read off the reference rather than written down anywhere, because a value written down is a value that is right on the machine somebody wrote it on.
 
