@@ -23,7 +23,7 @@ dir = "tests/single-exec"
 # dialect to whatever each compiler defaults to measures the year rather than the compiler.
 flags = ["-std=gnu17"]
 
-# Six cases rucc does not get through yet, each one naming the issue that will take it off
+# Four cases rucc does not get through yet, each one naming the issue that will take it off
 # this list. An entry whose case has started passing fails the run, so the list shrinks as the
 # work lands rather than sitting here. One of them carries a `when`, because the gap it names is
 # one platform's ABI and the case passes on the other.
@@ -43,16 +43,6 @@ why = "va_arg of a structure or a union is not lowered, E0519"
 case = "single-exec/00207.c"
 issue = "https://github.com/tamnd/rucc/issues/148"
 why = "a goto in a function with a variable length array is not lowered, E0519"
-
-[[exclude]]
-case = "single-exec/00210.c"
-issue = "https://github.com/tamnd/rucc/issues/149"
-why = "a type name for a function returning a function is refused instead of adjusted, E0541"
-
-[[exclude]]
-case = "single-exec/00213.c"
-issue = "https://github.com/tamnd/rucc/issues/150"
-why = "a conditional with one void arm is refused, E0518"
 
 [[exclude]]
 case = "single-exec/00216.c"

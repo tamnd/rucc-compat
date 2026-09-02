@@ -27,14 +27,9 @@ skip = [
   "34_array_assignment.c",
 ]
 
-# Twelve cases rucc does not get through yet, each one naming the issue that will take it off
+# Nine cases rucc does not get through yet, each one naming the issue that will take it off
 # this list. Three of them are the compiler producing IR its own verifier refuses, which is the
 # kind of thing only running the whole pipeline finds.
-
-[[exclude]]
-case = "tests2/46_grep.c"
-issue = "https://github.com/tamnd/rucc/issues/146"
-why = "an unprototyped declaration is not reconciled with the prototype next to it, E0586"
 
 [[exclude]]
 case = "tests2/73_arm64.c"
@@ -65,16 +60,6 @@ why = "an identifier that is not ASCII does not survive the IR round trip"
 case = "tests2/85_asm-outside-function.c"
 issue = "https://github.com/tamnd/rucc/issues/155"
 why = "an asm at file scope is not accepted, E0519"
-
-[[exclude]]
-case = "tests2/87_dead_code.c"
-issue = "https://github.com/tamnd/rucc/issues/150"
-why = "a conditional with one void arm is refused, E0518"
-
-[[exclude]]
-case = "tests2/89_nocode_wanted.c"
-issue = "https://github.com/tamnd/rucc/issues/150"
-why = "a conditional with one void arm is refused, E0518"
 
 [[exclude]]
 case = "tests2/90_struct-init.c"
