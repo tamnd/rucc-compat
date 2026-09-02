@@ -21,3 +21,12 @@ why = "Apple's AvailabilityInternal.h defines the whole family behind __has_attr
 issue = "https://github.com/tamnd/rucc/issues/31"
 rule = "token-text"
 matches = "__attribute__((availability("
+
+[[divergence]]
+id = "cet-indirect-return"
+what = "`swapcontext` in glibc's `ucontext.h` comes out without its `__indirect_return__` attribute."
+why = "glibc's bits/indirect-return.h gates the attribute on `__CET__`, not on `__has_attribute`, which both compilers answer yes to. A distribution builds gcc with `--enable-cet` so it defines `__CET__` as 3; a gcc built from source without that option defines no `__CET__` and declares `swapcontext` exactly the way rucc does, which is why this fails on a runner and passes on a machine with a source build. rucc defines no `__CET__` because the macro is a statement that the object carries the IBT and shadow stack markings, and a binary that says so without emitting `endbr64` faults on a machine that enforces it. That is codegen work."
+issue = "https://github.com/tamnd/rucc/issues/163"
+rule = "token-text"
+unit = "posix"
+matches = "__indirect_return__"
