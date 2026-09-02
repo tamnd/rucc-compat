@@ -124,15 +124,22 @@ jobs:
           if-no-files-found: ignore
 
   # The pipeline check, which needs no reference compiler because it is not comparing against
-  # one. It is not advisory: every case that does not get through is named in a manifest with
-  # the issue it waits on, so a red run here is a case that changed rather than a case that
-  # was always broken. It is still outside the required check below, because it builds rucc
-  # from its main branch and a change there should not block a pull request in this
-  # repository.
+  # one. Every case that does not get through is named in a manifest with the issue it waits
+  # on, so a red run here means something changed rather than something was always broken.
+  #
+  # Advisory for now, and for one reason: rucc claims to be GCC 4.2.1 by default, so glibc
+  # takes the branch of bits/floatn-common.h that typedefs _Float32 and the rest, which rucc
+  # already has as keywords. Sixty of the c-testsuite cases include a system header and fail
+  # on that one line. It is tamnd/rucc#142, and this job stops being advisory the day it is
+  # fixed. The macOS numbers in the manifests are the real ones until then.
+  #
+  # It stays outside the required check below either way, because it builds rucc from its
+  # main branch and a change there should not block a pull request in this repository.
   pipeline:
     name: pipeline over ${{ matrix.corpus }}
     needs: quick
     runs-on: ubuntu-24.04
+    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:

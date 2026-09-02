@@ -295,10 +295,23 @@ fn named(file: &Path, dir: &Path) -> PathBuf {
     }
 }
 
-/// The first few lines of what a failing run said, which is the part that names the problem.
+/// The part of what a failing run said that names the problem.
+///
+/// The errors come first, because a header three levels down produces an include chain and a
+/// warning for every level of it, and a report that takes the first three lines of that is a
+/// report of where the compiler was rather than of what went wrong. Everything else is kept
+/// after them for the case where the run failed without saying `error` anywhere.
 fn said(stderr: &[u8]) -> String {
     let text = String::from_utf8_lossy(stderr);
-    let mut lines: Vec<&str> = text.lines().filter(|line| !line.trim().is_empty()).collect();
+    let kept = |line: &&str| {
+        let line = line.trim();
+        !line.is_empty() && !line.starts_with("In file included from") && !line.starts_with("from ")
+    };
+    let lines: Vec<&str> = text.lines().filter(kept).collect();
+    let (errors, rest): (Vec<&str>, Vec<&str>) =
+        lines.into_iter().partition(|line| line.contains("error:"));
+    let mut lines = errors;
+    lines.extend(rest);
     lines.truncate(3);
     match lines.is_empty() {
         true => "it failed and said nothing".to_owned(),
@@ -471,6 +484,24 @@ mod tests {
         let stderr = b"one\n\ntwo\nthree\nfour\n";
         assert_eq!(said(stderr), "one; two; three");
         assert_eq!(said(b"   \n"), "it failed and said nothing");
+    }
+
+    #[test]
+    fn the_error_is_reported_rather_than_the_include_chain_that_leads_to_it() {
+        // A header three levels down gives this shape, and the first three lines of it say
+        // nothing at all about what went wrong.
+        let stderr = b"\
+In file included from t.c:1:1:
+                 from /usr/include/stdio.h:28:1:
+                 from /usr/include/features.h:33:1:
+/usr/include/features.h:33:1: warning: something minor
+/usr/include/features.h:40:1: error: the thing that actually failed
+";
+        assert_eq!(
+            said(stderr),
+            "/usr/include/features.h:40:1: error: the thing that actually failed; \
+/usr/include/features.h:33:1: warning: something minor"
+        );
     }
 
     #[test]
