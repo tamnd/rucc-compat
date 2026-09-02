@@ -1,0 +1,92 @@
+name = "tcc"
+summary = "The tests2 suite of the Tiny C Compiler, eighty odd programs written over twenty years against real gcc behaviour rather than against the standard."
+source = "tarball"
+upstream = "https://download.savannah.gnu.org/releases/tinycc/tcc-0.9.27.tar.bz2"
+version = "0.9.27"
+sha256 = "de23af78fca90ce32dff2dd45b3432b2334740bb9bb7b05bf60fdbfc396ceb9c"
+root = "tcc-0.9.27"
+license = "LGPL-2.1-or-later"
+license-file = "tcc-0.9.27/COPYING"
+
+# The value of this suite is that it was not written to be portable. It is the set of things
+# people found out the hard way that gcc does, which is the part of C that no specification
+# will tell us about.
+[[unit]]
+name = "tests2"
+kind = "source"
+dir = "tests/tests2"
+skip = [
+  # Assignment to an array, which is a tcc extension. The reference compiler refuses this
+  # file too, so refusing it is not a gap and there is nothing here for an exclusion to point
+  # an issue at.
+  "34_array_assignment.c",
+]
+
+# Thirteen cases rucc does not get through yet, each one naming the issue that will take it off
+# this list. Three of them are the compiler producing IR its own verifier refuses, which is the
+# kind of thing only running the whole pipeline finds.
+
+[[exclude]]
+case = "tests2/46_grep.c"
+issue = "https://github.com/tamnd/rucc/issues/146"
+why = "an unprototyped declaration is not reconciled with the prototype next to it, E0586"
+
+[[exclude]]
+case = "tests2/73_arm64.c"
+issue = "https://github.com/tamnd/rucc/issues/147"
+why = "va_arg of a structure or a union is not lowered, E0519"
+
+[[exclude]]
+case = "tests2/78_vla_label.c"
+issue = "https://github.com/tamnd/rucc/issues/148"
+why = "a goto in a function with a variable length array is not lowered, E0519"
+
+[[exclude]]
+case = "tests2/79_vla_continue.c"
+issue = "https://github.com/tamnd/rucc/issues/152"
+why = "stackrestore is emitted where the value it restores does not reach, E0652"
+
+[[exclude]]
+case = "tests2/80_flexarray.c"
+issue = "https://github.com/tamnd/rucc/issues/153"
+why = "a flexible array member initializer makes an image larger than the global, E0652"
+
+[[exclude]]
+case = "tests2/81_types.c"
+issue = "https://github.com/tamnd/rucc/issues/146"
+why = "a call through an unprototyped declaration is checked against a list that was never given, E0511"
+
+[[exclude]]
+case = "tests2/83_utf8_in_identifiers.c"
+issue = "https://github.com/tamnd/rucc/issues/154"
+why = "an identifier that is not ASCII does not survive the IR round trip"
+
+[[exclude]]
+case = "tests2/85_asm-outside-function.c"
+issue = "https://github.com/tamnd/rucc/issues/155"
+why = "an asm at file scope is not accepted, E0519"
+
+[[exclude]]
+case = "tests2/87_dead_code.c"
+issue = "https://github.com/tamnd/rucc/issues/150"
+why = "a conditional with one void arm is refused, E0518"
+
+[[exclude]]
+case = "tests2/89_nocode_wanted.c"
+issue = "https://github.com/tamnd/rucc/issues/150"
+why = "a conditional with one void arm is refused, E0518"
+
+[[exclude]]
+case = "tests2/90_struct-init.c"
+issue = "https://github.com/tamnd/rucc/issues/151"
+why = "a compound literal in a static initializer is called a non constant element, E0618"
+
+[[exclude]]
+case = "tests2/98_al_ax_extend.c"
+issue = "https://github.com/tamnd/rucc/issues/155"
+why = "an asm at file scope is not accepted, E0519"
+
+[[exclude]]
+case = "tests2/99_fastcall.c"
+issue = "https://github.com/tamnd/rucc/issues/155"
+why = "an asm at file scope is not accepted, E0519"

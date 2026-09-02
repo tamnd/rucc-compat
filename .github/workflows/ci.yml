@@ -123,8 +123,48 @@ jobs:
           path: results/
           if-no-files-found: ignore
 
+  # The pipeline check, which needs no reference compiler because it is not comparing against
+  # one. It is not advisory: every case that does not get through is named in a manifest with
+  # the issue it waits on, so a red run here is a case that changed rather than a case that
+  # was always broken. It is still outside the required check below, because it builds rucc
+  # from its main branch and a change there should not block a pull request in this
+  # repository.
+  pipeline:
+    name: pipeline over ${{ matrix.corpus }}
+    needs: quick
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        corpus: [c-testsuite, tcc]
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: check out the compiler
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: tamnd/rucc
+          path: rucc
+      - uses: Swatinem/rust-cache@v2.9.2
+      - name: build the compiler
+        run: cargo build --release --bin rucc --manifest-path rucc/Cargo.toml
+      - name: build the harness
+        run: cargo build --release
+      - name: fetch the corpus
+        run: ./target/release/rucc-compat fetch ${{ matrix.corpus }}
+      - name: take it through the pipeline
+        run: |
+          ./target/release/rucc-compat check ${{ matrix.corpus }} \
+            --rucc rucc/target/release/rucc --report
+      - name: keep the report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: pipeline-${{ matrix.corpus }}
+          path: results/
+          if-no-files-found: ignore
+
   # A single required check, so branch protection does not have to list every job above. The
-  # differential is deliberately not in this list yet.
+  # differential and the pipeline are deliberately not in this list yet.
   ci:
     name: ci
     if: always()

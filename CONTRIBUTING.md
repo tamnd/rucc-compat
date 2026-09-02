@@ -30,9 +30,28 @@ The fields:
 - `upstream`, `version` and `sha256` for a tarball. The version is in the URL and in the directory name, and it is pinned so that a run today and a run in a year compare the same bytes.
 - `license` is the SPDX identifier. `license-file` is the path inside the tarball to the license text that came with it, and a fetch that unpacks a tree without that file fails, because vendored code with no license in it is not code we can keep. Some projects have no separate license file and put the terms at the top of every source file, and then this points at one of those files.
 - `root` is the directory the tarball unpacks into.
-- One `[[unit]]` block per thing to preprocess, each with a `name` that `--unit` selects and that the case names begin with. `kind = "source"` names files. `kind = "headers"` takes the headers in `files`, or every header under `dir`, and includes each one from a file of its own, which is how a header set is checked for standing up on its own. `skip` drops paths under `dir`, and each one wants a comment next to it saying why. `flags` are passed to both compilers unchanged, and a relative include path in them is resolved against the tree.
+- One `[[unit]]` block per thing to preprocess, each with a `name` that `--unit` selects and that the case names begin with. `kind = "source"` names files in `files`, or takes every `.c` file under `dir`. `kind = "headers"` takes the headers in `files`, or every header under `dir`, and includes each one from a file of its own, which is how a header set is checked for standing up on its own. `skip` drops paths under `dir`, and each one wants a comment next to it saying why. `flags` are passed to both compilers unchanged, and a relative include path in them is resolved against the tree.
+
+A unit that names a `dir` is walked rather than listed, so a suite of two hundred programs is five lines of manifest rather than a list nobody updates when the pin moves. A file the manifest names is called after the tree it is in and a file found by walking is called after the directory the unit already named, so a walked case is `single-exec/00001.c` rather than repeating the directory in every one of two hundred names.
 
 Keep the units small and named for what they are. A unit is the unit of a CI job: the standard headers are worth running on every commit and a sweep over every header the machine has is worth running once a night, and that is only possible if they are not the same unit.
+
+### Excluding a case
+
+An `[[exclude]]` block says that `check` is not expected to get one case through yet.
+
+```toml
+[[exclude]]
+case = "single-exec/00048.c"
+issue = "https://github.com/tamnd/rucc/issues/144"
+why = "a designated initializer out of order is read as one writing over another, E0519"
+```
+
+All three fields are required. `case` is the name the report prints, which is the unit and the file. `issue` is the issue that will take the entry off the list, written out in full the same way the register writes one, because this manifest lives in a different repository from the compiler it is about. `why` is one line, so the list can be read without opening anything.
+
+A missing `issue` fails the load. An exclusion whose case has started passing fails the run, and so does one naming a case the corpus does not have, both only on a run of a whole corpus since a filtered run has no opinion about a case it never reached. Those three rules are the whole design: an exclusion list that only ever grows is a list that hides work instead of tracking it.
+
+Something the reference compiler refuses as well is not an exclusion. It is a `skip` on the unit, with a comment saying so, because there is no rucc bug there for an issue to point at.
 
 ### Recording the hash
 
@@ -69,6 +88,7 @@ An entry is a promise to remove the entry. When the issue closes, the entry goes
 - `fetch.rs` downloads, verifies and unpacks.
 - `lexer.rs` splits an output back into preprocessing tokens.
 - `differ.rs` runs both compilers and compares.
+- `pipeline.rs` takes a corpus through rucc alone: the front end, the lowering, the verifier and the IR round trip.
 - `main.rs` is the command line and nothing else.
 
 Before either compiler runs, `agreement` makes them agree about the things a difference must not come from.

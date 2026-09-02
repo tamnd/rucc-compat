@@ -55,6 +55,21 @@ pub enum UnitKind {
     Headers,
 }
 
+/// One case the pipeline check is not expected to get through yet.
+///
+/// The list is checked in and it is meant to shrink, which is why every entry carries the
+/// issue that will remove it and why an entry that no longer excludes anything is a failure.
+/// Without those two rules an exclusion list becomes the place a regression goes to be quiet.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Exclusion {
+    /// The case name, which is the unit and the file, the same string the report prints.
+    pub case: String,
+    /// The issue that will remove this entry.
+    pub issue: String,
+    /// What goes wrong, in one line, so the list can be read without opening anything.
+    pub why: String,
+}
+
 /// One group of things to preprocess.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Unit {
@@ -94,9 +109,17 @@ pub struct Corpus {
     pub probe: Vec<String>,
     /// What to preprocess.
     pub units: Vec<Unit>,
+    /// The cases the pipeline check is not expected to get through, in file order.
+    pub excluded: Vec<Exclusion>,
 }
 
 impl Corpus {
+    /// The entry that excuses this case, if there is one.
+    #[must_use]
+    pub fn excuse(&self, case: &str) -> Option<&Exclusion> {
+        self.excluded.iter().find(|e| e.case == case)
+    }
+
     /// The directory the code is in, given the repository root.
     ///
     /// An installed corpus has no tree of its own and answers with the root, so that a unit
@@ -189,12 +212,23 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
     if units.is_empty() {
         return Err(Error { message: format!("{whose}: a corpus with no [[unit]] runs nothing") });
     }
+    let mut excluded = Vec::new();
+    for fields in doc.named("exclude") {
+        excluded.push(Exclusion {
+            case: fields.need("case", &whose)?.to_owned(),
+            // Required, and this is the rule that makes the list shrink rather than grow. An
+            // exclusion with nowhere to point at is a decision nobody has to defend.
+            issue: fields.need("issue", &whose)?.to_owned(),
+            why: fields.need("why", &whose)?.to_owned(),
+        });
+    }
     Ok(Corpus {
         name: name.to_owned(),
         summary: root.need("summary", &whose)?.to_owned(),
         source,
         probe: root.list("probe"),
         units,
+        excluded,
     })
 }
 
@@ -409,6 +443,37 @@ mod tests {
         let corpus = load(&fake.root, "sys").unwrap();
         assert_eq!(corpus.probe.len(), 2);
         assert!(corpus.applies());
+    }
+
+    #[test]
+    fn an_exclusion_is_read_and_found_by_the_case_it_names() {
+        let fake = Fake::new("exclude");
+        let text = format!(
+            "{INSTALLED}\n[[exclude]]\ncase = \"standard/stdio.h\"\nissue = \"#142\"\nwhy = \"an initializer that writes over an earlier one\"\n"
+        );
+        fake.corpus("sys", &text);
+        let corpus = load(&fake.root, "sys").unwrap();
+        assert_eq!(corpus.excluded.len(), 1);
+        assert_eq!(corpus.excuse("standard/stdio.h").unwrap().issue, "#142");
+        assert_eq!(corpus.excuse("standard/stdlib.h"), None);
+    }
+
+    #[test]
+    fn an_exclusion_with_no_issue_to_point_at_is_refused() {
+        let fake = Fake::new("exclude-no-issue");
+        let text = format!(
+            "{INSTALLED}\n[[exclude]]\ncase = \"standard/stdio.h\"\nwhy = \"it does not work\"\n"
+        );
+        fake.corpus("sys", &text);
+        let e = load(&fake.root, "sys").unwrap_err();
+        assert!(e.message.contains("issue"), "{}", e.message);
+    }
+
+    #[test]
+    fn a_corpus_with_nothing_excluded_has_an_empty_list_rather_than_no_list() {
+        let fake = Fake::new("exclude-none");
+        fake.corpus("sys", INSTALLED);
+        assert!(load(&fake.root, "sys").unwrap().excluded.is_empty());
     }
 
     #[test]
