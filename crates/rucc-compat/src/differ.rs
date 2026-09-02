@@ -252,7 +252,7 @@ pub fn run(
 /// started from, so `rucc/target/release/rucc` would be looked for in the tree and not found.
 /// A bare name is left as it is, because that is a PATH lookup and the PATH does not care
 /// where we are.
-fn program(path: &Path) -> PathBuf {
+pub(crate) fn program(path: &Path) -> PathBuf {
     if path.is_absolute() || path.components().count() <= 1 {
         return path.to_path_buf();
     }
@@ -615,7 +615,7 @@ pub fn cases(repo: &Path, corpus: &Corpus, scratch: &Path) -> Result<Vec<Case>, 
     let mut cases = Vec::new();
     for unit in &corpus.units {
         match unit.kind {
-            UnitKind::Source => sources(&tree, unit, &mut cases),
+            UnitKind::Source => sources(&tree, unit, &mut cases)?,
             UnitKind::Headers => headers(&tree, unit, scratch, &mut cases)?,
         }
     }
@@ -623,17 +623,36 @@ pub fn cases(repo: &Path, corpus: &Corpus, scratch: &Path) -> Result<Vec<Case>, 
     Ok(cases)
 }
 
-fn sources(tree: &Path, unit: &Unit, cases: &mut Vec<Case>) {
+fn sources(tree: &Path, unit: &Unit, cases: &mut Vec<Case>) -> Result<(), Error> {
     let flags = absolute(&unit.flags, tree);
-    for file in &unit.files {
+    // A file the manifest lists is named from the tree, and a file found by walking is named
+    // from the directory the unit already names, so that a case is called `single-exec/00001.c`
+    // rather than repeating the directory in the name of every one of two hundred cases.
+    let mut found: Vec<(String, PathBuf)> =
+        unit.files.iter().map(|file| (file.clone(), tree.join(file))).collect();
+    // A unit that names a directory is walked for its `.c` files, so that a corpus of a few
+    // hundred test programs is a manifest of five lines rather than a list nobody updates
+    // when the upstream version moves.
+    if let Some(dir) = &unit.dir {
+        let root = resolve(dir, tree);
+        let mut walked = Vec::new();
+        walk(&root, &root, &unit.skip, ".c", &mut walked)?;
+        walked.sort();
+        found.extend(walked.into_iter().map(|name| {
+            let path = root.join(&name);
+            (name, path)
+        }));
+    }
+    for (name, file) in found {
         cases.push(Case {
             unit: unit.name.clone(),
-            name: format!("{}/{file}", unit.name),
-            file: tree.join(file),
+            name: format!("{}/{name}", unit.name),
+            file,
             dir: tree.to_path_buf(),
             flags: flags.clone(),
         });
     }
+    Ok(())
 }
 
 fn headers(tree: &Path, unit: &Unit, scratch: &Path, cases: &mut Vec<Case>) -> Result<(), Error> {
@@ -642,7 +661,7 @@ fn headers(tree: &Path, unit: &Unit, scratch: &Path, cases: &mut Vec<Case>) -> R
     if let Some(dir) = &unit.dir {
         let root = resolve(dir, tree);
         let mut found = Vec::new();
-        walk(&root, &root, &unit.skip, &mut found)?;
+        walk(&root, &root, &unit.skip, ".h", &mut found)?;
         found.sort();
         names.extend(found);
     }
@@ -661,20 +680,29 @@ fn headers(tree: &Path, unit: &Unit, scratch: &Path, cases: &mut Vec<Case>) -> R
     Ok(())
 }
 
-/// Every header under `root`, named the way an `#include` would name it.
-fn walk(root: &Path, dir: &Path, skip: &[String], found: &mut Vec<String>) -> Result<(), Error> {
+/// Every file under `root` whose name ends in `ext`, named relative to `root`.
+fn walk(
+    root: &Path,
+    dir: &Path,
+    skip: &[String],
+    ext: &str,
+    found: &mut Vec<String>,
+) -> Result<(), Error> {
     let listing =
         fs::read_dir(dir).map_err(|e| Error { message: format!("{}: {e}", dir.display()) })?;
     for entry in listing.flatten() {
         let path = entry.path();
         let Ok(relative) = path.strip_prefix(root) else { continue };
-        let name = relative.to_string_lossy().into_owned();
+        // Forward slashes on every platform. This name is what an `#include` says, what a
+        // `skip` in the manifest matches and what an exclusion names, and none of those three
+        // should read differently depending on which machine ran the harness.
+        let name = relative.to_string_lossy().replace('\\', "/");
         if skip.iter().any(|s| name == *s || name.starts_with(&format!("{s}/"))) {
             continue;
         }
         if path.is_dir() {
-            walk(root, &path, skip, found)?;
-        } else if name.ends_with(".h") {
+            walk(root, &path, skip, ext, found)?;
+        } else if name.ends_with(ext) {
             found.push(name);
         }
     }
@@ -938,6 +966,37 @@ mod tests {
             "-DA=1".to_owned(),
         ];
         assert_eq!(absolute(&flags, tree), expected);
+    }
+
+    #[test]
+    fn a_source_unit_that_names_a_directory_is_walked_for_its_c_files() {
+        let root = std::env::temp_dir().join(format!("rucc-compat-walk-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(root.join("tests/deep")).unwrap();
+        fs::write(root.join("tests/b.c"), "").unwrap();
+        fs::write(root.join("tests/a.c"), "").unwrap();
+        fs::write(root.join("tests/a.h"), "").unwrap();
+        fs::write(root.join("tests/skipped.c"), "").unwrap();
+        fs::write(root.join("tests/deep/c.c"), "").unwrap();
+        let unit = Unit {
+            name: "suite".to_owned(),
+            kind: UnitKind::Source,
+            files: Vec::new(),
+            dir: Some("tests".to_owned()),
+            skip: vec!["skipped.c".to_owned()],
+            flags: Vec::new(),
+        };
+        let mut cases = Vec::new();
+        sources(&root, &unit, &mut cases).unwrap();
+        let names: Vec<&str> = cases.iter().map(|c| c.name.as_str()).collect();
+        // The header is not a case, the skip took one out, and a case is named from the
+        // directory the unit already named rather than repeating it.
+        assert_eq!(names, ["suite/a.c", "suite/b.c", "suite/deep/c.c"]);
+        // The compilers still run in the tree, so a relative include in the corpus resolves
+        // the way it would in a real build of it.
+        assert_eq!(cases[0].dir, root);
+        assert_eq!(cases[0].file, root.join("tests/a.c"));
+        let _ = fs::remove_dir_all(&root);
     }
 
     #[test]

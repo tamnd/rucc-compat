@@ -28,6 +28,21 @@ Every difference is a failure unless it is in the register. Nothing is normalize
 
 A case the reference compiler cannot preprocess either is reported as not compared rather than as a pass, which is what most of a header sweep turns out to be: headers that were never meant to be included on their own.
 
+## The pipeline check
+
+`rucc-compat check` asks a different question, one no reference compiler can answer: whether rucc gets a corpus through its own front end, its own lowering and its own verifier, and whether the IR it printed reads back as the IR it printed.
+
+```
+./target/release/rucc-compat check c-testsuite --rucc ../rucc/target/release/rucc
+./target/release/rucc-compat check tcc --unit tests2 --report
+```
+
+Each case is three runs of the compiler. `--emit=tast` is parsing and semantic analysis. `--emit=ir` is lowering, and the verifier runs on the way out of it. Then the IR from the second run goes back in as input, which parses it and verifies it a second time, and the two texts have to be the same byte for byte.
+
+The round trip is the step worth explaining. A printer and a parser that disagree can each look right on its own, and a text that does not survive being read back is not a record of what the compiler decided. Comparing the second print against the first is the cheapest way to find that out and it costs one more run of a compiler that is already fast.
+
+Each manifest carries the cases that do not get through yet, as `[[exclude]]` entries. Every one of them names the issue that will take it off the list, and a manifest with an exclusion that has no issue on it does not load. The list is checked for going stale on every whole run: a case that starts passing while its entry is still there fails the run, and so does an entry naming a case the corpus does not have. That is what stops an exclusion list from becoming the place a regression goes to be quiet.
+
 ## The corpora
 
 Each directory under `corpus/` describes one body of code, in a `corpus.toml` that says where it comes from, what license it carries and what to do with it. There are two kinds and the difference is where the code lives.
@@ -51,6 +66,8 @@ The file is deliberately awkward to add to. A divergence with no reason on it do
 The sqlite corpus passes on macOS. All four cases, the eight megabyte amalgamation included, preprocess the same as Apple's clang, and the only difference left is one the register covers: the availability attribute, which Apple puts on nearly every declaration and which rucc drops because it does not implement it yet.
 
 Getting there took three compiler fixes, all found by running this and none of them guessed: Apple's spelling of the architecture, a signed `wint_t` on Darwin, and `__building_module`. The glibc and musl corpora are the next thing to get green, and they run in CI on every commit.
+
+The pipeline check runs over two corpora. On macOS, c-testsuite is at 208 of 220 and tcc tests2 is at 74 of 87, with twelve and thirteen exclusions covering the rest, and the twenty five of them point at twelve issues between them. On Linux it is sixty cases worse, all of them for the same reason: rucc claims to be GCC 4.2.1 by default, so glibc takes the branch of `bits/floatn-common.h` that typedefs `_Float32` and the rest, which rucc already has as keywords, and every case that includes a system header stops there. That is one issue rather than sixty exclusions, so the CI job is advisory until it is fixed. Three of those issues came out of the round trip and the verifier rather than out of a diagnostic: a stack restore whose saved pointer does not reach it, a flexible array member initializer that makes an image larger than the global it fills, and an identifier that is not ASCII surviving the printer and not the parser. None of the three shows up as an error message, and none of them would have been found by comparing preprocessor output.
 
 Results land in `results/` as markdown, one file per corpus, written by `run --report`. CI keeps its own as an artifact, because a result is about the machine that produced it.
 

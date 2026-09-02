@@ -6,6 +6,7 @@ use std::process::ExitCode;
 
 use rucc_compat::corpus::{self, Corpus, Source};
 use rucc_compat::differ::{self, Settings};
+use rucc_compat::pipeline;
 use rucc_compat::{fetch, repo_root};
 
 const USAGE: &str = "\
@@ -15,22 +16,27 @@ usage:
   rucc-compat list
   rucc-compat fetch [corpus...] [--record]
   rucc-compat run [corpus...] [options]
+  rucc-compat check [corpus...] [options]
 
 commands:
   list             what corpora there are and whether they are ready to run
   fetch            download a vendored corpus, check its hash and unpack it
   run              preprocess with rucc and with cc and report the differences
+  check            take a corpus through rucc alone: tast, ir, and the ir round trip
 
 options:
   --rucc PATH      the compiler under test, or $RUCC, or `rucc`
-  --cc PATH        the reference compiler, or $CC, or `cc`
-  --markers        compare line markers as well as tokens
+  --cc PATH        run only: the reference compiler, or $CC, or `cc`
+  --markers        run only: compare line markers as well as tokens
   --unit NAME      run only the unit of that name
   --limit N        stop after N cases, for a quick look
   --report         write results/<corpus>.md as well as printing the summary
   --record         fetch only: print the sha256 of the download and unpack nothing
 
 Naming no corpus means all of them. The exit status is 1 when anything failed.
+
+`check` fails on an exclusion that no longer excludes anything, so that the list in a
+manifest tracks work rather than hiding it.
 ";
 
 fn main() -> ExitCode {
@@ -62,6 +68,7 @@ fn run() -> Result<ExitCode, String> {
         "list" => list(&repo, &all),
         "fetch" => fetch_them(&repo, &all, rest),
         "run" => run_them(&repo, &all, rest),
+        "check" => check_them(&repo, &all, rest),
         other => Err(format!("`{other}` is not a command, try --help")),
     }
 }
@@ -175,6 +182,67 @@ fn run_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, St
             let path = dir.join(format!("{}.md", corpus.name));
             fs::write(&path, differ::markdown(&done, &settings, &register))
                 .map_err(|e| e.to_string())?;
+            println!("  wrote {}", path.display());
+        }
+        failures += done.failures();
+    }
+    Ok(if failures == 0 { ExitCode::SUCCESS } else { ExitCode::FAILURE })
+}
+
+fn check_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, String> {
+    let mut settings =
+        pipeline::Settings { rucc: from_env("RUCC", "rucc"), limit: None, unit: None };
+    let mut report = false;
+    let mut names = Vec::new();
+    let mut at = 0;
+    while at < args.len() {
+        let arg = args[at].as_str();
+        match arg {
+            "--report" => report = true,
+            "--rucc" => settings.rucc = PathBuf::from(value(args, &mut at, arg)?),
+            "--unit" => settings.unit = Some(value(args, &mut at, arg)?),
+            "--limit" => {
+                let text = value(args, &mut at, arg)?;
+                let limit = text.parse().map_err(|_| format!("`{text}` is not a number"))?;
+                settings.limit = Some(limit);
+            }
+            other if other.starts_with('-') => {
+                return Err(format!("`{other}` is not an option of check"));
+            }
+            other => names.push(other.to_owned()),
+        }
+        at += 1;
+    }
+    let wanted = chosen(all, &names)?;
+    let scratch = repo.join("target").join("pipeline");
+    let mut failures = 0;
+    for corpus in wanted {
+        if !corpus.applies() {
+            println!("{}: not this machine, skipped", corpus.name);
+            continue;
+        }
+        if !corpus.is_fetched(repo) {
+            eprintln!("{}: not fetched, run `rucc-compat fetch {}`", corpus.name, corpus.name);
+            failures += 1;
+            continue;
+        }
+        let scratch = scratch.join(&corpus.name);
+        let done = pipeline::run(repo, corpus, &settings, &scratch).map_err(|e| e.to_string())?;
+        println!("{}", done.summary());
+        for outcome in done.outcomes.iter().filter(|o| o.is_failure()) {
+            println!("  {} {}", outcome.status.word(), outcome.case);
+        }
+        for outcome in done.outcomes.iter().filter(|o| o.is_stale()) {
+            println!("  passes now, take the exclusion out: {}", outcome.case);
+        }
+        for entry in &done.unmatched {
+            println!("  excluded but not a case of this corpus: {}", entry.case);
+        }
+        if report {
+            let dir = repo.join("results");
+            fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+            let path = dir.join(format!("{}-pipeline.md", corpus.name));
+            fs::write(&path, pipeline::markdown(&done, &settings)).map_err(|e| e.to_string())?;
             println!("  wrote {}", path.display());
         }
         failures += done.failures();

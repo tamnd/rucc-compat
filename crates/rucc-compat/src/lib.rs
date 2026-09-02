@@ -10,6 +10,9 @@
 //! - [`corpus`] reads the manifests under `corpus/` and the register in `divergences.toml`.
 //! - [`fetch`] downloads a vendored corpus, checks it against its hash and unpacks it.
 //! - [`differ`] runs both preprocessors and compares the output three ways.
+//! - [`pipeline`] takes the same corpora all the way through rucc on their own, which is the
+//!   question no reference compiler can be asked: whether rucc parses, lowers, verifies and
+//!   round trips its own IR.
 //! - [`lexer`] splits an output back into preprocessing tokens, which is what the first and
 //!   strictest of those three comparisons is over.
 //! - [`sha256`] and [`toml`] are the two small things the above would otherwise depend on.
@@ -20,6 +23,7 @@ pub mod corpus;
 pub mod differ;
 pub mod fetch;
 pub mod lexer;
+pub mod pipeline;
 pub mod sha256;
 pub mod toml;
 
