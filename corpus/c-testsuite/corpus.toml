@@ -50,11 +50,6 @@ issue = "https://github.com/tamnd/rucc/issues/144"
 why = "a designated initializer out of order is read as one writing over another, E0519"
 
 [[exclude]]
-case = "single-exec/00152.c"
-issue = "https://github.com/tamnd/rucc/issues/145"
-why = "a directive whose hash is not the first thing on the line is not recognised, E0338"
-
-[[exclude]]
 case = "single-exec/00162.c"
 issue = "https://github.com/tamnd/rucc/issues/146"
 why = "an unprototyped declaration is not reconciled with the prototype next to it, E0586"
