@@ -812,15 +812,6 @@ why = "the address of a label is refused in a static initializer, E0618"
 
 [[exclude]]
 cases = [
-  "execute/20040811-1.c",
-  "execute/pr43220.c",
-  "execute/vla-dealloc-1.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/148"
-why = "a goto in a function with a variable length array is not lowered, E0519"
-
-[[exclude]]
-cases = [
   "execute/pr53645-2.c",
   "execute/pr53645.c",
 ]
