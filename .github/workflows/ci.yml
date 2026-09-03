@@ -210,9 +210,75 @@ jobs:
           path: results/
           if-no-files-found: ignore
 
+  # The programs built and run, which is the only job here that says anything about the back
+  # half of the compiler. Every job above can be green while the executable prints the wrong
+  # answer, because every job above is a question about compiling.
+  #
+  # Two corpora rather than four. tcc names no oracle, so there is nothing to decide a run by
+  # and `exec` passes it over. gcc-torture names one and has no exclusion list written yet,
+  # which is #30 and is nineteen hundred programs of work to write down.
+  #
+  # x86-64 Linux only, because that is the one target rucc generates code for today. The second
+  # target and the second host are M6, and the matrix here grows when they arrive.
+  exec:
+    name: exec over ${{ matrix.corpus }}
+    needs: quick
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        corpus: [c-testsuite, chibicc]
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: check out the compiler
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: tamnd/rucc
+          path: rucc
+      - uses: Swatinem/rust-cache@v2.9.2
+      - name: build the compiler
+        run: cargo build --release --bin rucc --manifest-path rucc/Cargo.toml
+      - name: build the harness
+        run: cargo build --release
+      # The same reference as the differential, and for the same reason. It is more than the
+      # arbiter here: the assembly and object paths hand their output to it to assemble and
+      # link, so a case cannot run at all without it.
+      - name: the reference compiler
+        run: |
+          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          sudo apt-get install -y gcc-16
+          gcc-16 --version | head -1
+      - name: name the cache after the tarball
+        id: tarball
+        run: |
+          sha=$(sed -n 's/^sha256 = "\(.*\)"$/\1/p' corpus/${{ matrix.corpus }}/corpus.toml)
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+      - name: reuse the download if we have it
+        uses: actions/cache@v6.1.0
+        with:
+          path: vendor/${{ matrix.corpus }}/*.tar.*
+          key: corpus-${{ matrix.corpus }}-${{ steps.tarball.outputs.sha }}
+      - name: fetch the corpus
+        run: ./target/release/rucc-compat fetch ${{ matrix.corpus }}
+      # The machine is named rather than left to the report to work out, because what the report
+      # would otherwise print is the operating system and the architecture and nothing about
+      # which of the two runners this was.
+      - name: build them and run them
+        run: |
+          ./target/release/rucc-compat exec ${{ matrix.corpus }} \
+            --rucc rucc/target/release/rucc --cc gcc-16 \
+            --machine github-ubuntu-24.04 --report
+      - name: keep the report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: exec-${{ matrix.corpus }}
+          path: results/
+          if-no-files-found: ignore
+
   # A single required check, so branch protection does not have to list every job above. The
-  # differential and the pipeline are deliberately not in this list: both build rucc from its
-  # main branch, and a pull request here is about this repository.
+  # differential, the pipeline and the execution are deliberately not in this list: all three
+  # build rucc from its main branch, and a pull request here is about this repository.
   ci:
     name: ci
     if: always()
