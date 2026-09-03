@@ -37,11 +37,6 @@ issue = "https://github.com/tamnd/rucc/issues/147"
 why = "va_arg of a structure or a union is not lowered, E0519"
 
 [[exclude]]
-case = "tests2/78_vla_label.c"
-issue = "https://github.com/tamnd/rucc/issues/148"
-why = "a goto in a function with a variable length array is not lowered, E0519"
-
-[[exclude]]
 case = "tests2/85_asm-outside-function.c"
 issue = "https://github.com/tamnd/rucc/issues/155"
 why = "an asm at file scope is not accepted, E0519"

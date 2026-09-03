@@ -31,8 +31,3 @@ flags = ["-std=gnu17"]
 case = "single-exec/00204.c"
 issue = "https://github.com/tamnd/rucc/issues/147"
 why = "va_arg of a structure or a union is not lowered, E0519"
-
-[[exclude]]
-case = "single-exec/00207.c"
-issue = "https://github.com/tamnd/rucc/issues/148"
-why = "a goto in a function with a variable length array is not lowered, E0519"
