@@ -189,14 +189,15 @@ skip = [
   "pr71494.c",
 ]
 
-# What is left is 142 cases out of 1772, so 1630 of them pass. The one thing that was holding
+# What is left is 124 cases out of 1772, so 1648 of them pass. The one thing that was holding
 # back more files than everything else together is gone: a call to a `__builtin_` this compiler
 # had never heard of used to stop 510 of them, and the library builtins are now declared and the
 # call goes to the library function of the same name, which took 422 files off this list at once.
 # The 88 that were in that block and are still here are in the blocks below, sorted by what each
 # one is actually waiting on now, which is what the old block was hiding. Every entry names the
-# issue that will take it off the list, and the list is meant to shrink. Five have gone since
-# that sorting was done, which is what sorting it was for.
+# issue that will take it off the list, and the list is meant to shrink. Twenty three have gone
+# since that sorting was done, which is what sorting it was for, and one of the nine blocks is
+# gone with them.
 
 [[exclude]]
 cases = [
@@ -224,30 +225,6 @@ cases = [
 ]
 issue = "https://github.com/tamnd/rucc/issues/223"
 why = "__builtin_setjmp and __builtin_longjmp are not declared, E0500"
-
-[[exclude]]
-cases = [
-  "execute/20080502-1.c",
-  "execute/ieee/compare-fp-1.c",
-  "execute/ieee/compare-fp-3.c",
-  "execute/ieee/compare-fp-4.c",
-  "execute/ieee/fp-cmp-4.c",
-  "execute/ieee/fp-cmp-4f.c",
-  "execute/ieee/fp-cmp-4l.c",
-  "execute/ieee/fp-cmp-5.c",
-  "execute/ieee/fp-cmp-8.c",
-  "execute/ieee/fp-cmp-8f.c",
-  "execute/ieee/fp-cmp-8l.c",
-  "execute/ieee/inf-4.c",
-  "execute/ieee/pr108540-1.c",
-  "execute/ieee/pr109386.c",
-  "execute/ieee/pr38016.c",
-  "execute/ieee/pr50310.c",
-  "execute/pr35456.c",
-  "execute/pr39228.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/224"
-why = "a floating point classification builtin is not declared, E0500"
 
 [[exclude]]
 cases = [
