@@ -189,15 +189,15 @@ skip = [
   "pr71494.c",
 ]
 
-# What is left is 122 cases out of 1772, so 1650 of them pass. The one thing that was holding
+# What is left is 117 cases out of 1772, so 1655 of them pass. The one thing that was holding
 # back more files than everything else together is gone: a call to a `__builtin_` this compiler
 # had never heard of used to stop 510 of them, and the library builtins are now declared and the
 # call goes to the library function of the same name, which took 422 files off this list at once.
 # The 88 that were in that block and are still here are in the blocks below, sorted by what each
 # one is actually waiting on now, which is what the old block was hiding. Every entry names the
-# issue that will take it off the list, and the list is meant to shrink. Twenty five have gone
-# since that sorting was done, which is what sorting it was for, and two of the nine blocks are
-# gone with them.
+# issue that will take it off the list, and the list is meant to shrink. Thirty have gone since
+# that sorting was done, which is what sorting it was for, and two of the nine blocks are gone
+# with them.
 
 [[exclude]]
 cases = [
@@ -270,15 +270,14 @@ cases = [
   "execute/ieee/cdivchkd.c",
   "execute/ieee/cdivchkf.c",
   "execute/ieee/cdivchkld.c",
-  "execute/ieee/copysign1.c",
-  "execute/ieee/copysign2.c",
-  "execute/ieee/mzero6.c",
-  "execute/ieee/pr72824-2.c",
-  "execute/ieee/pr72824.c",
-  "execute/pr44683.c",
 ]
 issue = "https://github.com/tamnd/rucc/issues/226"
-why = "a math library builtin is not declared, E0500"
+why = "__builtin_fmax is not declared, E0500"
+
+[[exclude]]
+case = "execute/ieee/pr72824-2.c"
+issue = "https://github.com/tamnd/rucc/issues/200"
+why = "a vector built with the vector_size attribute is a scalar to an initializer, E0635"
 
 [[exclude]]
 cases = [
