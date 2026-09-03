@@ -189,13 +189,14 @@ skip = [
   "pr71494.c",
 ]
 
-# What is left is 147 cases out of 1772, so 1625 of them pass. The one thing that was holding
+# What is left is 142 cases out of 1772, so 1630 of them pass. The one thing that was holding
 # back more files than everything else together is gone: a call to a `__builtin_` this compiler
 # had never heard of used to stop 510 of them, and the library builtins are now declared and the
 # call goes to the library function of the same name, which took 422 files off this list at once.
 # The 88 that were in that block and are still here are in the blocks below, sorted by what each
 # one is actually waiting on now, which is what the old block was hiding. Every entry names the
-# issue that will take it off the list, and the list is meant to shrink.
+# issue that will take it off the list, and the list is meant to shrink. Five have gone since
+# that sorting was done, which is what sorting it was for.
 
 [[exclude]]
 cases = [
@@ -309,23 +310,6 @@ cases = [
 ]
 issue = "https://github.com/tamnd/rucc/issues/228"
 why = "a library builtin that has to be folded rather than called, E0618 and E0652"
-
-[[exclude]]
-cases = [
-  "execute/memchr-1.c",
-  "execute/pr86714.c",
-  "execute/pr87053.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/229"
-why = "a string literal that fills its array exactly, E0519"
-
-[[exclude]]
-cases = [
-  "execute/pr103209.c",
-  "execute/pr70127.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/230"
-why = "a shape the walk to the IR cannot build yet, E0519"
 
 [[exclude]]
 cases = [
