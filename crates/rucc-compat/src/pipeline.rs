@@ -288,7 +288,7 @@ fn emit(rucc: &Path, case: &Case, what: &str, file: &Path) -> Result<String, Str
 /// A diagnostic quotes the path it was given, so an absolute one puts the whole of a vendored
 /// tree in front of every message and the report becomes unreadable. The compiler runs in the
 /// tree already, so the short name resolves to the same file.
-fn named(file: &Path, dir: &Path) -> PathBuf {
+pub(crate) fn named(file: &Path, dir: &Path) -> PathBuf {
     match file.strip_prefix(dir) {
         Ok(relative) => relative.to_path_buf(),
         Err(_) => file.to_path_buf(),
@@ -301,7 +301,7 @@ fn named(file: &Path, dir: &Path) -> PathBuf {
 /// warning for every level of it, and a report that takes the first three lines of that is a
 /// report of where the compiler was rather than of what went wrong. Everything else is kept
 /// after them for the case where the run failed without saying `error` anywhere.
-fn said(stderr: &[u8]) -> String {
+pub(crate) fn said(stderr: &[u8]) -> String {
     let text = String::from_utf8_lossy(stderr);
     let kept = |line: &&str| {
         let line = line.trim();
@@ -339,7 +339,7 @@ fn difference(first: &str, again: &str) -> String {
 }
 
 /// A case name turned into something that can be a file name.
-fn stem(case: &str) -> String {
+pub(crate) fn stem(case: &str) -> String {
     case.replace(['/', '\\', ':'], "_")
 }
 
@@ -448,6 +448,7 @@ mod tests {
             issue: "#142".to_owned(),
             why: "it was renamed upstream".to_owned(),
             when: Vec::new(),
+            outcome: None,
         };
         let report = Report {
             corpus: "c-testsuite".to_owned(),

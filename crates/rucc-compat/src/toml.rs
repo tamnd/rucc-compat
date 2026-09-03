@@ -1,9 +1,9 @@
 //! A reader for the subset of TOML this repository writes.
 //!
 //! Not a TOML implementation. It reads key and value lines, `[table]` headers and
-//! `[[array]]` headers, with strings, lists of strings and booleans as values. That is
-//! everything `corpus.toml` and `divergences.toml` use, and the files it has to read are
-//! files in this repository rather than files a stranger sends us.
+//! `[[array]]` headers, with strings, lists of strings, booleans and whole numbers as values.
+//! That is everything `corpus.toml` and `divergences.toml` use, and the files it has to read
+//! are files in this repository rather than files a stranger sends us.
 //!
 //! The alternative was a dependency, and a harness with a dependency is a harness that stops
 //! building on the day the compiler it tests is the thing that needs looking at.
@@ -19,6 +19,11 @@ pub enum Value {
     List(Vec<String>),
     /// `true` or `false`.
     Bool(bool),
+    /// A whole number, written without quotes around it.
+    ///
+    /// Here because a timeout in seconds is a number, and writing one as a string would make
+    /// every reader of the manifest wonder what else about it is not what it looks like.
+    Int(i64),
 }
 
 /// The keys of one table, in the order they were written.
@@ -67,6 +72,15 @@ impl Fields {
         match self.get(key) {
             Some(Value::Bool(b)) => *b,
             _ => fallback,
+        }
+    }
+
+    /// The value of `key` as a whole number, or `None` when it is not there or is not one.
+    #[must_use]
+    pub fn int(&self, key: &str) -> Option<i64> {
+        match self.get(key) {
+            Some(Value::Int(n)) => Some(*n),
+            _ => None,
         }
     }
 
@@ -279,6 +293,11 @@ fn read_value(text: &str) -> Option<Value> {
         }
         return Some(Value::List(items));
     }
+    // Before the string, because a string is quoted and a number is not, so nothing that reads
+    // as one reads as the other and the order only decides which of the two is tried first.
+    if let Ok(number) = text.parse::<i64>() {
+        return Some(Value::Int(number));
+    }
     Some(Value::Str(read_string(text)?))
 }
 
@@ -336,6 +355,18 @@ mod tests {
         let doc = parse("t.toml", text).unwrap();
         let kinds: Vec<&str> = doc.named("unit").filter_map(|u| u.str("kind")).collect();
         assert_eq!(kinds, ["source", "headers"]);
+    }
+
+    #[test]
+    fn a_number_written_without_quotes_reads_as_a_number() {
+        let doc = parse("t.toml", "timeout = 20\nback = -3\nname = \"20\"\n").unwrap();
+        assert_eq!(doc.root.int("timeout"), Some(20));
+        assert_eq!(doc.root.int("back"), Some(-3));
+        // A quoted one is the string it was written as, so a manifest cannot mean a number and
+        // get a string by accident, or the other way round.
+        assert_eq!(doc.root.int("name"), None);
+        assert_eq!(doc.root.str("name"), Some("20"));
+        assert_eq!(doc.root.int("missing"), None);
     }
 
     #[test]

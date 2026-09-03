@@ -13,6 +13,19 @@ pub const UNRECORDED: &str = "unrecorded";
 /// the three platforms this compiler is built for.
 pub const PLATFORMS: &[&str] = &["linux", "macos", "windows"];
 
+/// The outcomes an execution exclusion is allowed to say it covers.
+///
+/// The four ways a case can fail, and not the four ways it can be left alone. An exclusion for
+/// a case that is skipped or not compared would be excusing something nobody is being blamed
+/// for, and one for a case that passes is the stale entry the whole list exists to catch.
+///
+/// These are the words [`crate::exec::Status::word`] prints, and a test in that module holds
+/// the two lists to each other.
+pub const EXEC_OUTCOMES: &[&str] = &["wrong answer", "crashed", "timed out", "did not build"];
+
+/// How long a case gets to run when its corpus does not say, in seconds.
+pub const TIMEOUT: u64 = 10;
+
 /// Where the code comes from.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Source {
@@ -57,6 +70,44 @@ impl Tarball {
     }
 }
 
+/// Who decides whether a run of a program was right.
+///
+/// A property of the corpus rather than of a case, which `spec/20-execution-testing.md` section
+/// 20.3 settles: a corpus that mixes oracles is a corpus where a passing number cannot be read,
+/// because the reader has no way to tell which cases were held to which standard.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Oracle {
+    /// The program says so itself, through its exit status. A zero is a pass and anything else
+    /// is the program's own check having failed, which is what the torture suite is.
+    SelfCheck,
+    /// The corpus ships what the program should print, in a file beside it, and the run has to
+    /// match that and exit zero. The one oracle that needs neither a self check nor a reference.
+    Recorded,
+    /// The program is built twice, by rucc and by the reference, and both are run. A pass is the
+    /// same exit status and the same standard output.
+    Differential,
+}
+
+impl Oracle {
+    /// The word the manifest writes, which is also the word the report prints.
+    #[must_use]
+    pub fn word(self) -> &'static str {
+        match self {
+            Oracle::SelfCheck => "self-check",
+            Oracle::Recorded => "recorded",
+            Oracle::Differential => "differential",
+        }
+    }
+
+    /// The oracle of that name.
+    #[must_use]
+    pub fn named(word: &str) -> Option<Oracle> {
+        [Oracle::SelfCheck, Oracle::Recorded, Oracle::Differential]
+            .into_iter()
+            .find(|o| o.word() == word)
+    }
+}
+
 /// What one unit of the corpus is.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UnitKind {
@@ -87,6 +138,13 @@ pub struct Exclusion {
     /// An entry with no `when` would then be stale wherever it passes, and the run would be red
     /// on one platform whichever way it was written.
     pub when: Vec<String>,
+    /// Which of [`EXEC_OUTCOMES`] this entry admits to, for an execution exclusion.
+    ///
+    /// `None` for the exclusions the pipeline check reads, where there is one way to fail and
+    /// naming it would say nothing. An execution exclusion has four, and the difference between
+    /// them is the difference between a compiler that is incomplete and one that is wrong, so an
+    /// entry that did not name one would be hiding the worse of the two behind the better.
+    pub outcome: Option<String>,
 }
 
 impl Exclusion {
@@ -113,6 +171,14 @@ pub struct Unit {
     pub skip: Vec<String>,
     /// Flags passed to both compilers unchanged.
     pub flags: Vec<String>,
+    /// Files compiled and linked alongside every case of this unit, relative to the tree.
+    ///
+    /// A suite whose programs call a helper that lives in a file of its own cannot be built one
+    /// file at a time, and chibicc's is exactly that: every one of its tests calls an `assert`
+    /// that is defined in `test/common`. The helper goes through the compiler under test with
+    /// the case rather than being built once by the reference, because a helper built by the
+    /// reference would hide every bug in the code that calls across a translation unit.
+    pub link: Vec<String>,
 }
 
 /// One body of code and what to do with it.
@@ -138,6 +204,25 @@ pub struct Corpus {
     pub units: Vec<Unit>,
     /// The cases the pipeline check is not expected to get through, in file order.
     pub excluded: Vec<Exclusion>,
+    /// Who decides whether a run of one of these programs was right.
+    ///
+    /// `None` means nobody can, and `exec` leaves the corpus alone rather than guessing. A
+    /// header set is the case for that: there is no program in it to run, and a corpus of real
+    /// projects arrives here with no oracle until somebody has said what a right answer is.
+    pub oracle: Option<Oracle>,
+    /// How long one of these programs gets to run, in seconds.
+    ///
+    /// Per corpus because ten seconds is generous for a test program and not enough for a real
+    /// project's own suite, and a timeout that has to be right for both is a timeout that is
+    /// wrong for one of them.
+    pub timeout: u64,
+    /// The cases `exec` is not expected to get right yet, in file order.
+    ///
+    /// A separate list from [`Corpus::excluded`], because getting a program through the front
+    /// end and getting the right answer out of the program are different claims and a case can
+    /// easily do the first and not the second. One list would make an entry ambiguous about
+    /// which of the two it was excusing.
+    pub exec_excluded: Vec<Exclusion>,
 }
 
 impl Corpus {
@@ -145,6 +230,12 @@ impl Corpus {
     #[must_use]
     pub fn excuse(&self, case: &str) -> Option<&Exclusion> {
         self.excluded.iter().find(|e| e.case == case && e.here())
+    }
+
+    /// The entry that excuses this case from running correctly on this machine, if there is one.
+    #[must_use]
+    pub fn exec_excuse(&self, case: &str) -> Option<&Exclusion> {
+        self.exec_excluded.iter().find(|e| e.case == case && e.here())
     }
 
     /// The directory the code is in, given the repository root.
@@ -240,8 +331,57 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
     if units.is_empty() {
         return Err(Error { message: format!("{whose}: a corpus with no [[unit]] runs nothing") });
     }
+    let oracle = match root.str("oracle") {
+        None => None,
+        Some(word) => Some(Oracle::named(word).ok_or_else(|| Error {
+            message: format!(
+                "{whose}: `oracle` is `{word}`, which is not `self-check`, `recorded` or `differential`"
+            ),
+        })?),
+    };
+    let timeout = match root.int("timeout") {
+        None => TIMEOUT,
+        Some(seconds) if seconds > 0 => u64::try_from(seconds).expect("a positive number"),
+        Some(seconds) => {
+            return Err(Error {
+                message: format!("{whose}: `timeout` is {seconds}, which is not a length of time"),
+            });
+        }
+    };
+    let excluded = exclusions(&doc, "exclude", &whose, false)?;
+    let exec_excluded = exclusions(&doc, "exec-exclude", &whose, true)?;
+    if oracle.is_none() && !exec_excluded.is_empty() {
+        return Err(Error {
+            message: format!(
+                "{whose}: there are [[exec-exclude]] entries and no `oracle`, so `exec` never reaches them"
+            ),
+        });
+    }
+    Ok(Corpus {
+        name: name.to_owned(),
+        summary: root.need("summary", &whose)?.to_owned(),
+        source,
+        probe: root.list("probe"),
+        units,
+        excluded,
+        oracle,
+        timeout,
+        exec_excluded,
+    })
+}
+
+/// Every `[[header]]` block of the manifest, as one exclusion per case named.
+///
+/// `outcome` says whether the entries have to name which of [`EXEC_OUTCOMES`] they cover, which
+/// the execution list requires and the pipeline list has no use for.
+fn exclusions(
+    doc: &toml::Doc,
+    header: &str,
+    whose: &str,
+    outcome: bool,
+) -> Result<Vec<Exclusion>, Error> {
     let mut excluded = Vec::new();
-    for fields in doc.named("exclude") {
+    for fields in doc.named(header) {
         let when = fields.list("when");
         // Checked here rather than left to match nothing, because an entry naming an operating
         // system that does not exist excuses a case on no machine at all and reads as though it
@@ -273,25 +413,34 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
         }
         // Required, and this is the rule that makes the list shrink rather than grow. An
         // exclusion with nowhere to point at is a decision nobody has to defend.
-        let issue = fields.need("issue", &whose)?.to_owned();
-        let why = fields.need("why", &whose)?.to_owned();
+        let issue = fields.need("issue", whose)?.to_owned();
+        let why = fields.need("why", whose)?.to_owned();
+        let covers = match outcome {
+            false => None,
+            true => {
+                let word = fields.need("outcome", whose)?.to_owned();
+                if !EXEC_OUTCOMES.contains(&word.as_str()) {
+                    return Err(Error {
+                        message: format!(
+                            "{whose}: `outcome` is `{word}`, which is not one of {}",
+                            EXEC_OUTCOMES.join(", ")
+                        ),
+                    });
+                }
+                Some(word)
+            }
+        };
         for case in named {
             excluded.push(Exclusion {
                 case,
                 issue: issue.clone(),
                 why: why.clone(),
                 when: when.clone(),
+                outcome: covers.clone(),
             });
         }
     }
-    Ok(Corpus {
-        name: name.to_owned(),
-        summary: root.need("summary", &whose)?.to_owned(),
-        source,
-        probe: root.list("probe"),
-        units,
-        excluded,
-    })
+    Ok(excluded)
 }
 
 fn unit(fields: &Fields, whose: &str) -> Result<Unit, Error> {
@@ -312,7 +461,15 @@ fn unit(fields: &Fields, whose: &str) -> Result<Unit, Error> {
     if files.is_empty() && dir.is_none() {
         return Err(Error { message: format!("{whose}: a unit needs `files` or `dir`") });
     }
-    Ok(Unit { name, kind, files, dir, skip: fields.list("skip"), flags: fields.list("flags") })
+    Ok(Unit {
+        name,
+        kind,
+        files,
+        dir,
+        skip: fields.list("skip"),
+        flags: fields.list("flags"),
+        link: fields.list("link"),
+    })
 }
 
 /// One difference we have decided to live with.

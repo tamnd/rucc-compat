@@ -27,6 +27,12 @@ extract = [
 # reduced and kept, and forty years of them is a map of where compilers go wrong that nobody
 # could write from first principles.
 
+# Each of these computes something, compares it against what it should be, and calls `abort` when
+# the two disagree, so an exit status of zero is a pass and there is nothing else to consult.
+# This is the best of the three oracles: no reference compiler, no recorded output, and the check
+# was written by the person who found the bug the program is about.
+oracle = "self-check"
+
 [[unit]]
 name = "execute"
 kind = "source"

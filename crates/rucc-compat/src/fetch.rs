@@ -162,8 +162,12 @@ mod tests {
                 dir: None,
                 skip: Vec::new(),
                 flags: Vec::new(),
+                link: Vec::new(),
             }],
             excluded: Vec::new(),
+            oracle: None,
+            timeout: crate::corpus::TIMEOUT,
+            exec_excluded: Vec::new(),
         }
     }
 

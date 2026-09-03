@@ -11,6 +11,17 @@ license-file = "c-testsuite-5c7275656d751de0e68b2d340a95b5681858ed07/LICENSE"
 # A commit rather than a release, because the suite has never cut one. The hash is over the
 # tarball GitHub builds from that commit, which is reproducible as long as the commit is.
 
+# Every program here ships a file beside it holding what it is supposed to print, so the answer
+# to whether a run was right needs neither a reference compiler nor anything the program says
+# about itself. That makes this the corpus `exec` can measure when everything else is broken,
+# which is why it is the one the per commit gate runs.
+oracle = "recorded"
+
+# These are two hundred small programs and none of them does any work worth speaking of. Ten
+# seconds is what a program gets when the manifest says nothing, and it is already three orders
+# of magnitude more than any of these needs, so a case that reaches it is looping.
+timeout = 10
+
 # Every program in the suite, walked rather than listed, so that moving the pin forward does
 # not mean editing two hundred lines by hand.
 [[unit]]
