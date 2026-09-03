@@ -188,7 +188,7 @@ skip = [
   "pr71494.c",
 ]
 
-# What is left is 646 cases, and 508 of them are one thing: a call to a `__builtin_` this
+# What is left is 570 cases, and 510 of them are one thing: a call to a `__builtin_` this
 # compiler does not declare. `__builtin_abort` alone is 349 of them, because it is how a test in
 # this suite says a wrong answer. Every entry below names the issue that will take it off the
 # list, and the list is meant to shrink.
@@ -760,26 +760,6 @@ cases = [
 ]
 issue = "https://github.com/tamnd/rucc/issues/200"
 why = "a vector built with the vector_size attribute cannot be subscripted, E0504"
-
-[[exclude]]
-cases = [
-  "execute/920625-1.c",
-  "execute/920908-1.c",
-  "execute/931004-10.c",
-  "execute/931004-12.c",
-  "execute/931004-14.c",
-  "execute/931004-2.c",
-  "execute/931004-4.c",
-  "execute/931004-6.c",
-  "execute/931004-8.c",
-  "execute/pr44575.c",
-  "execute/stdarg-3.c",
-  "execute/strct-stdarg-1.c",
-  "execute/strct-varg-1.c",
-  "execute/va-arg-22.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/147"
-why = "va_arg of a structure or a union is not lowered, E0519"
 
 [[exclude]]
 cases = [

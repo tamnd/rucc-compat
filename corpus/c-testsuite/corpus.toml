@@ -23,11 +23,7 @@ dir = "tests/single-exec"
 # dialect to whatever each compiler defaults to measures the year rather than the compiler.
 flags = ["-std=gnu17"]
 
-# Two cases rucc does not get through yet, each one naming the issue that will take it off this
-# list. An entry whose case has started passing fails the run, so the list shrinks as the work
-# lands rather than sitting here.
-
-[[exclude]]
-case = "single-exec/00204.c"
-issue = "https://github.com/tamnd/rucc/issues/147"
-why = "va_arg of a structure or a union is not lowered, E0519"
+# No exclusions. Every program in the suite passes, which is the first corpus here to reach that
+# and is the rung of the target ladder M3 asks for. An entry added later names the issue that
+# will take it off again, and an entry whose case has started passing fails the run, so the list
+# shrinks as the work lands rather than sitting here.
