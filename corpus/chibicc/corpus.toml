@@ -86,3 +86,31 @@ skip = [
   # with an acceptance test of its own instead.
   "pragma-once.c",
 ]
+
+# Every file here calls `assert`, and `assert` prints a string literal when it fails, so
+# `test/common` needs the address of something at file scope before any of the eighteen cases
+# can be linked at all. That makes the whole corpus one entry rather than eighteen: nothing here
+# is blocked on anything specific to itself, and the first of these to run will be all of them.
+[[exec-exclude]]
+issue = "tamnd/rucc#281"
+why = "`test/common` needs `global_addr` for the string literals `assert` prints"
+outcome = "did not build"
+cases = [
+  "test/alignof.c",
+  "test/arith.c",
+  "test/attribute.c",
+  "test/builtin.c",
+  "test/cast.c",
+  "test/complit.c",
+  "test/decl.c",
+  "test/enum.c",
+  "test/extern.c",
+  "test/float.c",
+  "test/line.c",
+  "test/offsetof.c",
+  "test/stdhdr.c",
+  "test/string.c",
+  "test/typeof.c",
+  "test/union.c",
+  "test/usualconv.c",
+]
