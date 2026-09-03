@@ -23,16 +23,9 @@ dir = "tests/single-exec"
 # dialect to whatever each compiler defaults to measures the year rather than the compiler.
 flags = ["-std=gnu17"]
 
-# Three cases rucc does not get through yet, each one naming the issue that will take it off
-# this list. An entry whose case has started passing fails the run, so the list shrinks as the
-# work lands rather than sitting here. One of them carries a `when`, because the gap it names is
-# one platform's ABI and the case passes on the other.
-
-[[exclude]]
-case = "single-exec/00140.c"
-issue = "https://github.com/tamnd/rucc/issues/159"
-why = "a structure passed in memory to a variadic function is refused, E0519"
-when = ["linux"]
+# Two cases rucc does not get through yet, each one naming the issue that will take it off this
+# list. An entry whose case has started passing fails the run, so the list shrinks as the work
+# lands rather than sitting here.
 
 [[exclude]]
 case = "single-exec/00204.c"
