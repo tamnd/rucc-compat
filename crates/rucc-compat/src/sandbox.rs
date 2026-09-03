@@ -272,6 +272,9 @@ pub fn memory_limit(kib: u64) -> Option<u64> {
 #[cfg(test)]
 mod tests {
     use std::env;
+    // Only the tests that write a file into the run's directory need this, and all of those are
+    // the unix ones, because the shell they run is `/bin/sh`.
+    #[cfg(unix)]
     use std::fs;
 
     use super::*;
