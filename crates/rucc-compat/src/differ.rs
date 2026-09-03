@@ -985,6 +985,7 @@ mod tests {
             dir: Some("tests".to_owned()),
             skip: vec!["skipped.c".to_owned()],
             flags: Vec::new(),
+            link: Vec::new(),
         };
         let mut cases = Vec::new();
         sources(&root, &unit, &mut cases).unwrap();

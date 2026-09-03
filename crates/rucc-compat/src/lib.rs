@@ -13,17 +13,23 @@
 //! - [`pipeline`] takes the same corpora all the way through rucc on their own, which is the
 //!   question no reference compiler can be asked: whether rucc parses, lowers, verifies and
 //!   round trips its own IR.
+//! - [`exec`] builds the programs and runs them, which is the only question that covers the
+//!   back half of the compiler, since everything above it is a question about compiling and all
+//!   of them can be green while the executable prints the wrong answer.
 //! - [`lexer`] splits an output back into preprocessing tokens, which is what the first and
 //!   strictest of those three comparisons is over.
+//! - [`sandbox`] runs a program under a timeout and a memory limit and says how it ended.
 //! - [`sha256`] and [`toml`] are the two small things the above would otherwise depend on.
 
 use std::path::{Path, PathBuf};
 
 pub mod corpus;
 pub mod differ;
+pub mod exec;
 pub mod fetch;
 pub mod lexer;
 pub mod pipeline;
+pub mod sandbox;
 pub mod sha256;
 pub mod toml;
 

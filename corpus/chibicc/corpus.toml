@@ -11,6 +11,10 @@ license-file = "chibicc-90d1f7f199cc55b13c7fdb5839d1409806633fdb/LICENSE"
 # A commit rather than a release, because chibicc has never cut one. The hash is over the
 # tarball GitHub builds from that commit, which is reproducible as long as the commit is.
 
+# Every file here is a list of assertions and an exit status that says whether they all held, so
+# the program decides for itself and nothing outside it has to know what the right answer was.
+oracle = "self-check"
+
 # What makes this suite worth the time is who wrote it and why. Every file is one person's
 # answer to the question of what a C compiler has to get right about one feature, written while
 # building the compiler rather than afterwards, so the cases sit exactly on the parts that are
@@ -30,6 +34,11 @@ dir = "test"
 # the machine's, and comparing a compiler against a corpus is more use when the corpus reads
 # the headers the compiler will meet in real work.
 flags = ["-std=gnu17", "-I", "."]
+# The `assert` every one of these files calls is defined in `test/common`, along with the
+# objects and functions the cases that reach across a translation unit reach for. It goes
+# through the compiler under test with the case rather than being built once by the reference,
+# because a helper built by the reference would hide every bug in the code that calls it.
+link = ["test/common"]
 skip = [
   # A pointer given a value whose target type is something else. GCC 14 turned this from a
   # warning into an error and chibicc was written in 2020, so more than half of the suite is
@@ -76,4 +85,32 @@ skip = [
   # ran rather than anything about the compiler under test. rucc follows GCC and covers it
   # with an acceptance test of its own instead.
   "pragma-once.c",
+]
+
+# Every file here calls `assert`, and `assert` prints a string literal when it fails, so
+# `test/common` needs the address of something at file scope before any of the eighteen cases
+# can be linked at all. That makes the whole corpus one entry rather than eighteen: nothing here
+# is blocked on anything specific to itself, and the first of these to run will be all of them.
+[[exec-exclude]]
+issue = "tamnd/rucc#281"
+why = "`test/common` needs `global_addr` for the string literals `assert` prints"
+outcome = "did not build"
+cases = [
+  "test/alignof.c",
+  "test/arith.c",
+  "test/attribute.c",
+  "test/builtin.c",
+  "test/cast.c",
+  "test/complit.c",
+  "test/decl.c",
+  "test/enum.c",
+  "test/extern.c",
+  "test/float.c",
+  "test/line.c",
+  "test/offsetof.c",
+  "test/stdhdr.c",
+  "test/string.c",
+  "test/typeof.c",
+  "test/union.c",
+  "test/usualconv.c",
 ]

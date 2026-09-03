@@ -11,6 +11,17 @@ license-file = "c-testsuite-5c7275656d751de0e68b2d340a95b5681858ed07/LICENSE"
 # A commit rather than a release, because the suite has never cut one. The hash is over the
 # tarball GitHub builds from that commit, which is reproducible as long as the commit is.
 
+# Every program here ships a file beside it holding what it is supposed to print, so the answer
+# to whether a run was right needs neither a reference compiler nor anything the program says
+# about itself. That makes this the corpus `exec` can measure when everything else is broken,
+# which is why it is the one the per commit gate runs.
+oracle = "recorded"
+
+# These are two hundred small programs and none of them does any work worth speaking of. Ten
+# seconds is what a program gets when the manifest says nothing, and it is already three orders
+# of magnitude more than any of these needs, so a case that reaches it is looping.
+timeout = 10
+
 # Every program in the suite, walked rather than listed, so that moving the pin forward does
 # not mean editing two hundred lines by hand.
 [[unit]]
@@ -23,7 +34,215 @@ dir = "tests/single-exec"
 # dialect to whatever each compiler defaults to measures the year rather than the compiler.
 flags = ["-std=gnu17"]
 
-# No exclusions. Every program in the suite passes, which is the first corpus here to reach that
-# and is the rung of the target ladder M3 asks for. An entry added later names the issue that
-# will take it off again, and an entry whose case has started passing fails the run, so the list
-# shrinks as the work lands rather than sitting here.
+# No exclusions for `check`. Every program in the suite gets through the front end, the lowering
+# to IR and the round trip, which is the first corpus here to reach that and is the rung of the
+# target ladder M3 asks for. An entry added later names the issue that will take it off again,
+# and an entry whose case has started passing fails the run, so the list shrinks as the work
+# lands rather than sitting here.
+#
+# `exec` is the other half of that and is where the list below comes from. Getting a program
+# through the front end and getting the right answer out of the program are different claims,
+# which is why the two lists are separate and why this one is long while the one above is empty.
+
+# The lowering rule set is where this corpus stops. Everything below builds and runs on the two
+# hundred and twenty programs here, and the ninety five that pass are the ones whose whole body
+# is integer arithmetic in registers. The rest reach an IR opcode no rule names, which is a
+# `did not build` rather than a wrong answer, and each block below is one gap and the issue that
+# closes it. As a rule lands its block goes stale in one piece and comes out in one commit.
+
+# The address of anything at file scope, which is a string literal in most of these and a
+# variable at file scope in the rest. Ninety six of the hundred and twenty five, so this one
+# block is what the number here mostly measures.
+[[exec-exclude]]
+issue = "tamnd/rucc#281"
+why = "`global_addr`, `inttoptr` and `ptrtoint` have no name in the rule set"
+outcome = "did not build"
+cases = [
+  "single-exec/00023.c",
+  "single-exec/00024.c",
+  "single-exec/00025.c",
+  "single-exec/00026.c",
+  "single-exec/00033.c",
+  "single-exec/00037.c",
+  "single-exec/00040.c",
+  "single-exec/00045.c",
+  "single-exec/00047.c",
+  "single-exec/00048.c",
+  "single-exec/00049.c",
+  "single-exec/00050.c",
+  "single-exec/00051.c",
+  "single-exec/00056.c",
+  "single-exec/00058.c",
+  "single-exec/00062.c",
+  "single-exec/00067.c",
+  "single-exec/00068.c",
+  "single-exec/00069.c",
+  "single-exec/00070.c",
+  "single-exec/00088.c",
+  "single-exec/00090.c",
+  "single-exec/00091.c",
+  "single-exec/00092.c",
+  "single-exec/00095.c",
+  "single-exec/00096.c",
+  "single-exec/00107.c",
+  "single-exec/00110.c",
+  "single-exec/00112.c",
+  "single-exec/00115.c",
+  "single-exec/00125.c",
+  "single-exec/00127.c",
+  "single-exec/00128.c",
+  "single-exec/00131.c",
+  "single-exec/00132.c",
+  "single-exec/00137.c",
+  "single-exec/00138.c",
+  "single-exec/00142.c",
+  "single-exec/00144.c",
+  "single-exec/00146.c",
+  "single-exec/00147.c",
+  "single-exec/00148.c",
+  "single-exec/00149.c",
+  "single-exec/00150.c",
+  "single-exec/00151.c",
+  "single-exec/00154.c",
+  "single-exec/00156.c",
+  "single-exec/00157.c",
+  "single-exec/00158.c",
+  "single-exec/00160.c",
+  "single-exec/00161.c",
+  "single-exec/00163.c",
+  "single-exec/00164.c",
+  "single-exec/00165.c",
+  "single-exec/00166.c",
+  "single-exec/00167.c",
+  "single-exec/00168.c",
+  "single-exec/00169.c",
+  "single-exec/00170.c",
+  "single-exec/00171.c",
+  "single-exec/00172.c",
+  "single-exec/00173.c",
+  "single-exec/00176.c",
+  "single-exec/00177.c",
+  "single-exec/00178.c",
+  "single-exec/00179.c",
+  "single-exec/00180.c",
+  "single-exec/00181.c",
+  "single-exec/00182.c",
+  "single-exec/00183.c",
+  "single-exec/00184.c",
+  "single-exec/00185.c",
+  "single-exec/00186.c",
+  "single-exec/00187.c",
+  "single-exec/00188.c",
+  "single-exec/00190.c",
+  "single-exec/00191.c",
+  "single-exec/00192.c",
+  "single-exec/00193.c",
+  "single-exec/00194.c",
+  "single-exec/00196.c",
+  "single-exec/00197.c",
+  "single-exec/00198.c",
+  "single-exec/00199.c",
+  "single-exec/00200.c",
+  "single-exec/00201.c",
+  "single-exec/00202.c",
+  "single-exec/00203.c",
+  "single-exec/00205.c",
+  "single-exec/00206.c",
+  "single-exec/00211.c",
+  "single-exec/00212.c",
+  "single-exec/00213.c",
+  "single-exec/00215.c",
+  "single-exec/00217.c",
+  "single-exec/00219.c",
+]
+
+# A comparison used as a value, which is an `i1` widened to an `int`. These eight have no global
+# and no call in them at all, so this is the only thing between them and running.
+[[exec-exclude]]
+issue = "tamnd/rucc#285"
+why = "`zext` from `i1` has no name in the rule set"
+outcome = "did not build"
+cases = [
+  "single-exec/00035.c",
+  "single-exec/00042.c",
+  "single-exec/00046.c",
+  "single-exec/00105.c",
+  "single-exec/00126.c",
+  "single-exec/00133.c",
+  "single-exec/00134.c",
+  "single-exec/00135.c",
+]
+
+# Floating point, none of which is lowered, and which waits on the allocator having a second
+# register class before any of it can be written.
+[[exec-exclude]]
+issue = "tamnd/rucc#286"
+why = "no floating point opcode has a name in the rule set"
+outcome = "did not build"
+cases = [
+  "single-exec/00113.c",
+  "single-exec/00119.c",
+  "single-exec/00123.c",
+  "single-exec/00174.c",
+  "single-exec/00175.c",
+  "single-exec/00195.c",
+]
+
+# A structure assigned, passed or returned by value, and an initialiser that leaves part of an
+# object to be zeroed.
+[[exec-exclude]]
+issue = "tamnd/rucc#287"
+why = "`memcpy` and `memset` have no name in the rule set"
+outcome = "did not build"
+cases = [
+  "single-exec/00140.c",
+  "single-exec/00208.c",
+  "single-exec/00216.c",
+  "single-exec/00220.c",
+]
+
+# A call through a function pointer, which is the one failure in the run whose message says what
+# it is rather than saying that something has no name.
+[[exec-exclude]]
+issue = "tamnd/rucc#288"
+why = "no rule calls through an address"
+outcome = "did not build"
+cases = [
+  "single-exec/00087.c",
+  "single-exec/00089.c",
+  "single-exec/00124.c",
+  "single-exec/00159.c",
+  "single-exec/00189.c",
+  "single-exec/00209.c",
+  "single-exec/00210.c",
+]
+
+# A variadic function reading its own arguments, which needs the register save area the x86-64
+# convention puts in the prologue.
+[[exec-exclude]]
+issue = "tamnd/rucc#289"
+why = "`va_start` and the object behind it have no name in the rule set"
+outcome = "did not build"
+cases = [
+  "single-exec/00204.c",
+]
+
+# A block control cannot arrive at, which is the smallest of these gaps.
+[[exec-exclude]]
+issue = "tamnd/rucc#290"
+why = "`unreachable` has no name in the rule set"
+outcome = "did not build"
+cases = [
+  "single-exec/00214.c",
+  "single-exec/00218.c",
+]
+
+# A variable length array, which is a frame that grows during the body rather than a missing
+# rule, and is the only one of these blocks whose work is not in the rule set.
+[[exec-exclude]]
+issue = "tamnd/rucc#291"
+why = "nothing here grows the stack for a variable length array"
+outcome = "did not build"
+cases = [
+  "single-exec/00207.c",
+]

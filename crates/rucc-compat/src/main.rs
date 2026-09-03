@@ -1,4 +1,4 @@
-//! The command line: list the corpora, fetch one, run the differential.
+//! The command line: list the corpora, fetch one, run the differential, run the programs.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -6,6 +6,7 @@ use std::process::ExitCode;
 
 use rucc_compat::corpus::{self, Corpus, Source};
 use rucc_compat::differ::{self, Settings};
+use rucc_compat::exec::{self, Route};
 use rucc_compat::pipeline;
 use rucc_compat::{fetch, repo_root};
 
@@ -17,17 +18,23 @@ usage:
   rucc-compat fetch [corpus...] [--record]
   rucc-compat run [corpus...] [options]
   rucc-compat check [corpus...] [options]
+  rucc-compat exec [corpus...] [options]
 
 commands:
   list             what corpora there are and whether they are ready to run
   fetch            download a vendored corpus, check its hash and unpack it
   run              preprocess with rucc and with cc and report the differences
   check            take a corpus through rucc alone: tast, ir, and the ir round trip
+  exec             build the programs, run them, and say whether they were right
 
 options:
   --rucc PATH      the compiler under test, or $RUCC, or `rucc`
-  --cc PATH        run only: the reference compiler, or $CC, or `cc`
+  --cc PATH        run and exec: the reference compiler, or $CC, or `cc`
   --markers        run only: compare line markers as well as tokens
+  --path NAME      exec only: build this way, one of assembly, object, driver, repeatable
+  --opt LEVEL      exec only: the level to pass both compilers after -O
+  --machine NAME   exec only: what to call this machine in the report
+  --timeout N      exec only: seconds per run, over what the manifest asks for
   --unit NAME      run only the unit of that name
   --limit N        stop after N cases, for a quick look
   --report         write results/<corpus>.md as well as printing the summary
@@ -35,8 +42,11 @@ options:
 
 Naming no corpus means all of them. The exit status is 1 when anything failed.
 
-`check` fails on an exclusion that no longer excludes anything, so that the list in a
-manifest tracks work rather than hiding it.
+`check` and `exec` fail on an exclusion that no longer excludes anything, so that the list in
+a manifest tracks work rather than hiding it.
+
+`exec` runs a corpus only when its manifest names an oracle, since without one there is
+nothing to decide a run by. A corpus with no oracle is reported as such and passed over.
 ";
 
 fn main() -> ExitCode {
@@ -69,6 +79,7 @@ fn run() -> Result<ExitCode, String> {
         "fetch" => fetch_them(&repo, &all, rest),
         "run" => run_them(&repo, &all, rest),
         "check" => check_them(&repo, &all, rest),
+        "exec" => exec_them(&repo, &all, rest),
         other => Err(format!("`{other}` is not a command, try --help")),
     }
 }
@@ -243,6 +254,95 @@ fn check_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, 
             fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
             let path = dir.join(format!("{}-pipeline.md", corpus.name));
             fs::write(&path, pipeline::markdown(&done, &settings)).map_err(|e| e.to_string())?;
+            println!("  wrote {}", path.display());
+        }
+        failures += done.failures();
+    }
+    Ok(if failures == 0 { ExitCode::SUCCESS } else { ExitCode::FAILURE })
+}
+
+fn exec_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, String> {
+    let mut settings = exec::Settings {
+        rucc: from_env("RUCC", "rucc"),
+        cc: from_env("CC", "cc"),
+        ..exec::Settings::default()
+    };
+    let mut routes = Vec::new();
+    let mut report = false;
+    let mut names = Vec::new();
+    let mut at = 0;
+    while at < args.len() {
+        let arg = args[at].as_str();
+        match arg {
+            "--report" => report = true,
+            "--rucc" => settings.rucc = PathBuf::from(value(args, &mut at, arg)?),
+            "--cc" => settings.cc = PathBuf::from(value(args, &mut at, arg)?),
+            "--unit" => settings.unit = Some(value(args, &mut at, arg)?),
+            "--opt" => settings.opt = Some(value(args, &mut at, arg)?),
+            "--machine" => settings.machine = Some(value(args, &mut at, arg)?),
+            "--path" => {
+                let word = value(args, &mut at, arg)?;
+                let route = Route::named(&word).ok_or_else(|| {
+                    format!("`{word}` is not a build path, try assembly, object or driver")
+                })?;
+                routes.push(route);
+            }
+            "--timeout" => {
+                let text = value(args, &mut at, arg)?;
+                let seconds = text.parse().map_err(|_| format!("`{text}` is not a number"))?;
+                settings.timeout = Some(seconds);
+            }
+            "--limit" => {
+                let text = value(args, &mut at, arg)?;
+                let limit = text.parse().map_err(|_| format!("`{text}` is not a number"))?;
+                settings.limit = Some(limit);
+            }
+            other if other.starts_with('-') => {
+                return Err(format!("`{other}` is not an option of exec"));
+            }
+            other => names.push(other.to_owned()),
+        }
+        at += 1;
+    }
+    if !routes.is_empty() {
+        settings.routes = routes;
+    }
+    let wanted = chosen(all, &names)?;
+    let scratch = repo.join("target").join("exec");
+    let mut failures = 0;
+    for corpus in wanted {
+        if corpus.oracle.is_none() {
+            // Not a failure. A header set has no program in it to run, and a corpus of real
+            // projects has none until somebody has written down what a right answer is.
+            println!("{}: no oracle, nothing to run", corpus.name);
+            continue;
+        }
+        if !corpus.applies() {
+            println!("{}: not this machine, skipped", corpus.name);
+            continue;
+        }
+        if !corpus.is_fetched(repo) {
+            eprintln!("{}: not fetched, run `rucc-compat fetch {}`", corpus.name, corpus.name);
+            failures += 1;
+            continue;
+        }
+        let scratch = scratch.join(&corpus.name);
+        let done = exec::run(repo, corpus, &settings, &scratch).map_err(|e| e.to_string())?;
+        println!("{}", done.summary());
+        for outcome in done.outcomes.iter().filter(|o| o.is_failure()) {
+            println!("  {} on {}: {}", outcome.status.word(), outcome.route.word(), outcome.case);
+        }
+        for outcome in done.outcomes.iter().filter(|o| o.is_stale()) {
+            println!("  passes now, take the exclusion out: {}", outcome.case);
+        }
+        for entry in &done.unmatched {
+            println!("  excluded but not a case of this corpus: {}", entry.case);
+        }
+        if report {
+            let dir = repo.join("results");
+            fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+            let path = dir.join(exec::result_file(&corpus.name, settings.opt.as_deref()));
+            fs::write(&path, exec::markdown(&done, &settings)).map_err(|e| e.to_string())?;
             println!("  wrote {}", path.display());
         }
         failures += done.failures();
