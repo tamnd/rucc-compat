@@ -27,14 +27,8 @@ skip = [
   "34_array_assignment.c",
 ]
 
-# Five cases rucc does not get through yet, each one naming the issue that will take it off
-# this list. Three of the five are one gap, which is an `asm` at file scope, and the other two
-# are one each.
-
-[[exclude]]
-case = "tests2/73_arm64.c"
-issue = "https://github.com/tamnd/rucc/issues/147"
-why = "va_arg of a structure or a union is not lowered, E0519"
+# Three cases rucc does not get through yet, each one naming the issue that will take it off
+# this list. All three are one gap, which is an `asm` at file scope.
 
 [[exclude]]
 case = "tests2/85_asm-outside-function.c"
