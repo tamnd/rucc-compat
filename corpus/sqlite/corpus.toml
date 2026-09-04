@@ -38,6 +38,22 @@ skip = [
   "sqlite3rc.h",
 ]
 
-# One case rucc does not get through yet, naming the issue that will take it off this list. An
-# entry whose case has started passing fails the run, so the list shrinks as the work lands
-# rather than sitting here.
+# Two cases rucc does not get through yet, each naming the issue that will take it off this
+# list. An entry whose case has started passing fails the run, so the list shrinks as the work
+# lands rather than sitting here.
+#
+# Both reach three byte swap builtins first, through a glibc header that defines static inline
+# functions over them which neither file calls and which this compiler emits anyway, which is
+# tamnd/rucc#308. Neither entry names that issue, because closing it is not enough for either
+# file: the amalgamation writes its own atomics and the shell writes its own `ceil` and `floor`,
+# and those are what each one is really waiting on.
+
+[[exclude]]
+case = "amalgamation/sqlite3.c"
+issue = "https://github.com/tamnd/rucc/issues/311"
+why = "an atomic builtin has no lowering, E0686"
+
+[[exclude]]
+case = "shell/shell.c"
+issue = "https://github.com/tamnd/rucc/issues/226"
+why = "__builtin_ceil and __builtin_floor have no lowering, E0686"

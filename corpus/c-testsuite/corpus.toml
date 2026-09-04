@@ -34,15 +34,32 @@ dir = "tests/single-exec"
 # dialect to whatever each compiler defaults to measures the year rather than the compiler.
 flags = ["-std=gnu17"]
 
-# No exclusions for `check`. Every program in the suite gets through the front end, the lowering
-# to IR and the round trip, which is the first corpus here to reach that and is the rung of the
-# target ladder M3 asks for. An entry added later names the issue that will take it off again,
-# and an entry whose case has started passing fails the run, so the list shrinks as the work
-# lands rather than sitting here.
+# One exclusion for `check`, which is three programs that ask for no builtin at all. Everything
+# else in the suite gets through the front end, the lowering to IR and the round trip, which is
+# the first corpus here to reach that and is the rung of the target ladder M3 asks for. An entry
+# whose case has started passing fails the run, so the list shrinks as the work lands rather
+# than sitting here.
 #
+# What the three have in common is a glibc header that defines three static inline functions
+# over the byte swap builtins. None of the programs calls one, and this compiler emits a static
+# function nothing refers to, so all three carry calls to builtins nothing lowers. They used to
+# get through this and stop at the linker, which is why they are in the execution list below as
+# well and were only there, and the compiler refuses a call to a builtin nothing lowers now, so
+# the failure arrives here instead. Both lists come out when the unreferenced functions stop
+# being emitted, which is what the issue names, and lowering the byte swaps would close them
+# too.
+[[exclude]]
+issue = "tamnd/rucc#308"
+why = "a static function nothing refers to is emitted, and a glibc header defines three over the byte swap builtins"
+cases = [
+  "single-exec/00040.c",
+  "single-exec/00181.c",
+  "single-exec/00182.c",
+]
+
 # `exec` is the other half of that and is where the list below comes from. Getting a program
 # through the front end and getting the right answer out of the program are different claims,
-# which is why the two lists are separate and why this one is long while the one above is empty.
+# which is why the two lists are separate and why this one is long while the one above is short.
 
 # The lowering rule set is where this corpus stops. Everything below builds and runs on the two
 # hundred and twenty programs here, and the two hundred and seven that pass are the ones the rule
@@ -106,16 +123,16 @@ cases = [
   "single-exec/00174.c",
 ]
 
-# The three cases here that are not the rule set. They compile, and the object holds calls to
-# `__builtin_bswap16`, `__builtin_bswap32` and `__builtin_bswap64` that no library defines,
-# which is what a builtin nothing expands looks like by the time it reaches a linker. None of
-# these programs asks for a byte swap: all three include a glibc header that defines `htons` and
-# its family in terms of the builtins, so this is what reaching for the machine's own headers
-# costs. Two of them were in the one bit block until that width was written, which is what a
-# case blocked on two gaps looks like from here.
+# The three cases here that are not the rule set, and the same three as the list at the top. None
+# of these programs asks for a byte swap: all three include a glibc header that defines `htons`
+# and its family as static inline functions over `__builtin_bswap16`, `__builtin_bswap32` and
+# `__builtin_bswap64`, none of which any of them calls, and this compiler emits a static function
+# nothing refers to. So this is what reaching for the machine's own headers costs twice over. Two
+# of them were in the one bit block until that width was written, which is what a case blocked on
+# two gaps looks like from here.
 [[exec-exclude]]
-issue = "tamnd/rucc#277"
-why = "the byte swap builtins are calls to names nothing defines"
+issue = "tamnd/rucc#308"
+why = "a static function nothing refers to is emitted, and a glibc header defines three over the byte swap builtins"
 outcome = "did not build"
 cases = [
   "single-exec/00040.c",

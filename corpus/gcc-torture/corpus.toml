@@ -195,7 +195,7 @@ skip = [
   "pr71494.c",
 ]
 
-# What is left is 117 cases out of 1772, so 1655 of them pass. The one thing that was holding
+# What is left is 207 cases out of 1772, so 1565 of them pass. The one thing that was holding
 # back more files than everything else together is gone: a call to a `__builtin_` this compiler
 # had never heard of used to stop 510 of them, and the library builtins are now declared and the
 # call goes to the library function of the same name, which took 422 files off this list at once.
@@ -204,6 +204,18 @@ skip = [
 # issue that will take it off the list, and the list is meant to shrink. Thirty have gone since
 # that sorting was done, which is what sorting it was for, and two of the nine blocks are gone
 # with them.
+#
+# Ninety came back at once, which is the last eight blocks. None of them is a new gap: each was a
+# call this compiler wrote down to a builtin nothing lowers, which the linker was left to ask
+# about, and rucc now refuses the call where it is written instead. So these ninety used to reach
+# the end of `check` and stop later, and they stop here now, which is the same missing feature
+# read off an earlier step. They are sorted by which builtin each one reaches first.
+#
+# Forty one of the ninety ask for no builtin at all. They include a glibc header, which defines
+# three static inline functions over the byte swap builtins, and this compiler emits a static
+# function nothing refers to, so a program that never mentions a byte swap ends up carrying three
+# calls to one. Those name the issue about emitting them rather than the issue about lowering
+# them, because that is what will take them off.
 
 [[exclude]]
 cases = [
@@ -390,3 +402,140 @@ case = "execute/pr80692.c"
 issue = "https://github.com/tamnd/rucc/issues/207"
 why = "decimal floating constants are not supported"
 
+[[exclude]]
+cases = [
+  "execute/20000910-1.c",
+  "execute/20000910-2.c",
+  "execute/20021010-2.c",
+  "execute/20040823-1.c",
+  "execute/20050125-1.c",
+  "execute/20050131-1.c",
+  "execute/20050203-1.c",
+  "execute/20120111-1.c",
+  "execute/20221006-1.c",
+  "execute/920810-1.c",
+  "execute/941014-2.c",
+  "execute/960521-1.c",
+  "execute/980707-1.c",
+  "execute/990628-1.c",
+  "execute/const-addr-expr-1.c",
+  "execute/fprintf-1.c",
+  "execute/fprintf-2.c",
+  "execute/fprintf-chk-1.c",
+  "execute/ieee/copysign1.c",
+  "execute/ieee/copysign2.c",
+  "execute/loop-2f.c",
+  "execute/loop-2g.c",
+  "execute/mode-dependent-address.c",
+  "execute/p18298.c",
+  "execute/pr111613.c",
+  "execute/pr34456.c",
+  "execute/pr41463.c",
+  "execute/pr69320-1.c",
+  "execute/pr69320-2.c",
+  "execute/pr69320-3.c",
+  "execute/pr69320-4.c",
+  "execute/printf-1.c",
+  "execute/printf-2.c",
+  "execute/printf-chk-1.c",
+  "execute/user-printf.c",
+  "execute/va-arg-21.c",
+  "execute/va-arg-24.c",
+  "execute/vfprintf-1.c",
+  "execute/vfprintf-chk-1.c",
+  "execute/vprintf-1.c",
+  "execute/vprintf-chk-1.c",
+]
+issue = "https://github.com/tamnd/rucc/issues/308"
+why = "a static function nothing refers to is emitted, so a glibc header reaches __builtin_bswap16, E0686"
+
+[[exclude]]
+cases = [
+  "execute/pr108789.c",
+  "execute/pr64006.c",
+  "execute/pr68381.c",
+  "execute/pr71554.c",
+  "execute/pr84169.c",
+  "execute/pr85095.c",
+  "execute/pr89434.c",
+  "execute/pr90311.c",
+  "execute/pr91450-1.c",
+  "execute/pr91450-2.c",
+  "execute/pr91635.c",
+  "execute/pr93213.c",
+  "execute/pr93494.c",
+]
+issue = "https://github.com/tamnd/rucc/issues/309"
+why = "an overflow checked arithmetic builtin has no lowering, E0686"
+
+[[exclude]]
+cases = [
+  "execute/20020418-1.c",
+  "execute/20040709-1.c",
+  "execute/20040709-2.c",
+  "execute/20040709-3.c",
+  "execute/builtin-prefetch-1.c",
+  "execute/builtin-prefetch-2.c",
+  "execute/builtin-prefetch-3.c",
+  "execute/builtin-prefetch-4.c",
+  "execute/builtin-prefetch-5.c",
+  "execute/builtin-prefetch-6.c",
+  "execute/pr115033.c",
+  "execute/pr125291.c",
+]
+issue = "https://github.com/tamnd/rucc/issues/313"
+why = "a builtin that is one instruction or none has no lowering, E0686"
+
+[[exclude]]
+cases = [
+  "execute/20010122-1.c",
+  "execute/20021113-1.c",
+  "execute/20030323-1.c",
+  "execute/20030811-1.c",
+  "execute/20070824-1.c",
+  "execute/alloca-1.c",
+  "execute/frame-address.c",
+  "execute/pr17377.c",
+  "execute/pr36321.c",
+  "execute/pr86528.c",
+]
+issue = "https://github.com/tamnd/rucc/issues/312"
+why = "a builtin that asks about the frame has no lowering, E0686"
+
+[[exclude]]
+cases = [
+  "execute/ffs-1.c",
+  "execute/ffs-2.c",
+  "execute/pr37780.c",
+  "execute/pr61725.c",
+  "execute/pr97325.c",
+]
+issue = "https://github.com/tamnd/rucc/issues/310"
+why = "a bit counting builtin has no lowering, E0686"
+
+[[exclude]]
+cases = [
+  "execute/20230509-1.c",
+  "execute/20241029-1.c",
+  "execute/pr81281.c",
+  "execute/pr97888-1.c",
+]
+issue = "https://github.com/tamnd/rucc/issues/290"
+why = "__builtin_unreachable has no lowering, E0686"
+
+[[exclude]]
+cases = [
+  "execute/bswap-1.c",
+  "execute/bswap-3.c",
+  "execute/pr90025.c",
+  "execute/pr97386-1.c",
+]
+issue = "https://github.com/tamnd/rucc/issues/307"
+why = "a byte swap builtin has no lowering, E0686"
+
+[[exclude]]
+cases = [
+  "execute/pr122000.c",
+]
+issue = "https://github.com/tamnd/rucc/issues/311"
+why = "an atomic builtin has no lowering, E0686"
