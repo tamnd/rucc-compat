@@ -43,6 +43,23 @@ The round trip is the step worth explaining. A printer and a parser that disagre
 
 Each manifest carries the cases that do not get through yet, as `[[exclude]]` entries. Every one of them names the issue that will take it off the list, and a manifest with an exclusion that has no issue on it does not load. The list is checked for going stale on every whole run: a case that starts passing while its entry is still there fails the run, and so does an entry naming a case the corpus does not have. That is what stops an exclusion list from becoming the place a regression goes to be quiet. An entry can carry a `when` naming the operating systems it applies to, for the gaps that are one platform's ABI rather than the compiler's everywhere.
 
+## The execution check
+
+`rucc-compat exec` is the one that runs the program. Everything above it is a claim about compiling, and a compiler that gets a file through the front end, the lowering and the verifier has still not been asked the only question a user has, which is whether the executable does what the C said.
+
+```
+./target/release/rucc-compat exec c-testsuite --rucc ../rucc/target/release/rucc
+./target/release/rucc-compat exec chibicc --report
+```
+
+Every case is built three ways, because the three depend on different amounts of the compiler. `-S` and then the system assembler and linker needs no encoder, no object writer and no relocations, and what it produces in the middle is text somebody can read. `-c` and then the system linker is the encoder and the relocations and nothing else. The driver on its own is the whole of it, including finding a linker. A case that passes one way and fails another is reported as exactly that, which is what checks the encoder against the assembly printer without anybody writing a byte level differential: the two come out of one instruction description, so a disagreement between them is a disagreement inside that description and it turns up as a wrong answer rather than as a diff nobody reads.
+
+How a run is judged is the corpus's business and is one of three. A self checking program says so in its exit status. A recorded corpus ships the output each program is supposed to print. Anything else is compared against what the same program built by the reference compiler does, which is the oracle that needs no corpus support at all.
+
+The outcomes are reported separately rather than as a pass rate, because a compiler that is wrong and a compiler that is unfinished are not the same news and a summary that adds them together hides the one that matters. A case that does not build, one that builds and gives the wrong answer, one that dies on a signal and one that runs out of time are four different lines. Each case gets a fresh working directory, a timeout and a memory limit, and a program killed by a signal is reported as a signal rather than as whatever exit status a shell would have turned it into.
+
+The exclusions work the way the pipeline check's do, in a separate `[[exec-exclude]]` list, and carry one thing more: the outcome they cover. An entry that says a case does not build and a case that now builds and prints the wrong answer are not the same entry, so the run fails rather than counting it as covered.
+
 ## The corpora
 
 Each directory under `corpus/` describes one body of code, in a `corpus.toml` that says where it comes from, what license it carries and what to do with it. There are two kinds and the difference is where the code lives.
@@ -74,6 +91,8 @@ The chibicc corpus is a different shape from the collections. It is forty one pr
 The gcc.c-torture execution suite is the largest of them and the newest here. It is 1907 programs written over forty years, every one of them a bug report that was once a wrong answer from a released compiler, reduced and kept. `spec/14-target-ladder.md` section 14.1 names it as part of rung 0 of the compiler's target ladder, and the exit criterion there is every one of these programs that does not need an extension nobody has written yet, with the list of the rest checked in and shrinking. This manifest is that list. One hundred and thirty four files are skipped rather than excluded: one hundred and eleven because gcc 16 refuses them itself, mostly on the three permissive rules gcc 14 promoted to errors, and twenty three because they are GNU's nested functions, which this compiler has decided it will not have. The six hundred and twenty three exclusions point at twelve issues, and five hundred and eight of them are one thing, a call to a `__builtin_` the compiler has never heard of.
 
 The tarball this comes in is the whole of GCC, a hundred and seven megabytes, and the tests are eight. The `extract` field in a manifest is what keeps the other ninety nine off every machine that runs the harness.
+
+The execution check is younger and its number is the one that moves. c-testsuite is at 177 of 220 on a linux x86-64 host, over all three build paths, measured against gcc 16.2.0. It was at 95 a week ago and the whole of the difference is one gap in the back end: the address of a name at file scope, which is where every string literal and every use of a global variable starts, and the definitions those names refer to. Ninety six cases were waiting on the first half and eighty two of them run now. What is left is forty three cases and nine issues, and the largest block is twenty cases blocked on a one bit value, which is what a comparison produces and what the rule set has no width for. The chibicc suite is at none of its eighteen for a reason worth writing down: every case there is built with one helper file, that file has a variadic function in it, and nothing lowers `va_start`, so one gap holds the whole corpus and the first case to run will be all of them.
 
 Results land in `results/` as markdown, one file per corpus, written by `run --report`. CI keeps its own as an artifact, because a result is about the machine that produced it.
 

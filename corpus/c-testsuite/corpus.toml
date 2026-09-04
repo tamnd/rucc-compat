@@ -45,132 +45,40 @@ flags = ["-std=gnu17"]
 # which is why the two lists are separate and why this one is long while the one above is empty.
 
 # The lowering rule set is where this corpus stops. Everything below builds and runs on the two
-# hundred and twenty programs here, and the ninety five that pass are the ones whose whole body
-# is integer arithmetic in registers. The rest reach an IR opcode no rule names, which is a
-# `did not build` rather than a wrong answer, and each block below is one gap and the issue that
-# closes it. As a rule lands its block goes stale in one piece and comes out in one commit.
+# hundred and twenty programs here, and the hundred and seventy seven that pass are the ones the
+# rule set reaches all the way through. The rest mostly reach an IR opcode no rule names, which
+# is a `did not build` rather than a wrong answer, and each block below is one gap and the issue
+# that closes it. As a rule lands its block goes stale in one piece and comes out in one commit.
 
-# The address of anything at file scope, which is a string literal in most of these and a
-# variable at file scope in the rest. Ninety six of the hundred and twenty five, so this one
-# block is what the number here mostly measures.
-[[exec-exclude]]
-issue = "tamnd/rucc#281"
-why = "`global_addr`, `inttoptr` and `ptrtoint` have no name in the rule set"
-outcome = "did not build"
-cases = [
-  "single-exec/00023.c",
-  "single-exec/00024.c",
-  "single-exec/00025.c",
-  "single-exec/00026.c",
-  "single-exec/00033.c",
-  "single-exec/00037.c",
-  "single-exec/00040.c",
-  "single-exec/00045.c",
-  "single-exec/00047.c",
-  "single-exec/00048.c",
-  "single-exec/00049.c",
-  "single-exec/00050.c",
-  "single-exec/00051.c",
-  "single-exec/00056.c",
-  "single-exec/00058.c",
-  "single-exec/00062.c",
-  "single-exec/00067.c",
-  "single-exec/00068.c",
-  "single-exec/00069.c",
-  "single-exec/00070.c",
-  "single-exec/00088.c",
-  "single-exec/00090.c",
-  "single-exec/00091.c",
-  "single-exec/00092.c",
-  "single-exec/00095.c",
-  "single-exec/00096.c",
-  "single-exec/00107.c",
-  "single-exec/00110.c",
-  "single-exec/00112.c",
-  "single-exec/00115.c",
-  "single-exec/00125.c",
-  "single-exec/00127.c",
-  "single-exec/00128.c",
-  "single-exec/00131.c",
-  "single-exec/00132.c",
-  "single-exec/00137.c",
-  "single-exec/00138.c",
-  "single-exec/00142.c",
-  "single-exec/00144.c",
-  "single-exec/00146.c",
-  "single-exec/00147.c",
-  "single-exec/00148.c",
-  "single-exec/00149.c",
-  "single-exec/00150.c",
-  "single-exec/00151.c",
-  "single-exec/00154.c",
-  "single-exec/00156.c",
-  "single-exec/00157.c",
-  "single-exec/00158.c",
-  "single-exec/00160.c",
-  "single-exec/00161.c",
-  "single-exec/00163.c",
-  "single-exec/00164.c",
-  "single-exec/00165.c",
-  "single-exec/00166.c",
-  "single-exec/00167.c",
-  "single-exec/00168.c",
-  "single-exec/00169.c",
-  "single-exec/00170.c",
-  "single-exec/00171.c",
-  "single-exec/00172.c",
-  "single-exec/00173.c",
-  "single-exec/00176.c",
-  "single-exec/00177.c",
-  "single-exec/00178.c",
-  "single-exec/00179.c",
-  "single-exec/00180.c",
-  "single-exec/00181.c",
-  "single-exec/00182.c",
-  "single-exec/00183.c",
-  "single-exec/00184.c",
-  "single-exec/00185.c",
-  "single-exec/00186.c",
-  "single-exec/00187.c",
-  "single-exec/00188.c",
-  "single-exec/00190.c",
-  "single-exec/00191.c",
-  "single-exec/00192.c",
-  "single-exec/00193.c",
-  "single-exec/00194.c",
-  "single-exec/00196.c",
-  "single-exec/00197.c",
-  "single-exec/00198.c",
-  "single-exec/00199.c",
-  "single-exec/00200.c",
-  "single-exec/00201.c",
-  "single-exec/00202.c",
-  "single-exec/00203.c",
-  "single-exec/00205.c",
-  "single-exec/00206.c",
-  "single-exec/00211.c",
-  "single-exec/00212.c",
-  "single-exec/00213.c",
-  "single-exec/00215.c",
-  "single-exec/00217.c",
-  "single-exec/00219.c",
-]
-
-# A comparison used as a value, which is an `i1` widened to an `int`. These eight have no global
-# and no call in them at all, so this is the only thing between them and running.
+# A one bit value, which is what a comparison produces and what the rule set has no width for.
+# The largest block here now that the address of a name is lowered, and it is one gap seen three
+# ways: the widening a comparison used as a value goes through, a constant `0` or `1` written at
+# that width, and the `^` a `!=` between two of them becomes.
 [[exec-exclude]]
 issue = "tamnd/rucc#285"
-why = "`zext` from `i1` has no name in the rule set"
+why = "`i1` is not a width the rule set is written at"
 outcome = "did not build"
 cases = [
+  "single-exec/00033.c",
   "single-exec/00035.c",
+  "single-exec/00040.c",
   "single-exec/00042.c",
   "single-exec/00046.c",
+  "single-exec/00050.c",
   "single-exec/00105.c",
+  "single-exec/00112.c",
   "single-exec/00126.c",
   "single-exec/00133.c",
   "single-exec/00134.c",
   "single-exec/00135.c",
+  "single-exec/00151.c",
+  "single-exec/00164.c",
+  "single-exec/00172.c",
+  "single-exec/00179.c",
+  "single-exec/00181.c",
+  "single-exec/00196.c",
+  "single-exec/00200.c",
+  "single-exec/00212.c",
 ]
 
 # Floating point, none of which is lowered, and which waits on the allocator having a second
@@ -245,4 +153,25 @@ why = "nothing here grows the stack for a variable length array"
 outcome = "did not build"
 cases = [
   "single-exec/00207.c",
+]
+
+# A call with more than six integer arguments, where the seventh goes on the stack. Where a call
+# puts one is the convention rather than a rule, so this is not a missing name either.
+[[exec-exclude]]
+issue = "tamnd/rucc#257"
+why = "nothing passes an argument on the stack"
+outcome = "did not build"
+cases = [
+  "single-exec/00170.c",
+]
+
+# The one case here that is not the rule set. It compiles, and the object holds calls to
+# `__builtin_bswap16`, `__builtin_bswap32` and `__builtin_bswap64` that no library defines,
+# which is what a builtin nothing expands looks like by the time it reaches a linker.
+[[exec-exclude]]
+issue = "tamnd/rucc#277"
+why = "the byte swap builtins are calls to names nothing defines"
+outcome = "did not build"
+cases = [
+  "single-exec/00182.c",
 ]
