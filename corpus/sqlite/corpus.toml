@@ -42,11 +42,11 @@ skip = [
 # list. An entry whose case has started passing fails the run, so the list shrinks as the work
 # lands rather than sitting here.
 #
-# Both reach three byte swap builtins first, through a glibc header that defines static inline
-# functions over them which neither file calls and which this compiler emits anyway, which is
-# tamnd/rucc#308. Neither entry names that issue, because closing it is not enough for either
-# file: the amalgamation writes its own atomics and the shell writes its own `ceil` and `floor`,
-# and those are what each one is really waiting on.
+# Both used to reach three byte swap builtins first, through a glibc header that defines static
+# inline functions over them which neither file calls and which this compiler emitted anyway.
+# That was tamnd/rucc#308 and closing it was never going to be enough for either file, which is
+# why neither entry named it: the amalgamation writes its own atomics and the shell writes its
+# own `ceil` and `floor`, and those are what each one is really waiting on.
 
 [[exclude]]
 case = "amalgamation/sqlite3.c"
