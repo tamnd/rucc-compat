@@ -45,41 +45,10 @@ flags = ["-std=gnu17"]
 # which is why the two lists are separate and why this one is long while the one above is empty.
 
 # The lowering rule set is where this corpus stops. Everything below builds and runs on the two
-# hundred and twenty programs here, and the hundred and seventy seven that pass are the ones the
+# hundred and twenty programs here, and the hundred and ninety five that pass are the ones the
 # rule set reaches all the way through. The rest mostly reach an IR opcode no rule names, which
 # is a `did not build` rather than a wrong answer, and each block below is one gap and the issue
 # that closes it. As a rule lands its block goes stale in one piece and comes out in one commit.
-
-# A one bit value, which is what a comparison produces and what the rule set has no width for.
-# The largest block here now that the address of a name is lowered, and it is one gap seen three
-# ways: the widening a comparison used as a value goes through, a constant `0` or `1` written at
-# that width, and the `^` a `!=` between two of them becomes.
-[[exec-exclude]]
-issue = "tamnd/rucc#285"
-why = "`i1` is not a width the rule set is written at"
-outcome = "did not build"
-cases = [
-  "single-exec/00033.c",
-  "single-exec/00035.c",
-  "single-exec/00040.c",
-  "single-exec/00042.c",
-  "single-exec/00046.c",
-  "single-exec/00050.c",
-  "single-exec/00105.c",
-  "single-exec/00112.c",
-  "single-exec/00126.c",
-  "single-exec/00133.c",
-  "single-exec/00134.c",
-  "single-exec/00135.c",
-  "single-exec/00151.c",
-  "single-exec/00164.c",
-  "single-exec/00172.c",
-  "single-exec/00179.c",
-  "single-exec/00181.c",
-  "single-exec/00196.c",
-  "single-exec/00200.c",
-  "single-exec/00212.c",
-]
 
 # Floating point, none of which is lowered, and which waits on the allocator having a second
 # register class before any of it can be written.
@@ -165,13 +134,19 @@ cases = [
   "single-exec/00170.c",
 ]
 
-# The one case here that is not the rule set. It compiles, and the object holds calls to
+# The three cases here that are not the rule set. They compile, and the object holds calls to
 # `__builtin_bswap16`, `__builtin_bswap32` and `__builtin_bswap64` that no library defines,
-# which is what a builtin nothing expands looks like by the time it reaches a linker.
+# which is what a builtin nothing expands looks like by the time it reaches a linker. None of
+# these programs asks for a byte swap: all three include a glibc header that defines `htons` and
+# its family in terms of the builtins, so this is what reaching for the machine's own headers
+# costs. Two of them were in the one bit block until that width was written, which is what a
+# case blocked on two gaps looks like from here.
 [[exec-exclude]]
 issue = "tamnd/rucc#277"
 why = "the byte swap builtins are calls to names nothing defines"
 outcome = "did not build"
 cases = [
+  "single-exec/00040.c",
+  "single-exec/00181.c",
   "single-exec/00182.c",
 ]
