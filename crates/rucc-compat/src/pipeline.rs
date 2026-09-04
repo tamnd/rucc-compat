@@ -487,6 +487,7 @@ mod tests {
             why: "it was renamed upstream".to_owned(),
             when: Vec::new(),
             outcome: None,
+            opt: Vec::new(),
         };
         let report = Report {
             corpus: "c-testsuite".to_owned(),

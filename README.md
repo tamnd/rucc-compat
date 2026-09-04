@@ -58,7 +58,9 @@ How a run is judged is the corpus's business and is one of three. A self checkin
 
 The outcomes are reported separately rather than as a pass rate, because a compiler that is wrong and a compiler that is unfinished are not the same news and a summary that adds them together hides the one that matters. A case that does not build, one that builds and gives the wrong answer, one that dies on a signal and one that runs out of time are four different lines. Each case gets a fresh working directory, a timeout and a memory limit, and a program killed by a signal is reported as a signal rather than as whatever exit status a shell would have turned it into.
 
-The exclusions work the way the pipeline check's do, in a separate `[[exec-exclude]]` list, and carry one thing more: the outcome they cover. An entry that says a case does not build and a case that now builds and prints the wrong answer are not the same entry, so the run fails rather than counting it as covered.
+The exclusions work the way the pipeline check's do, in a separate `[[exec-exclude]]` list, and carry two things more. The first is the outcome they cover: an entry that says a case does not build and a case that now builds and prints the wrong answer are not the same entry, so the run fails rather than counting it as covered. The second is an optional `opt`, naming the optimization levels the entry speaks at, for the gaps that are one level's rather than every level's.
+
+Every level is run, and not as a setting on one answer. `-O0` and `-O2` run different passes over different code, and the headers change underneath them as well, since glibc defines a family of functions inline behind `__OPTIMIZE__` being set and `__OPTIMIZE_SIZE__` not being set. A sweep at one level says nothing about the other five.
 
 ## How long a sweep takes
 

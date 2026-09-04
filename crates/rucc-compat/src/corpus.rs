@@ -23,6 +23,12 @@ pub const PLATFORMS: &[&str] = &["linux", "macos", "windows"];
 /// the two lists to each other.
 pub const EXEC_OUTCOMES: &[&str] = &["wrong answer", "crashed", "timed out", "did not build"];
 
+/// What an execution exclusion's `opt` is allowed to name, which is the levels both compilers
+/// have, written the way they are written after `-O`.
+///
+/// `-O4` and up are `-O3` to both of them and naming one would say the same thing twice.
+pub const LEVELS: &[&str] = &["0", "1", "2", "3", "s", "z"];
+
 /// How long a case gets to run when its corpus does not say, in seconds.
 pub const TIMEOUT: u64 = 10;
 
@@ -145,6 +151,14 @@ pub struct Exclusion {
     /// them is the difference between a compiler that is incomplete and one that is wrong, so an
     /// entry that did not name one would be hiding the worse of the two behind the better.
     pub outcome: Option<String>,
+    /// The optimization levels this excuses the case at, empty meaning every one of them.
+    ///
+    /// Some gaps are one level's, and not always the levels anybody would guess. glibc's
+    /// `wchar.h` defines a family of functions inline behind `__OPTIMIZE__ && !__OPTIMIZE_SIZE__`,
+    /// so a program that includes it reaches code at `-O1` through `-O3` that is not there at
+    /// `-O0`, `-Os` or `-Oz`. An entry with no `opt` would then be stale at half the levels and
+    /// the sweep would be red at half of them whichever way it was written.
+    pub opt: Vec<String>,
 }
 
 impl Exclusion {
@@ -152,6 +166,15 @@ impl Exclusion {
     #[must_use]
     pub fn here(&self) -> bool {
         self.when.is_empty() || self.when.iter().any(|os| os == env::consts::OS)
+    }
+
+    /// Whether this entry says anything at the level the run is being made at.
+    ///
+    /// A run at no level at all is each compiler's own default, which is a level this cannot
+    /// name, so an entry that names any level says nothing about it.
+    #[must_use]
+    pub fn at(&self, opt: Option<&str>) -> bool {
+        self.opt.is_empty() || opt.is_some_and(|level| self.opt.iter().any(|o| o == level))
     }
 }
 
@@ -232,10 +255,11 @@ impl Corpus {
         self.excluded.iter().find(|e| e.case == case && e.here())
     }
 
-    /// The entry that excuses this case from running correctly on this machine, if there is one.
+    /// The entry that excuses this case from running correctly on this machine at this level, if
+    /// there is one.
     #[must_use]
-    pub fn exec_excuse(&self, case: &str) -> Option<&Exclusion> {
-        self.exec_excluded.iter().find(|e| e.case == case && e.here())
+    pub fn exec_excuse(&self, case: &str, opt: Option<&str>) -> Option<&Exclusion> {
+        self.exec_excluded.iter().find(|e| e.case == case && e.here() && e.at(opt))
     }
 
     /// The directory the code is in, given the repository root.
@@ -430,6 +454,27 @@ fn exclusions(
                 Some(word)
             }
         };
+        // Checked the same way `when` is, and refused outright on the list the pipeline check
+        // reads, since that check is not made at a level and an entry naming one there would be
+        // a condition nothing ever looks at.
+        let levels = fields.list("opt");
+        if !levels.is_empty() && !outcome {
+            return Err(Error {
+                message: format!(
+                    "{whose}: `opt` is for an execution exclusion, which is run at a level"
+                ),
+            });
+        }
+        for level in &levels {
+            if !LEVELS.contains(&level.as_str()) {
+                return Err(Error {
+                    message: format!(
+                        "{whose}: `opt` is `{level}`, which is not one of {}",
+                        LEVELS.join(", ")
+                    ),
+                });
+            }
+        }
         for case in named {
             excluded.push(Exclusion {
                 case,
@@ -437,6 +482,7 @@ fn exclusions(
                 why: why.clone(),
                 when: when.clone(),
                 outcome: covers.clone(),
+                opt: levels.clone(),
             });
         }
     }
@@ -696,6 +742,57 @@ mod tests {
         let corpus = load(&fake.root, "sys").unwrap();
         assert!(!corpus.excluded[0].here(), "still read, and it says nothing here");
         assert_eq!(corpus.excuse("standard/stdio.h"), None);
+    }
+
+    /// The same rule `when` follows, one axis over. A gap that is one level's is excused at that
+    /// level and says nothing at the others, which is what keeps a sweep over every level from
+    /// being red at half of them whichever way the entry was written.
+    #[test]
+    fn an_execution_exclusion_may_name_the_levels_it_speaks_at() {
+        let fake = Fake::new("exclude-opt");
+        let text = format!(
+            "oracle = \"self-check\"\n{INSTALLED}\n[[exec-exclude]]\ncase = \"standard/stdio.h\"\nissue = \"#344\"\nwhy = \"a header defines it inline only when optimizing\"\noutcome = \"did not build\"\nopt = [\"1\", \"2\", \"3\"]\n"
+        );
+        fake.corpus("sys", &text);
+        let corpus = load(&fake.root, "sys").unwrap();
+        assert_eq!(corpus.exec_excuse("standard/stdio.h", Some("2")).unwrap().issue, "#344");
+        assert_eq!(corpus.exec_excuse("standard/stdio.h", Some("0")), None);
+        assert_eq!(corpus.exec_excuse("standard/stdio.h", Some("s")), None);
+        assert_eq!(corpus.exec_excuse("standard/stdio.h", None), None, "a default is no level");
+
+        // And an entry that names none of them still says the same thing everywhere, which is
+        // what almost every entry is.
+        let every = format!(
+            "oracle = \"self-check\"\n{INSTALLED}\n[[exec-exclude]]\ncase = \"standard/stdio.h\"\nissue = \"#1\"\nwhy = \"nothing lowers it\"\noutcome = \"did not build\"\n"
+        );
+        fake.corpus("sys", &every);
+        let corpus = load(&fake.root, "sys").unwrap();
+        assert!(corpus.exec_excuse("standard/stdio.h", Some("0")).is_some());
+        assert!(corpus.exec_excuse("standard/stdio.h", None).is_some());
+    }
+
+    #[test]
+    fn an_exclusion_naming_a_level_that_is_not_one_is_refused() {
+        let fake = Fake::new("exclude-opt-unknown");
+        let text = format!(
+            "oracle = \"self-check\"\n{INSTALLED}\n[[exec-exclude]]\ncase = \"standard/stdio.h\"\nissue = \"#1\"\nwhy = \"it does not work\"\noutcome = \"crashed\"\nopt = [\"fast\"]\n"
+        );
+        fake.corpus("sys", &text);
+        let said = load(&fake.root, "sys").unwrap_err().message;
+        assert!(said.contains("`fast`"), "{said}");
+    }
+
+    /// The pipeline check is not made at a level, so an entry naming one there is a condition
+    /// nothing ever reads and it would silently excuse the case everywhere.
+    #[test]
+    fn a_pipeline_exclusion_may_not_name_a_level() {
+        let fake = Fake::new("exclude-opt-on-check");
+        let text = format!(
+            "{INSTALLED}\n[[exclude]]\ncase = \"standard/stdio.h\"\nissue = \"#1\"\nwhy = \"it does not work\"\nopt = [\"2\"]\n"
+        );
+        fake.corpus("sys", &text);
+        let said = load(&fake.root, "sys").unwrap_err().message;
+        assert!(said.contains("execution exclusion"), "{said}");
     }
 
     #[test]
