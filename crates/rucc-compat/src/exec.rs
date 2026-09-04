@@ -542,12 +542,30 @@ pub fn check(
         Ok(exe) => exe,
         Err(why) => return every(&Status::Skipped { why }),
     };
+    // The reference is run under the other two oracles as well, and it is held to the same
+    // rule the case under test will be. A self checking program that returns non-zero when the
+    // reference built it, or one whose output does not match what the corpus recorded, is a
+    // program written on assumptions no compiler released this decade holds to, and there is
+    // nothing there to hold us to either. It is the same judgement the failed build above
+    // makes, one step later, and it is made by running rather than by a list, so it cannot go
+    // stale and nobody has to notice when the reference changes its mind.
     let expected = match oracle {
         Oracle::Differential => match sandbox::run(&theirs, &[] as &[&str], dir, limits) {
             Ok(ran) => Some(ran),
             Err(why) => return every(&Status::NotCompared { why }),
         },
-        Oracle::SelfCheck | Oracle::Recorded => None,
+        Oracle::SelfCheck | Oracle::Recorded => {
+            match sandbox::run(&theirs, &[] as &[&str], dir, limits) {
+                Err(why) => return every(&Status::Skipped { why }),
+                Ok(ran) => match judge(oracle, case, &ran, None) {
+                    Status::Passed => None,
+                    // Nothing to hold the reference to is nothing to hold us to either, and it
+                    // is not the reference getting the program wrong, so it keeps its own word.
+                    missing @ Status::NotCompared { .. } => return every(&missing),
+                    verdict => return every(&Status::Skipped { why: reference_failed(&verdict) }),
+                },
+            }
+        }
     };
 
     let mut out = Vec::with_capacity(settings.routes.len());
@@ -563,6 +581,19 @@ pub fn check(
         out.push((*route, status));
     }
     out
+}
+
+/// Why a case whose own oracle the reference compiler does not satisfy is skipped.
+///
+/// It names the verdict rather than saying the reference failed, because the two verdicts it
+/// can carry are different statements: a wrong answer means the program expects something no
+/// compiler does, and a crash or a timeout means the program does not work at all here.
+fn reference_failed(verdict: &Status) -> String {
+    format!(
+        "the reference compiler's own build of this program is a {}: {}",
+        verdict.word(),
+        verdict.why()
+    )
 }
 
 /// The files that go into one case, which is the case itself and whatever its unit links with
@@ -1054,6 +1085,26 @@ mod tests {
         let out = judge(Oracle::Recorded, &it, &ran(End::Exited(1), "one\ntwo\n"), None);
         assert_eq!(out.word(), "wrong answer");
         let _ = fs::remove_dir_all(&dir);
+    }
+
+    /// A program whose own oracle the reference does not satisfy is not a case, and the word for
+    /// that is the one a program the reference refused to build already gets. What it must not be
+    /// is a pass, since a program neither compiler gets right is not a thing either of them got
+    /// right, and it must not be a failure of ours either.
+    #[test]
+    fn a_case_the_reference_cannot_pass_either_is_skipped_and_says_which_way_it_failed() {
+        let wrong = Status::Wrong { why: "returned 1".to_owned() };
+        let skipped = Status::Skipped { why: reference_failed(&wrong) };
+        assert_eq!(skipped.word(), "skipped");
+        assert_eq!(
+            skipped.why(),
+            "the reference compiler's own build of this program is a wrong answer: returned 1"
+        );
+        assert!(!skipped.is_against_us());
+        assert_eq!(report(vec![outcome(skipped, None)]).failures(), 0);
+
+        let crashed = Status::Crashed { why: "killed by SIGSEGV".to_owned() };
+        assert!(reference_failed(&crashed).contains("a crashed: killed by SIGSEGV"));
     }
 
     #[test]

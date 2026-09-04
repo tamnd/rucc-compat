@@ -89,35 +89,43 @@ skip = [
 
 
 # Every file here is built with `test/common`, and `test/common` has seven functions that give
-# back a structure by value, so one gap in the back end blocks all seventeen cases before any of
-# them gets as far as its own subject. That makes the whole corpus one entry rather than
-# seventeen: nothing here is blocked on anything specific to itself, and the first of these to
-# run will be all of them.
+# back a structure by value, so one gap in the back end used to block all seventeen cases before
+# any of them got as far as its own subject. That made the whole corpus one entry rather than
+# seventeen, and it pointed in turn at tamnd/rucc#281 for the address of a name at file scope,
+# then tamnd/rucc#289 for a variadic function reading its own arguments, then tamnd/rucc#287 for
+# a structure being copied, and last tamnd/rucc#325 for a structure coming back in two registers.
+# That one landed and the whole block came out at once, which is what a block written as one gap
+# rather than as seventeen is for. What is below is what was behind it.
 #
-# This entry pointed at tamnd/rucc#281 until the address of a name at file scope was lowered,
-# which is what `assert` needs to print a string literal, then at tamnd/rucc#289 until a
-# variadic function could read its own arguments, and then at tamnd/rucc#287 until a structure
-# could be copied. Each time the next thing in the same file is what it points at now.
+# `test/line.c` is not here, because it expects the line after `#line 500` to be 501 rather than
+# 500 and GCC 16 fails its own build of it on that assertion. `exec` runs the reference against
+# the same oracle before it runs us, so a program neither compiler passes is reported as skipped
+# and needs no entry that could go stale.
+
+# The conversions between a sixty four bit unsigned integer and a floating point type, which SSE
+# has no instruction for in either direction. `test/arith.c` wants an eighty bit float as well
+# and would still be here on tamnd/rucc#326 if this landed first.
 [[exec-exclude]]
-issue = "tamnd/rucc#325"
-why = "`test/common` returns structures by value and nothing lowers that return"
+issue = "tamnd/rucc#346"
+why = "nothing converts a sixty four bit unsigned integer to or from floating point"
 outcome = "did not build"
 cases = [
-  "test/alignof.c",
   "test/arith.c",
-  "test/attribute.c",
-  "test/builtin.c",
-  "test/cast.c",
-  "test/complit.c",
-  "test/decl.c",
-  "test/enum.c",
-  "test/extern.c",
   "test/float.c",
-  "test/line.c",
-  "test/offsetof.c",
-  "test/stdhdr.c",
-  "test/string.c",
-  "test/typeof.c",
-  "test/union.c",
-  "test/usualconv.c",
+]
+
+# The alignment of a local, which this file measures by taking the address of one and asking for
+# it modulo sixteen. Both answers conform, since the objects it asks about have an alignment of
+# one and of four, and the one gcc gives is the one this file was written against.
+#
+# It fails under gcc at `-O0` on a different assertion of its own, one that subtracts the
+# addresses of two unrelated objects, so at that level it is skipped as a program no compiler
+# passes and this entry says nothing. At `-O2` gcc's frame happens to satisfy that assertion and
+# the alignment one is what is left, which is what this entry is for.
+[[exec-exclude]]
+issue = "tamnd/rucc#347"
+why = "a local of sixteen bytes is not raised to sixteen byte alignment the way gcc raises it"
+outcome = "wrong answer"
+cases = [
+  "test/alignof.c",
 ]
