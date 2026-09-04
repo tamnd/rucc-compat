@@ -75,16 +75,6 @@ cases = [
   "single-exec/00204.c",
 ]
 
-# A block control cannot arrive at, which is the smallest of these gaps.
-[[exec-exclude]]
-issue = "tamnd/rucc#290"
-why = "`unreachable` has no name in the rule set"
-outcome = "did not build"
-cases = [
-  "single-exec/00214.c",
-  "single-exec/00218.c",
-]
-
 # A variable length array, which is a frame that grows during the body rather than a missing
 # rule, and is the only one of these blocks whose work is not in the rule set.
 [[exec-exclude]]
