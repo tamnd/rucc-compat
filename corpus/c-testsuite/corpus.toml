@@ -52,18 +52,19 @@ flags = ["-std=gnu17"]
 # not build` rather than a wrong answer, and each block below is one gap and the issue that closes
 # it. As a rule lands its block goes stale in one piece and comes out in one commit.
 
-# A structure assigned, passed or returned by value, and an initialiser that leaves part of an
-# object to be zeroed.
+# Structures of `long double` passed through a variadic function and a plain one. The eighty bit
+# float is on the x87 stack rather than in a register file, so the rule set names no type for it
+# and nothing reads or writes one.
+#
+# This entry pointed at tamnd/rucc#289 until a variadic function could read its own arguments,
+# and then at tamnd/rucc#287 until a structure could be copied. The next thing in the same file
+# is what it points at now.
 [[exec-exclude]]
-issue = "tamnd/rucc#287"
-why = "`memcpy` and `memset` have no name in the rule set"
+issue = "tamnd/rucc#326"
+why = "an eighty bit float has no type in the rule set"
 outcome = "did not build"
 cases = [
-  "single-exec/00140.c",
   "single-exec/00204.c",
-  "single-exec/00208.c",
-  "single-exec/00216.c",
-  "single-exec/00220.c",
 ]
 
 # A variable length array, which is a frame that grows during the body rather than a missing
