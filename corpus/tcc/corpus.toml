@@ -27,8 +27,11 @@ skip = [
   "34_array_assignment.c",
 ]
 
-# Three cases rucc does not get through yet, each one naming the issue that will take it off
-# this list. All three are one gap, which is an `asm` at file scope.
+# Six cases rucc does not get through yet, each one naming the issue that will take it off this
+# list. Three are one gap, which is an `asm` at file scope. The other three ask for no builtin
+# at all: they include a glibc header that defines three static inline functions over the byte
+# swap builtins, none of them calls one, and this compiler emits a static function nothing
+# refers to, so all three end up carrying a call to a builtin nothing lowers.
 
 [[exclude]]
 case = "tests2/85_asm-outside-function.c"
@@ -44,3 +47,12 @@ why = "an asm at file scope is not accepted, E0519"
 case = "tests2/99_fastcall.c"
 issue = "https://github.com/tamnd/rucc/issues/155"
 why = "an asm at file scope is not accepted, E0519"
+
+[[exclude]]
+cases = [
+  "tests2/30_hanoi.c",
+  "tests2/32_led.c",
+  "tests2/46_grep.c",
+]
+issue = "https://github.com/tamnd/rucc/issues/308"
+why = "a static function nothing refers to is emitted, and a glibc header defines three over the byte swap builtins, E0686"
