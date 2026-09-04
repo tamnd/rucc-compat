@@ -47,12 +47,3 @@ why = "an asm at file scope is not accepted, E0519"
 case = "tests2/99_fastcall.c"
 issue = "https://github.com/tamnd/rucc/issues/155"
 why = "an asm at file scope is not accepted, E0519"
-
-[[exclude]]
-cases = [
-  "tests2/30_hanoi.c",
-  "tests2/32_led.c",
-  "tests2/46_grep.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/308"
-why = "a static function nothing refers to is emitted, and a glibc header defines three over the byte swap builtins, E0686"

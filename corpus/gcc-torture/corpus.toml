@@ -205,17 +205,17 @@ skip = [
 # that sorting was done, which is what sorting it was for, and two of the nine blocks are gone
 # with them.
 #
-# Ninety came back at once, which is the last eight blocks. None of them is a new gap: each was a
-# call this compiler wrote down to a builtin nothing lowers, which the linker was left to ask
-# about, and rucc now refuses the call where it is written instead. So these ninety used to reach
-# the end of `check` and stop later, and they stop here now, which is the same missing feature
-# read off an earlier step. They are sorted by which builtin each one reaches first.
+# Ninety came back at once, which was the last eight blocks. None of them was a new gap: each was
+# a call this compiler wrote down to a builtin nothing lowers, which the linker was left to ask
+# about, and rucc refuses the call where it is written instead. So those ninety used to reach the
+# end of `check` and stop later, and they stop here now, which is the same missing feature read
+# off an earlier step. They are sorted by which builtin each one reaches first.
 #
-# Forty one of the ninety ask for no builtin at all. They include a glibc header, which defines
-# three static inline functions over the byte swap builtins, and this compiler emits a static
-# function nothing refers to, so a program that never mentions a byte swap ends up carrying three
-# calls to one. Those name the issue about emitting them rather than the issue about lowering
-# them, because that is what will take them off.
+# Forty one of the ninety asked for no builtin at all and are gone again. They include a glibc
+# header, which defines three static inline functions over the byte swap builtins, and this
+# compiler emitted a static function nothing refers to, so a program that never mentioned a byte
+# swap ended up carrying three calls to one. That was the block worth the most of the ninety and
+# it came out in one piece.
 
 [[exclude]]
 cases = [
@@ -401,53 +401,6 @@ why = "a vector built with the vector_size attribute is not a type here, E0504"
 case = "execute/pr80692.c"
 issue = "https://github.com/tamnd/rucc/issues/207"
 why = "decimal floating constants are not supported"
-
-[[exclude]]
-cases = [
-  "execute/20000910-1.c",
-  "execute/20000910-2.c",
-  "execute/20021010-2.c",
-  "execute/20040823-1.c",
-  "execute/20050125-1.c",
-  "execute/20050131-1.c",
-  "execute/20050203-1.c",
-  "execute/20120111-1.c",
-  "execute/20221006-1.c",
-  "execute/920810-1.c",
-  "execute/941014-2.c",
-  "execute/960521-1.c",
-  "execute/980707-1.c",
-  "execute/990628-1.c",
-  "execute/const-addr-expr-1.c",
-  "execute/fprintf-1.c",
-  "execute/fprintf-2.c",
-  "execute/fprintf-chk-1.c",
-  "execute/ieee/copysign1.c",
-  "execute/ieee/copysign2.c",
-  "execute/loop-2f.c",
-  "execute/loop-2g.c",
-  "execute/mode-dependent-address.c",
-  "execute/p18298.c",
-  "execute/pr111613.c",
-  "execute/pr34456.c",
-  "execute/pr41463.c",
-  "execute/pr69320-1.c",
-  "execute/pr69320-2.c",
-  "execute/pr69320-3.c",
-  "execute/pr69320-4.c",
-  "execute/printf-1.c",
-  "execute/printf-2.c",
-  "execute/printf-chk-1.c",
-  "execute/user-printf.c",
-  "execute/va-arg-21.c",
-  "execute/va-arg-24.c",
-  "execute/vfprintf-1.c",
-  "execute/vfprintf-chk-1.c",
-  "execute/vprintf-1.c",
-  "execute/vprintf-chk-1.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/308"
-why = "a static function nothing refers to is emitted, so a glibc header reaches __builtin_bswap16, E0686"
 
 [[exclude]]
 cases = [
