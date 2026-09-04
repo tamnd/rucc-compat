@@ -468,16 +468,6 @@ why = "a bit counting builtin has no lowering, E0686"
 
 [[exclude]]
 cases = [
-  "execute/20230509-1.c",
-  "execute/20241029-1.c",
-  "execute/pr81281.c",
-  "execute/pr97888-1.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/290"
-why = "__builtin_unreachable has no lowering, E0686"
-
-[[exclude]]
-cases = [
   "execute/bswap-1.c",
   "execute/bswap-3.c",
   "execute/pr90025.c",
