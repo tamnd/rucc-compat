@@ -19,6 +19,8 @@
 //! - [`lexer`] splits an output back into preprocessing tokens, which is what the first and
 //!   strictest of those three comparisons is over.
 //! - [`sandbox`] runs a program under a timeout and a memory limit and says how it ended.
+//! - [`work`] runs several cases at once, since each of the three commands above is a map over
+//!   cases that do not look at each other.
 //! - [`sha256`] and [`toml`] are the two small things the above would otherwise depend on.
 
 use std::path::{Path, PathBuf};
@@ -32,6 +34,7 @@ pub mod pipeline;
 pub mod sandbox;
 pub mod sha256;
 pub mod toml;
+pub mod work;
 
 /// The repository root, found by walking up from `start` until something has a `corpus`
 /// directory in it.

@@ -26,6 +26,7 @@ use std::process::Command;
 use crate::corpus::{Corpus, Exclusion};
 use crate::differ::{self, Case};
 use crate::toml::Error;
+use crate::work;
 
 /// How to run.
 #[derive(Debug, Clone)]
@@ -36,11 +37,13 @@ pub struct Settings {
     pub limit: Option<usize>,
     /// Run only the unit of this name.
     pub unit: Option<String>,
+    /// How many cases to have in the air at once, or `None` for a share of the machine.
+    pub jobs: Option<usize>,
 }
 
 impl Default for Settings {
     fn default() -> Settings {
-        Settings { rucc: PathBuf::from("rucc"), limit: None, unit: None }
+        Settings { rucc: PathBuf::from("rucc"), limit: None, unit: None, jobs: None }
     }
 }
 
@@ -211,12 +214,11 @@ pub fn run(
         None => &cases[..],
     };
     let rucc = differ::program(&settings.rucc);
-    let mut outcomes = Vec::with_capacity(cases.len());
-    for case in cases {
+    let outcomes = work::spread(cases, work::jobs(settings.jobs), |case| {
         let status = check(case, &rucc, scratch);
         let excused = corpus.excuse(&case.name).map(|e| e.issue.clone());
-        outcomes.push(Outcome { case: case.name.clone(), status, excused });
-    }
+        Outcome { case: case.name.clone(), status, excused }
+    });
     let unmatched = match settings.is_whole() {
         true => corpus
             .excluded

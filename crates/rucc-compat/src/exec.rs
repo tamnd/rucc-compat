@@ -26,6 +26,7 @@ use crate::differ::{self, Case};
 use crate::pipeline::{named, said, stem};
 use crate::sandbox::{self, End, Limits, Ran};
 use crate::toml::Error;
+use crate::work;
 
 /// The eight words a case can come out as, in the order the report counts them.
 ///
@@ -125,6 +126,12 @@ pub struct Settings {
     pub timeout: Option<u64>,
     /// How much address space to give a run, in kibibytes.
     pub memory: Option<u64>,
+    /// How many cases to have in the air at once, or `None` for a share of the machine.
+    ///
+    /// Not part of what is measured. A case says the same thing whichever thread built it, and a
+    /// report that came out different at two settings of this is a bug in the harness rather
+    /// than news about the compiler.
+    pub jobs: Option<usize>,
 }
 
 impl Default for Settings {
@@ -139,6 +146,7 @@ impl Default for Settings {
             machine: None,
             timeout: None,
             memory: Some(MEMORY),
+            jobs: None,
         }
     }
 }
@@ -425,8 +433,10 @@ pub fn run(
     let seconds = settings.timeout.unwrap_or(corpus.timeout);
     let limits = Limits { timeout: Duration::from_secs(seconds), memory };
 
-    let mut outcomes = Vec::with_capacity(cases.len() * settings.routes.len());
-    for case in cases {
+    // Several at a time. Each case owns a scratch directory named after itself and reads nothing
+    // any other case wrote, so the only thing the threads share is the two compiler binaries and
+    // neither of those is written to. See [`work`] for why this is not every core.
+    let each = |case: &Case| -> Vec<Outcome> {
         let dir = scratch.join(stem(&case.name));
         let _ = fs::remove_dir_all(&dir);
         let excused = corpus.exec_excuse(&case.name).cloned();
@@ -440,8 +450,10 @@ pub fn run(
         if mine.iter().all(|o| o.status == Status::Passed) {
             let _ = fs::remove_dir_all(&dir);
         }
-        outcomes.extend(mine);
-    }
+        mine
+    };
+    let outcomes: Vec<Outcome> =
+        work::spread(cases, work::jobs(settings.jobs), each).into_iter().flatten().collect();
 
     let unmatched = match settings.is_whole() {
         true => corpus

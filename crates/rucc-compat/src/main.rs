@@ -37,6 +37,7 @@ options:
   --timeout N      exec only: seconds per run, over what the manifest asks for
   --unit NAME      run only the unit of that name
   --limit N        stop after N cases, for a quick look
+  --jobs N         how many cases to have in the air at once, default half the machine
   --report         write results/<corpus>.md as well as printing the summary
   --record         fetch only: print the sha256 of the download and unpack nothing
 
@@ -139,6 +140,7 @@ fn run_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, St
         markers: false,
         limit: None,
         unit: None,
+        jobs: None,
     };
     let mut report = false;
     let mut names = Vec::new();
@@ -151,6 +153,11 @@ fn run_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, St
             "--rucc" => settings.rucc = PathBuf::from(value(args, &mut at, arg)?),
             "--cc" => settings.cc = PathBuf::from(value(args, &mut at, arg)?),
             "--unit" => settings.unit = Some(value(args, &mut at, arg)?),
+            "--jobs" => {
+                let text = value(args, &mut at, arg)?;
+                let jobs = text.parse().map_err(|_| format!("`{text}` is not a number"))?;
+                settings.jobs = Some(jobs);
+            }
             "--limit" => {
                 let text = value(args, &mut at, arg)?;
                 let limit = text.parse().map_err(|_| format!("`{text}` is not a number"))?;
@@ -202,7 +209,7 @@ fn run_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, St
 
 fn check_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, String> {
     let mut settings =
-        pipeline::Settings { rucc: from_env("RUCC", "rucc"), limit: None, unit: None };
+        pipeline::Settings { rucc: from_env("RUCC", "rucc"), limit: None, unit: None, jobs: None };
     let mut report = false;
     let mut names = Vec::new();
     let mut at = 0;
@@ -212,6 +219,11 @@ fn check_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, 
             "--report" => report = true,
             "--rucc" => settings.rucc = PathBuf::from(value(args, &mut at, arg)?),
             "--unit" => settings.unit = Some(value(args, &mut at, arg)?),
+            "--jobs" => {
+                let text = value(args, &mut at, arg)?;
+                let jobs = text.parse().map_err(|_| format!("`{text}` is not a number"))?;
+                settings.jobs = Some(jobs);
+            }
             "--limit" => {
                 let text = value(args, &mut at, arg)?;
                 let limit = text.parse().map_err(|_| format!("`{text}` is not a number"))?;
@@ -291,6 +303,11 @@ fn exec_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, S
                 let text = value(args, &mut at, arg)?;
                 let seconds = text.parse().map_err(|_| format!("`{text}` is not a number"))?;
                 settings.timeout = Some(seconds);
+            }
+            "--jobs" => {
+                let text = value(args, &mut at, arg)?;
+                let jobs = text.parse().map_err(|_| format!("`{text}` is not a number"))?;
+                settings.jobs = Some(jobs);
             }
             "--limit" => {
                 let text = value(args, &mut at, arg)?;

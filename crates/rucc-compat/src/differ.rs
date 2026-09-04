@@ -8,6 +8,7 @@ use std::process::Command;
 use crate::corpus::{Corpus, Question, Register, Unit, UnitKind};
 use crate::lexer;
 use crate::toml::Error;
+use crate::work;
 
 /// The comparison rules, which is what the register can suppress by name.
 pub mod rule {
@@ -32,6 +33,8 @@ pub struct Settings {
     pub limit: Option<usize>,
     /// Run only the unit of this name.
     pub unit: Option<String>,
+    /// How many cases to have in the air at once, or `None` for a share of the machine.
+    pub jobs: Option<usize>,
 }
 
 impl Default for Settings {
@@ -42,6 +45,7 @@ impl Default for Settings {
             markers: false,
             limit: None,
             unit: None,
+            jobs: None,
         }
     }
 }
@@ -226,8 +230,7 @@ pub fn run(
         &Settings { rucc: program(&settings.rucc), cc: program(&settings.cc), ..settings.clone() };
     // Everything that has to be the same on both sides before a difference means anything.
     let agree = agreement(&settings.cc);
-    let mut outcomes = Vec::with_capacity(cases.len());
-    for case in cases {
+    let outcomes = work::spread(cases, work::jobs(settings.jobs), |case| {
         let status = compare(case, settings, &agree);
         let differing = status.differing_line();
         let accepted = status
@@ -241,8 +244,8 @@ pub fn run(
                 })
             })
             .map(|d| d.id.clone());
-        outcomes.push(Outcome { case: case.name.clone(), status, accepted });
-    }
+        Outcome { case: case.name.clone(), status, accepted }
+    });
     Ok(Report { corpus: corpus.name.clone(), outcomes })
 }
 

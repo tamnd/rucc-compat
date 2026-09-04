@@ -60,6 +60,16 @@ The outcomes are reported separately rather than as a pass rate, because a compi
 
 The exclusions work the way the pipeline check's do, in a separate `[[exec-exclude]]` list, and carry one thing more: the outcome they cover. An entry that says a case does not build and a case that now builds and prints the wrong answer are not the same entry, so the run fails rather than counting it as covered.
 
+## How long a sweep takes
+
+Every one of the three commands is a map over cases that do not look at each other. Each case gets a scratch directory named after itself, reads nothing another case wrote, and the only things any of them share are the two compiler binaries, which nobody writes to. So they run several at a time, and `--jobs N` says how many.
+
+The default is half of what the machine reports, at least one. Not all of it, for two reasons that are both about the answer being right rather than about being polite. A case in `exec` is run against a wall clock, and a machine with more work in flight than it can do makes a slow program slower, so a run that took every core would report oversubscription as a timeout and send somebody looking for a performance bug that is not there. And the machines these sweeps run on have a CI runner on them, so a harness that took the whole machine would be measuring a compiler that is being starved.
+
+`--jobs 1` is the serial path, and a real one rather than a pool of one, for when a number is being held against an older number.
+
+The order of the report does not depend on this. Answers come back in the order the cases were in whatever the setting is, because a report whose rows move between two runs of the same corpus is a report nobody can diff.
+
 ## The corpora
 
 Each directory under `corpus/` describes one body of code, in a `corpus.toml` that says where it comes from, what license it carries and what to do with it. There are two kinds and the difference is where the code lives.
