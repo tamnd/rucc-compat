@@ -87,18 +87,20 @@ skip = [
   "pragma-once.c",
 ]
 
-# Every file here is built with `test/common`, and `test/common` has a variadic function in it
-# that reads its own arguments, so one gap in the back end blocks all eighteen cases before any
+
+# Every file here is built with `test/common`, and `test/common` assigns structures and zeroes
+# the tail of an initialiser, so one gap in the rule set blocks all seventeen cases before any
 # of them gets as far as its own subject. That makes the whole corpus one entry rather than
-# eighteen: nothing here is blocked on anything specific to itself, and the first of these to
+# seventeen: nothing here is blocked on anything specific to itself, and the first of these to
 # run will be all of them.
 #
 # This entry pointed at tamnd/rucc#281 until the address of a name at file scope was lowered,
-# which is what `assert` needs to print a string literal. The next thing in the same file is
+# which is what `assert` needs to print a string literal, and then at tamnd/rucc#289 until a
+# variadic function could read its own arguments. Each time the next thing in the same file is
 # what it points at now.
 [[exec-exclude]]
-issue = "tamnd/rucc#289"
-why = "`test/common` has a variadic function and `va_start` has no name in the rule set"
+issue = "tamnd/rucc#287"
+why = "`test/common` copies structures and `memcpy` has no name in the rule set"
 outcome = "did not build"
 cases = [
   "test/alignof.c",
