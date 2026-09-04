@@ -18,6 +18,8 @@
 //!   of them can be green while the executable prints the wrong answer.
 //! - [`lexer`] splits an output back into preprocessing tokens, which is what the first and
 //!   strictest of those three comparisons is over.
+//! - [`ledger`] remembers which cases were not green, so the next run can be pointed at those
+//!   and nothing else.
 //! - [`sandbox`] runs a program under a timeout and a memory limit and says how it ended.
 //! - [`work`] runs several cases at once, since each of the three commands above is a map over
 //!   cases that do not look at each other.
@@ -29,6 +31,7 @@ pub mod corpus;
 pub mod differ;
 pub mod exec;
 pub mod fetch;
+pub mod ledger;
 pub mod lexer;
 pub mod pipeline;
 pub mod sandbox;

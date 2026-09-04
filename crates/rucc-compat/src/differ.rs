@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use crate::corpus::{Corpus, Question, Register, Unit, UnitKind};
+use crate::ledger;
 use crate::lexer;
 use crate::toml::Error;
 use crate::work;
@@ -33,6 +34,10 @@ pub struct Settings {
     pub limit: Option<usize>,
     /// Run only the unit of this name.
     pub unit: Option<String>,
+    /// Run only cases whose name contains one of these, or all of them when empty.
+    pub only: Vec<String>,
+    /// Run only cases the last run here did not call green.
+    pub failed: bool,
     /// How many cases to have in the air at once, or `None` for a share of the machine.
     pub jobs: Option<usize>,
 }
@@ -45,6 +50,8 @@ impl Default for Settings {
             markers: false,
             limit: None,
             unit: None,
+            only: Vec::new(),
+            failed: false,
             jobs: None,
         }
     }
@@ -222,6 +229,15 @@ pub fn run(
             });
         }
     }
+    // Narrowed before the limit, so `--limit 20 --failed` is the first twenty of the failures
+    // rather than whichever of the first twenty cases happened to fail.
+    let record = ledger::path(repo, &corpus.name, "run", None);
+    let keep = ledger::Keep::new(&settings.only, settings.failed.then_some(record.as_path()))
+        .map_err(|message| Error { message: format!("{}: {message}", corpus.name) })?;
+    let cases: Vec<Case> = cases.into_iter().filter(|c| keep.wants(&c.name)).collect();
+    if cases.is_empty() && !keep.is_all() {
+        return Err(Error { message: format!("{}: {}", corpus.name, keep.emptiness()) });
+    }
     let cases = match settings.limit {
         Some(limit) => &cases[..limit.min(cases.len())],
         None => &cases[..],
@@ -246,6 +262,16 @@ pub fn run(
             .map(|d| d.id.clone());
         Outcome { case: case.name.clone(), status, accepted }
     });
+    // A case the register accepts is green. It is a difference somebody wrote down and decided
+    // to live with, so it is not what `--failed` is for, and a run that listed it every time
+    // would make the list useless for the differences nobody has decided about yet.
+    let seen: Vec<(String, String, bool)> = outcomes
+        .iter()
+        .map(|o| (o.case.clone(), o.status.word().to_owned(), !o.is_failure()))
+        .collect();
+    if let Err(e) = ledger::save(&record, &seen) {
+        eprintln!("{}: could not write {}: {e}", corpus.name, record.display());
+    }
     Ok(Report { corpus: corpus.name.clone(), outcomes })
 }
 

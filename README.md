@@ -70,6 +70,19 @@ The default is half of what the machine reports, at least one. Not all of it, fo
 
 The order of the report does not depend on this. Answers come back in the order the cases were in whatever the setting is, because a report whose rows move between two runs of the same corpus is a report nobody can diff.
 
+The other half of it is running fewer cases. `--only PATTERN` keeps the cases whose name contains the pattern and can be given more than once, which is how somebody fixing structure returns asks for the seventeen chibicc cases rather than the six hundred and thirty nine in c-testsuite. `--failed` keeps the cases the last run of the same command on this machine did not call green, which is the set a fix is usually aimed at. Both at once is the overlap and not the sum.
+
+```
+./target/release/rucc-compat exec gcc-torture --failed
+./target/release/rucc-compat exec chibicc --only test/cast --only test/struct
+```
+
+What `--failed` reads is a small file under `target/last`, one line per case that was not green, written by every run. It is under `target` because it is a fact about this machine and this checkout rather than a report, and the reports still go to `results/`. A narrowed run updates only the rows for the cases it reached and leaves the rest where they were, because a run that saw thirty cases has no opinion about the other two thousand. That is what makes asking twice in a row mean something: the second one asks about what the first one did not fix.
+
+Green there means what green means for the run as a whole, which is neither a failure nor a stale exclusion. An excluded case is not green, because an exclusion is a case that is still broken and is where the work is. An exclusion that has started passing is not green either, because that is a thing somebody has to act on and a rerun that called it green would be the one rerun where the only check for it cannot fire.
+
+A run narrowed by any of `--unit`, `--only`, `--failed` or `--limit` is not a whole corpus, so it does not check for exclusions that name a case nobody ran. That check needs the whole corpus and stays where it belongs, in the sweep.
+
 ## The corpora
 
 Each directory under `corpus/` describes one body of code, in a `corpus.toml` that says where it comes from, what license it carries and what to do with it. There are two kinds and the difference is where the code lives.
