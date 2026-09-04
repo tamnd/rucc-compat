@@ -38,10 +38,16 @@ options:
   --unit NAME      run only the unit of that name
   --limit N        stop after N cases, for a quick look
   --jobs N         how many cases to have in the air at once, default half the machine
+  --only PATTERN   run only cases whose name contains PATTERN, may be given more than once
+  --failed         run only cases the last run here did not call green
   --report         write results/<corpus>.md as well as printing the summary
   --record         fetch only: print the sha256 of the download and unpack nothing
 
 Naming no corpus means all of them. The exit status is 1 when anything failed.
+
+`--failed` reads what the last run of the same command on this machine recorded under
+`target/last`, and a narrowed run updates only the cases it reached, so asking twice in a row
+asks about what the first one did not fix.
 
 `check` and `exec` fail on an exclusion that no longer excludes anything, so that the list in
 a manifest tracks work rather than hiding it.
@@ -140,6 +146,8 @@ fn run_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, St
         markers: false,
         limit: None,
         unit: None,
+        only: Vec::new(),
+        failed: false,
         jobs: None,
     };
     let mut report = false;
@@ -153,6 +161,8 @@ fn run_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, St
             "--rucc" => settings.rucc = PathBuf::from(value(args, &mut at, arg)?),
             "--cc" => settings.cc = PathBuf::from(value(args, &mut at, arg)?),
             "--unit" => settings.unit = Some(value(args, &mut at, arg)?),
+            "--failed" => settings.failed = true,
+            "--only" => settings.only.push(value(args, &mut at, arg)?),
             "--jobs" => {
                 let text = value(args, &mut at, arg)?;
                 let jobs = text.parse().map_err(|_| format!("`{text}` is not a number"))?;
@@ -209,7 +219,7 @@ fn run_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, St
 
 fn check_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, String> {
     let mut settings =
-        pipeline::Settings { rucc: from_env("RUCC", "rucc"), limit: None, unit: None, jobs: None };
+        pipeline::Settings { rucc: from_env("RUCC", "rucc"), ..pipeline::Settings::default() };
     let mut report = false;
     let mut names = Vec::new();
     let mut at = 0;
@@ -219,6 +229,8 @@ fn check_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, 
             "--report" => report = true,
             "--rucc" => settings.rucc = PathBuf::from(value(args, &mut at, arg)?),
             "--unit" => settings.unit = Some(value(args, &mut at, arg)?),
+            "--failed" => settings.failed = true,
+            "--only" => settings.only.push(value(args, &mut at, arg)?),
             "--jobs" => {
                 let text = value(args, &mut at, arg)?;
                 let jobs = text.parse().map_err(|_| format!("`{text}` is not a number"))?;
@@ -304,6 +316,8 @@ fn exec_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, S
                 let seconds = text.parse().map_err(|_| format!("`{text}` is not a number"))?;
                 settings.timeout = Some(seconds);
             }
+            "--failed" => settings.failed = true,
+            "--only" => settings.only.push(value(args, &mut at, arg)?),
             "--jobs" => {
                 let text = value(args, &mut at, arg)?;
                 let jobs = text.parse().map_err(|_| format!("`{text}` is not a number"))?;

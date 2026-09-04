@@ -23,6 +23,7 @@ use std::time::Duration;
 
 use crate::corpus::{Corpus, Exclusion, Oracle};
 use crate::differ::{self, Case};
+use crate::ledger;
 use crate::pipeline::{named, said, stem};
 use crate::sandbox::{self, End, Limits, Ran};
 use crate::toml::Error;
@@ -116,6 +117,10 @@ pub struct Settings {
     pub limit: Option<usize>,
     /// Run only the unit of this name.
     pub unit: Option<String>,
+    /// Run only cases whose name contains one of these, or all of them when empty.
+    pub only: Vec<String>,
+    /// Run only cases the last run here did not call green.
+    pub failed: bool,
     /// What to call the machine in the report, or `None` for the platform it runs on.
     pub machine: Option<String>,
     /// Seconds per run, over what the corpus asks for.
@@ -143,6 +148,8 @@ impl Default for Settings {
             opt: None,
             limit: None,
             unit: None,
+            only: Vec::new(),
+            failed: false,
             machine: None,
             timeout: None,
             memory: Some(MEMORY),
@@ -158,7 +165,7 @@ impl Settings {
     /// staleness check only runs when this is true.
     #[must_use]
     pub fn is_whole(&self) -> bool {
-        self.limit.is_none() && self.unit.is_none()
+        self.limit.is_none() && self.unit.is_none() && self.only.is_empty() && !self.failed
     }
 
     /// The `-O` flag both compilers get, if there is one.
@@ -421,6 +428,15 @@ pub fn run(
             });
         }
     }
+    // Narrowed before the limit, so `--limit 20 --failed` is the first twenty of the failures
+    // rather than whichever of the first twenty cases happened to fail.
+    let record = ledger::path(repo, &corpus.name, "exec", settings.opt.as_deref());
+    let keep = ledger::Keep::new(&settings.only, settings.failed.then_some(record.as_path()))
+        .map_err(|message| Error { message: format!("{}: {message}", corpus.name) })?;
+    let cases: Vec<Case> = cases.into_iter().filter(|c| keep.wants(&c.name)).collect();
+    if cases.is_empty() && !keep.is_all() {
+        return Err(Error { message: format!("{}: {}", corpus.name, keep.emptiness()) });
+    }
     let cases = match settings.limit {
         Some(limit) => &cases[..limit.min(cases.len())],
         None => &cases[..],
@@ -454,6 +470,31 @@ pub fn run(
     };
     let outcomes: Vec<Outcome> =
         work::spread(cases, work::jobs(settings.jobs), each).into_iter().flatten().collect();
+
+    // One row per case and not per route, since `--failed` narrows by case. Green is the same
+    // thing the run being green means, which is neither a failure nor a stale exclusion: an
+    // exclusion that has started passing is a thing somebody has to act on, and a rerun that
+    // called it green would be the one rerun where the only check for it cannot fire.
+    let mut seen: Vec<(String, String, bool)> = Vec::with_capacity(cases.len());
+    for outcome in &outcomes {
+        let green = outcome.status == Status::Passed && !outcome.is_stale();
+        let word = match outcome.is_stale() {
+            true => "stale",
+            false => outcome.word(),
+        };
+        match seen.last_mut() {
+            Some(row) if row.0 == outcome.case => {
+                row.2 &= green;
+                if !green && row.1 == "passed" {
+                    row.1 = word.to_owned();
+                }
+            }
+            _ => seen.push((outcome.case.clone(), word.to_owned(), green)),
+        }
+    }
+    if let Err(e) = ledger::save(&record, &seen) {
+        eprintln!("{}: could not write {}: {e}", corpus.name, record.display());
+    }
 
     let unmatched = match settings.is_whole() {
         true => corpus
@@ -1071,6 +1112,8 @@ mod tests {
         assert!(Settings::default().is_whole());
         assert!(!Settings { limit: Some(10), ..Settings::default() }.is_whole());
         assert!(!Settings { unit: Some("test".to_owned()), ..Settings::default() }.is_whole());
+        assert!(!Settings { only: vec!["a".to_owned()], ..Settings::default() }.is_whole());
+        assert!(!Settings { failed: true, ..Settings::default() }.is_whole());
     }
 
     #[test]

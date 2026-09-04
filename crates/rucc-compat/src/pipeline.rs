@@ -25,6 +25,7 @@ use std::process::Command;
 
 use crate::corpus::{Corpus, Exclusion};
 use crate::differ::{self, Case};
+use crate::ledger;
 use crate::toml::Error;
 use crate::work;
 
@@ -37,13 +38,24 @@ pub struct Settings {
     pub limit: Option<usize>,
     /// Run only the unit of this name.
     pub unit: Option<String>,
+    /// Run only cases whose name contains one of these, or all of them when empty.
+    pub only: Vec<String>,
+    /// Run only cases the last run here did not call green.
+    pub failed: bool,
     /// How many cases to have in the air at once, or `None` for a share of the machine.
     pub jobs: Option<usize>,
 }
 
 impl Default for Settings {
     fn default() -> Settings {
-        Settings { rucc: PathBuf::from("rucc"), limit: None, unit: None, jobs: None }
+        Settings {
+            rucc: PathBuf::from("rucc"),
+            limit: None,
+            unit: None,
+            only: Vec::new(),
+            failed: false,
+            jobs: None,
+        }
     }
 }
 
@@ -54,7 +66,7 @@ impl Settings {
     /// staleness check only runs when this is true.
     #[must_use]
     pub fn is_whole(&self) -> bool {
-        self.limit.is_none() && self.unit.is_none()
+        self.limit.is_none() && self.unit.is_none() && self.only.is_empty() && !self.failed
     }
 }
 
@@ -209,6 +221,15 @@ pub fn run(
             });
         }
     }
+    // Narrowed before the limit, so `--limit 20 --failed` is the first twenty of the failures
+    // rather than whichever of the first twenty cases happened to fail.
+    let record = ledger::path(repo, &corpus.name, "check", None);
+    let keep = ledger::Keep::new(&settings.only, settings.failed.then_some(record.as_path()))
+        .map_err(|message| Error { message: format!("{}: {message}", corpus.name) })?;
+    let cases: Vec<Case> = cases.into_iter().filter(|c| keep.wants(&c.name)).collect();
+    if cases.is_empty() && !keep.is_all() {
+        return Err(Error { message: format!("{}: {}", corpus.name, keep.emptiness()) });
+    }
     let cases = match settings.limit {
         Some(limit) => &cases[..limit.min(cases.len())],
         None => &cases[..],
@@ -219,6 +240,21 @@ pub fn run(
         let excused = corpus.excuse(&case.name).map(|e| e.issue.clone());
         Outcome { case: case.name.clone(), status, excused }
     });
+    // A stale exclusion is not green here either. See the note in `exec::run` for why.
+    let seen: Vec<(String, String, bool)> = outcomes
+        .iter()
+        .map(|o| {
+            let word = match o.is_stale() {
+                true => "stale".to_owned(),
+                false => o.status.word().to_owned(),
+            };
+            (o.case.clone(), word, o.status == Status::Passed && !o.is_stale())
+        })
+        .collect();
+    if let Err(e) = ledger::save(&record, &seen) {
+        eprintln!("{}: could not write {}: {e}", corpus.name, record.display());
+    }
+
     let unmatched = match settings.is_whole() {
         true => corpus
             .excluded
@@ -466,6 +502,8 @@ mod tests {
         assert!(whole.is_whole());
         assert!(!Settings { limit: Some(10), ..Settings::default() }.is_whole());
         assert!(!Settings { unit: Some("tests".to_owned()), ..Settings::default() }.is_whole());
+        assert!(!Settings { only: vec!["a".to_owned()], ..Settings::default() }.is_whole());
+        assert!(!Settings { failed: true, ..Settings::default() }.is_whole());
     }
 
     #[test]
