@@ -45,25 +45,10 @@ flags = ["-std=gnu17"]
 # which is why the two lists are separate and why this one is long while the one above is empty.
 
 # The lowering rule set is where this corpus stops. Everything below builds and runs on the two
-# hundred and twenty programs here, and the two hundred and two that pass are the ones the rule set
-# reaches all the way through. The rest mostly reach an IR opcode no rule names, which is a `did not
-# build` rather than a wrong answer, and each block below is one gap and the issue that closes it.
-# As a rule lands its block goes stale in one piece and comes out in one commit.
-
-# Floating point, none of which is lowered, and which waits on the allocator having a second
-# register class before any of it can be written.
-[[exec-exclude]]
-issue = "tamnd/rucc#286"
-why = "no floating point opcode has a name in the rule set"
-outcome = "did not build"
-cases = [
-  "single-exec/00113.c",
-  "single-exec/00119.c",
-  "single-exec/00123.c",
-  "single-exec/00174.c",
-  "single-exec/00175.c",
-  "single-exec/00195.c",
-]
+# hundred and twenty programs here, and the two hundred and seven that pass are the ones the rule
+# set reaches all the way through. The rest mostly reach an IR opcode no rule names, which is a `did
+# not build` rather than a wrong answer, and each block below is one gap and the issue that closes
+# it. As a rule lands its block goes stale in one piece and comes out in one commit.
 
 # A structure assigned, passed or returned by value, and an initialiser that leaves part of an
 # object to be zeroed.
@@ -109,13 +94,16 @@ cases = [
 ]
 
 # A call with more than six integer arguments, where the seventh goes on the stack. Where a call
-# puts one is the convention rather than a rule, so this is not a missing name either.
+# puts one is the convention rather than a rule, so this is not a missing name either. The second
+# case was in the floating point block until that whole block came out, and it is the one program
+# in the suite that prints six comparisons in a single call, so it stops here now instead.
 [[exec-exclude]]
 issue = "tamnd/rucc#257"
 why = "nothing passes an argument on the stack"
 outcome = "did not build"
 cases = [
   "single-exec/00170.c",
+  "single-exec/00174.c",
 ]
 
 # The three cases here that are not the rule set. They compile, and the object holds calls to
