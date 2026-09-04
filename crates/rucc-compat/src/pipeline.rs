@@ -488,6 +488,7 @@ mod tests {
             when: Vec::new(),
             outcome: None,
             opt: Vec::new(),
+            route: Vec::new(),
         };
         let report = Report {
             corpus: "c-testsuite".to_owned(),

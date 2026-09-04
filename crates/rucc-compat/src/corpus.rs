@@ -29,6 +29,15 @@ pub const EXEC_OUTCOMES: &[&str] = &["wrong answer", "crashed", "timed out", "di
 /// `-O4` and up are `-O3` to both of them and naming one would say the same thing twice.
 pub const LEVELS: &[&str] = &["0", "1", "2", "3", "s", "z"];
 
+/// What an execution exclusion's `route` is allowed to name, which is the build paths `exec`
+/// takes, written the way the report writes them.
+///
+/// The same three words [`crate::exec::Route`] answers with. They are repeated here rather than
+/// read from there because a manifest is loaded by commands that never run a program, and a
+/// manifest that could only be checked by the half of the harness that builds things would be a
+/// manifest nothing checks.
+pub const ROUTES: &[&str] = &["assembly", "object", "driver"];
+
 /// How long a case gets to run when its corpus does not say, in seconds.
 pub const TIMEOUT: u64 = 10;
 
@@ -159,6 +168,15 @@ pub struct Exclusion {
     /// `-O0`, `-Os` or `-Oz`. An entry with no `opt` would then be stale at half the levels and
     /// the sweep would be red at half of them whichever way it was written.
     pub opt: Vec<String>,
+    /// The build paths this excuses the case on, empty meaning every one of them.
+    ///
+    /// A gap can be one path's, because the three do not do the same thing with what the compiler
+    /// produced. `execute/pr54937.c` emits a relocation the linker refuses when it is making a
+    /// position independent executable, which is what the driver path links and what the other two
+    /// do not, so it fails there and passes on the other two. The reverse happens as well: a
+    /// program needing a library the harness does not pass links on the driver path, because
+    /// rucc's own driver names more than the harness does.
+    pub route: Vec<String>,
 }
 
 impl Exclusion {
@@ -175,6 +193,12 @@ impl Exclusion {
     #[must_use]
     pub fn at(&self, opt: Option<&str>) -> bool {
         self.opt.is_empty() || opt.is_some_and(|level| self.opt.iter().any(|o| o == level))
+    }
+
+    /// Whether this entry says anything about the build path the case was taken down.
+    #[must_use]
+    pub fn along(&self, route: &str) -> bool {
+        self.route.is_empty() || self.route.iter().any(|r| r == route)
     }
 }
 
@@ -258,8 +282,10 @@ impl Corpus {
     /// The entry that excuses this case from running correctly on this machine at this level, if
     /// there is one.
     #[must_use]
-    pub fn exec_excuse(&self, case: &str, opt: Option<&str>) -> Option<&Exclusion> {
-        self.exec_excluded.iter().find(|e| e.case == case && e.here() && e.at(opt))
+    pub fn exec_excuse(&self, case: &str, opt: Option<&str>, route: &str) -> Option<&Exclusion> {
+        self.exec_excluded
+            .iter()
+            .find(|e| e.case == case && e.here() && e.at(opt) && e.along(route))
     }
 
     /// The directory the code is in, given the repository root.
@@ -475,6 +501,27 @@ fn exclusions(
                 });
             }
         }
+        // The third of the axes, checked the same way and refused on the pipeline list for the
+        // same reason: `check` takes one path through the compiler and has no build paths to
+        // choose between.
+        let routes = fields.list("route");
+        if !routes.is_empty() && !outcome {
+            return Err(Error {
+                message: format!(
+                    "{whose}: `route` is for an execution exclusion, which is built three ways"
+                ),
+            });
+        }
+        for route in &routes {
+            if !ROUTES.contains(&route.as_str()) {
+                return Err(Error {
+                    message: format!(
+                        "{whose}: `route` is `{route}`, which is not one of {}",
+                        ROUTES.join(", ")
+                    ),
+                });
+            }
+        }
         for case in named {
             excluded.push(Exclusion {
                 case,
@@ -483,6 +530,7 @@ fn exclusions(
                 when: when.clone(),
                 outcome: covers.clone(),
                 opt: levels.clone(),
+                route: routes.clone(),
             });
         }
     }
@@ -755,10 +803,17 @@ mod tests {
         );
         fake.corpus("sys", &text);
         let corpus = load(&fake.root, "sys").unwrap();
-        assert_eq!(corpus.exec_excuse("standard/stdio.h", Some("2")).unwrap().issue, "#344");
-        assert_eq!(corpus.exec_excuse("standard/stdio.h", Some("0")), None);
-        assert_eq!(corpus.exec_excuse("standard/stdio.h", Some("s")), None);
-        assert_eq!(corpus.exec_excuse("standard/stdio.h", None), None, "a default is no level");
+        assert_eq!(
+            corpus.exec_excuse("standard/stdio.h", Some("2"), "driver").unwrap().issue,
+            "#344"
+        );
+        assert_eq!(corpus.exec_excuse("standard/stdio.h", Some("0"), "driver"), None);
+        assert_eq!(corpus.exec_excuse("standard/stdio.h", Some("s"), "driver"), None);
+        assert_eq!(
+            corpus.exec_excuse("standard/stdio.h", None, "driver"),
+            None,
+            "a default is no level"
+        );
 
         // And an entry that names none of them still says the same thing everywhere, which is
         // what almost every entry is.
@@ -767,8 +822,8 @@ mod tests {
         );
         fake.corpus("sys", &every);
         let corpus = load(&fake.root, "sys").unwrap();
-        assert!(corpus.exec_excuse("standard/stdio.h", Some("0")).is_some());
-        assert!(corpus.exec_excuse("standard/stdio.h", None).is_some());
+        assert!(corpus.exec_excuse("standard/stdio.h", Some("0"), "driver").is_some());
+        assert!(corpus.exec_excuse("standard/stdio.h", None, "driver").is_some());
     }
 
     #[test]
@@ -789,6 +844,47 @@ mod tests {
         let fake = Fake::new("exclude-opt-on-check");
         let text = format!(
             "{INSTALLED}\n[[exclude]]\ncase = \"standard/stdio.h\"\nissue = \"#1\"\nwhy = \"it does not work\"\nopt = [\"2\"]\n"
+        );
+        fake.corpus("sys", &text);
+        let said = load(&fake.root, "sys").unwrap_err().message;
+        assert!(said.contains("execution exclusion"), "{said}");
+    }
+
+    /// The third axis, and the one that is not about the program at all. A relocation a position
+    /// independent link refuses fails on the path that makes one and passes on the two that hand
+    /// their output to the reference to link, and an entry with no `route` would be stale on those
+    /// two.
+    #[test]
+    fn an_execution_exclusion_may_name_the_build_paths_it_speaks_on() {
+        let fake = Fake::new("exclude-route");
+        let text = format!(
+            "oracle = \"self-check\"\n{INSTALLED}\n[[exec-exclude]]\ncase = \"standard/stdio.h\"\nissue = \"#355\"\nwhy = \"the relocation is one a position independent link refuses\"\noutcome = \"did not build\"\nroute = [\"driver\"]\n"
+        );
+        fake.corpus("sys", &text);
+        let corpus = load(&fake.root, "sys").unwrap();
+        assert_eq!(corpus.exec_excuse("standard/stdio.h", None, "driver").unwrap().issue, "#355");
+        assert_eq!(corpus.exec_excuse("standard/stdio.h", None, "assembly"), None);
+        assert_eq!(corpus.exec_excuse("standard/stdio.h", None, "object"), None);
+    }
+
+    #[test]
+    fn an_exclusion_naming_a_build_path_that_is_not_one_is_refused() {
+        let fake = Fake::new("exclude-route-unknown");
+        let text = format!(
+            "oracle = \"self-check\"\n{INSTALLED}\n[[exec-exclude]]\ncase = \"standard/stdio.h\"\nissue = \"#1\"\nwhy = \"it does not work\"\noutcome = \"crashed\"\nroute = [\"linker\"]\n"
+        );
+        fake.corpus("sys", &text);
+        let said = load(&fake.root, "sys").unwrap_err().message;
+        assert!(said.contains("`linker`"), "{said}");
+    }
+
+    /// `check` takes one path through the compiler, so an entry naming a build path there is a
+    /// condition nothing ever reads.
+    #[test]
+    fn a_pipeline_exclusion_may_not_name_a_build_path() {
+        let fake = Fake::new("exclude-route-on-check");
+        let text = format!(
+            "{INSTALLED}\n[[exclude]]\ncase = \"standard/stdio.h\"\nissue = \"#1\"\nwhy = \"it does not work\"\nroute = [\"driver\"]\n"
         );
         fake.corpus("sys", &text);
         let said = load(&fake.root, "sys").unwrap_err().message;

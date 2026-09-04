@@ -79,7 +79,7 @@ Something the reference compiler refuses as well is not an exclusion. It is a `s
 
 Neither is a case that fails on an extension rucc has decided against. GNU's nested functions are the one there is a settled answer on, and the answer is no, so the twenty three torture cases that use them are a `skip` with the reason written above them. The test for which of the two a case belongs in is whether an issue could ever close it. An exclusion waits for work somebody will do. A skip is for a case where nobody will, either because the reference refuses it too or because the feature it needs is one this compiler is not going to have, and an exclusion pointing at an issue that will never close is an exclusion nobody will ever remove.
 
-An `[[exec-exclude]]` block is the same thing for `exec`, and it carries two fields the pipeline list does not have. `outcome` is required and names which of `wrong answer`, `crashed`, `timed out` and `did not build` the entry admits to, so an entry that says a case does not build stops covering it the day it starts building and printing the wrong answer instead. `opt` is optional and names the optimization levels the entry speaks at:
+An `[[exec-exclude]]` block is the same thing for `exec`, and it carries three fields the pipeline list does not have. `outcome` is required and names which of `wrong answer`, `crashed`, `timed out` and `did not build` the entry admits to, so an entry that says a case does not build stops covering it the day it starts building and printing the wrong answer instead. `opt` is optional and names the optimization levels the entry speaks at:
 
 ```toml
 [[exec-exclude]]
@@ -93,6 +93,10 @@ opt = ["1", "2", "3"]
 The levels are `0`, `1`, `2`, `3`, `s` and `z`, written the way they are written after `-O`, and anything else fails the load. Leaving it out means every level, which is what almost every entry wants. It is `when` one axis over and it is reached for on the same terms: only where the case really does pass at some levels and fail at others, since without it such an entry is stale wherever the case passes and the sweep comes out red at half the levels whichever way it is written.
 
 The reason those entries exist at all is that the headers change underneath the levels. glibc defines a family of functions inline behind `__OPTIMIZE__ && !__OPTIMIZE_SIZE__`, so a program compiled at `-O2` includes code that is simply not there at `-O0` or at `-Os`, and a gap in that code is a gap at three levels out of six. An entry naming a level with a reason that is really about a pass rather than about a header is usually an entry that should be an issue instead.
+
+`route` is the third of these and names the build paths the entry speaks on, out of `assembly`, `object` and `driver`. It is reached for on the same terms as the other two and it is rarer than either, because the three paths are meant to agree and a case where they do not is usually a bug in the one that fails rather than a property of the program. There is exactly one across every corpus today, and it is real: `execute/pr54937.c` emits a relocation the linker refuses when it is making a position independent executable, which is what the driver path links and what the other two do not, so it fails there and passes on the other two.
+
+`opt` and `route` are refused on the `[[exclude]]` list. `check` is not run at a level and does not build anything, so an entry naming either there would be a condition nothing ever looks at, and it would quietly excuse the case everywhere instead.
 
 ### Recording the hash
 

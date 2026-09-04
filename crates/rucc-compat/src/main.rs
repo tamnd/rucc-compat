@@ -339,7 +339,14 @@ fn exec_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, S
         settings.routes = routes;
     }
     let wanted = chosen(all, &names)?;
-    let scratch = repo.join("target").join("exec");
+    // The level is part of the path rather than only part of the command, so that two sweeps at
+    // two levels can run at the same time. Without it they share a directory and write over each
+    // other's objects, and what comes out is not a failure either of them would get on its own:
+    // wrong answers and link errors scattered over cases that pass when the sweep is run alone.
+    // Six levels in parallel is the difference between half an hour and five minutes on a
+    // machine with the cores for it.
+    let scratch =
+        repo.join("target").join("exec").join(settings.opt.as_deref().unwrap_or("default"));
     let mut failures = 0;
     for corpus in wanted {
         if corpus.oracle.is_none() {

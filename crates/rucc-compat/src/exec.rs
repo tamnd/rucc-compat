@@ -455,10 +455,13 @@ pub fn run(
     let each = |case: &Case| -> Vec<Outcome> {
         let dir = scratch.join(stem(&case.name));
         let _ = fs::remove_dir_all(&dir);
-        let excused = corpus.exec_excuse(&case.name, settings.opt.as_deref()).cloned();
         let mut mine = Vec::with_capacity(settings.routes.len());
         for (route, status) in check(case, corpus, oracle, &settings, &dir, &limits) {
-            mine.push(Outcome { case: case.name.clone(), route, status, excused: excused.clone() });
+            // Asked per route rather than once for the case, because an entry may name the paths
+            // it speaks on and the three paths do not do the same thing with what rucc produced.
+            let excused =
+                corpus.exec_excuse(&case.name, settings.opt.as_deref(), route.word()).cloned();
+            mine.push(Outcome { case: case.name.clone(), route, status, excused });
         }
         // Kept when something went wrong, because a case that failed is a case somebody is about
         // to want to look at, and thrown away otherwise, because a corpus of two thousand cases
@@ -967,6 +970,7 @@ mod tests {
             when: Vec::new(),
             outcome: Some(word.to_owned()),
             opt: Vec::new(),
+            route: Vec::new(),
         }
     }
 

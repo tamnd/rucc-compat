@@ -482,3 +482,653 @@ cases = [
 ]
 issue = "https://github.com/tamnd/rucc/issues/311"
 why = "an atomic builtin has no lowering, E0686"
+
+# The execution list, which is what tamnd/rucc-compat#30 asked for. `exec` builds each of these
+# programs three ways and runs it, and the self check inside the program decides whether the run
+# was right, so this list is about what the compiler produced rather than about what it accepted.
+#
+# It is shorter than that issue expected. The guess there was nineteen hundred programs of red.
+# The unit is 1772 programs, which is the 1907 in the tarball less the 135 skipped above, and at
+# `-O0` 1296 of them pass, 309 are named below and 167 are refused by gcc 16 as well. At `-O3`
+# it is 1280, 322 and 170. The reason for the gap between the guess and the count is that the
+# issue was written when a call to an unknown builtin stopped five hundred files at once, and it
+# said to wait until the lowering rule set stopped moving so fast. It has.
+#
+# The programs gcc refuses are not on this list and are not in the skip list either. They are
+# decided by running the reference, so they cannot go stale and nobody has to notice when gcc
+# changes its mind, and there are a few more of them at `-Os` than at `-O0` because some of what
+# gcc refuses it only works out once it has folded something.
+#
+# 327 cases are named here across the six levels, and 46 blocks name them, because the reasons
+# are far fewer than the programs. The blocks are sorted by size and the first three are a third
+# of the list: inline assembly, an eighty bit float and a vector type are what the torture suite
+# is mostly made of.
+#
+# Two of the questions that issue left open have answers now. The timeout stays at ten seconds:
+# every program that passes finishes far inside it, and the one that does not is `pr15296.c`,
+# which is a loop the compiler turned into one that does not end and is a bug rather than a slow
+# test. And all three build paths run, because they disagree: `pr54937.c` fails on the driver
+# path and passes on the other two, which is the one relocation a position independent link
+# refuses. A list written against one path would have called that a pass.
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/349"
+why = "inline assembly has no lowering, E0653"
+outcome = "did not build"
+cases = [
+  "execute/20001009-2.c",
+  "execute/20030222-1.c",
+  "execute/20050203-1.c",
+  "execute/20061031-1.c",
+  "execute/20071211-1.c",
+  "execute/20080122-1.c",
+  "execute/960312-1.c",
+  "execute/990130-1.c",
+  "execute/bitfld-5.c",
+  "execute/ieee/pr50310.c",
+  "execute/memclr.c",
+  "execute/memcpy-a1.c",
+  "execute/memcpy-a2.c",
+  "execute/memcpy-a4.c",
+  "execute/memcpy-a8.c",
+  "execute/misalign.c",
+  "execute/pr103376.c",
+  "execute/pr108498-1.c",
+  "execute/pr110252-2.c",
+  "execute/pr114552.c",
+  "execute/pr38533.c",
+  "execute/pr40022.c",
+  "execute/pr40657.c",
+  "execute/pr41239.c",
+  "execute/pr43385.c",
+  "execute/pr43560.c",
+  "execute/pr44852.c",
+  "execute/pr45695.c",
+  "execute/pr46309.c",
+  "execute/pr47925.c",
+  "execute/pr49279.c",
+  "execute/pr49390.c",
+  "execute/pr51581-1.c",
+  "execute/pr51581-2.c",
+  "execute/pr51877.c",
+  "execute/pr51933.c",
+  "execute/pr52286.c",
+  "execute/pr56205.c",
+  "execute/pr56866.c",
+  "execute/pr56982.c",
+  "execute/pr57344-1.c",
+  "execute/pr57344-2.c",
+  "execute/pr57344-3.c",
+  "execute/pr57344-4.c",
+  "execute/pr58277-1.c",
+  "execute/pr58419.c",
+  "execute/pr63641.c",
+  "execute/pr65053-1.c",
+  "execute/pr65053-2.c",
+  "execute/pr65648.c",
+  "execute/pr65956.c",
+  "execute/pr68328.c",
+  "execute/pr69320-2.c",
+  "execute/pr69691.c",
+  "execute/pr78438.c",
+  "execute/pr78726.c",
+  "execute/pr79737-2.c",
+  "execute/pr80421.c",
+  "execute/pr81588.c",
+  "execute/pr82954.c",
+  "execute/pr84478.c",
+  "execute/pr84524.c",
+  "execute/pr85156.c",
+  "execute/pr85756.c",
+  "execute/pr88904.c",
+  "execute/pr93945.c",
+  "execute/pr94130.c",
+  "execute/stkalign.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/326"
+why = "an eighty bit float has no type in the rule set, E0653"
+outcome = "did not build"
+cases = [
+  "execute/20020413-1.c",
+  "execute/20030914-1.c",
+  "execute/20040208-1.c",
+  "execute/20080502-1.c",
+  "execute/930622-2.c",
+  "execute/960215-1.c",
+  "execute/960405-1.c",
+  "execute/960513-1.c",
+  "execute/990413-2.c",
+  "execute/align-2.c",
+  "execute/conversion.c",
+  "execute/ieee/20010226-1.c",
+  "execute/ieee/20011123-1.c",
+  "execute/ieee/acc2.c",
+  "execute/ieee/copysign1.c",
+  "execute/ieee/copysign2.c",
+  "execute/ieee/fp-cmp-3.c",
+  "execute/ieee/fp-cmp-4l.c",
+  "execute/ieee/fp-cmp-8l.c",
+  "execute/ieee/inf-1.c",
+  "execute/ieee/inf-2.c",
+  "execute/ieee/inf-3.c",
+  "execute/ieee/pr109008.c",
+  "execute/ieee/pr29302-1.c",
+  "execute/ieee/pr36332.c",
+  "execute/pr39228.c",
+  "execute/pr44942.c",
+  "execute/regstack-1.c",
+  "execute/stdarg-2.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/200"
+why = "a vector built with the vector_size attribute cannot be subscripted, E0504"
+outcome = "did not build"
+cases = [
+  "execute/ieee/fp-cmp-cond-1.c",
+  "execute/ieee/pr72824-2.c",
+  "execute/pr105613.c",
+  "execute/pr108292.c",
+  "execute/pr109040.c",
+  "execute/pr110817-1.c",
+  "execute/pr110817-2.c",
+  "execute/pr110817-3.c",
+  "execute/pr121957.c",
+  "execute/pr123625-2.c",
+  "execute/pr123625-3.c",
+  "execute/pr123625.c",
+  "execute/pr123753.c",
+  "execute/pr126405-2.c",
+  "execute/pr126405-3.c",
+  "execute/pr126405.c",
+  "execute/pr53645-2.c",
+  "execute/pr53645.c",
+  "execute/pr70903.c",
+  "execute/pr71626-1.c",
+  "execute/pr71626-2.c",
+  "execute/pr85169.c",
+  "execute/pr94412.c",
+  "execute/pr94524-1.c",
+  "execute/pr94524-2.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/201"
+why = "complex arithmetic is missing the piece this file starts with, E0506, E0509, E0519 or E0525"
+outcome = "did not build"
+cases = [
+  "execute/20020227-1.c",
+  "execute/20020411-1.c",
+  "execute/20030910-1.c",
+  "execute/20041124-1.c",
+  "execute/20041201-1.c",
+  "execute/20050121-1.c",
+  "execute/20070614-1.c",
+  "execute/960512-1.c",
+  "execute/complex-1.c",
+  "execute/complex-2.c",
+  "execute/complex-4.c",
+  "execute/complex-5.c",
+  "execute/complex-6.c",
+  "execute/complex-7.c",
+  "execute/pr104604.c",
+  "execute/pr38151.c",
+  "execute/pr38969.c",
+  "execute/pr42248.c",
+  "execute/pr49644.c",
+  "execute/pr56837.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/351"
+why = "an __int128 has no place in the rule set, E0653"
+outcome = "did not build"
+cases = [
+  "execute/20010604-1.c",
+  "execute/20031010-1.c",
+  "execute/20050502-1.c",
+  "execute/20141107-1.c",
+  "execute/20230510-1.c",
+  "execute/pr117095.c",
+  "execute/pr122943.c",
+  "execute/pr49218.c",
+  "execute/pr54471.c",
+  "execute/pr61375.c",
+  "execute/pr63302.c",
+  "execute/pr65170.c",
+  "execute/pr84748.c",
+  "execute/pr85582-2.c",
+  "execute/pr85582-3.c",
+  "execute/pr98474.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/309"
+why = "an overflow checked arithmetic builtin has no lowering, E0686"
+outcome = "did not build"
+cases = [
+  "execute/pr108789.c",
+  "execute/pr64006.c",
+  "execute/pr68381.c",
+  "execute/pr71554.c",
+  "execute/pr84169.c",
+  "execute/pr85095.c",
+  "execute/pr89434.c",
+  "execute/pr90311.c",
+  "execute/pr91450-1.c",
+  "execute/pr91450-2.c",
+  "execute/pr91635.c",
+  "execute/pr93213.c",
+  "execute/pr93494.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/200"
+why = "a vector built with the vector_size attribute builds and then gives the wrong answer"
+outcome = "crashed"
+cases = [
+  "execute/20050316-1.c",
+  "execute/20050316-2.c",
+  "execute/20050316-3.c",
+  "execute/20050604-1.c",
+  "execute/pr92618.c",
+  "execute/scal-to-vec1.c",
+  "execute/scal-to-vec2.c",
+  "execute/scal-to-vec3.c",
+  "execute/simd-1.c",
+  "execute/simd-2.c",
+  "execute/simd-4.c",
+  "execute/simd-6.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/313"
+why = "a builtin that is one instruction or none has no lowering, E0686"
+outcome = "did not build"
+cases = [
+  "execute/20020418-1.c",
+  "execute/20040709-1.c",
+  "execute/20040709-2.c",
+  "execute/20040709-3.c",
+  "execute/builtin-prefetch-1.c",
+  "execute/builtin-prefetch-2.c",
+  "execute/builtin-prefetch-3.c",
+  "execute/builtin-prefetch-4.c",
+  "execute/builtin-prefetch-5.c",
+  "execute/builtin-prefetch-6.c",
+  "execute/pr115033.c",
+  "execute/pr125291.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/312"
+why = "a builtin that asks about the frame has no lowering, E0686"
+outcome = "did not build"
+cases = [
+  "execute/20010122-1.c",
+  "execute/20021113-1.c",
+  "execute/20030323-1.c",
+  "execute/20030811-1.c",
+  "execute/20070824-1.c",
+  "execute/alloca-1.c",
+  "execute/frame-address.c",
+  "execute/pr17377.c",
+  "execute/pr36321.c",
+  "execute/pr86528.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/361"
+why = "the program asks for an optimizer as soon as __OPTIMIZE__ is defined"
+outcome = "did not build"
+opt = ["1", "2", "3", "s", "z"]
+cases = [
+  "execute/20010119-1.c",
+  "execute/20030216-1.c",
+  "execute/20041114-1.c",
+  "execute/compare-3.c",
+  "execute/ieee/compare-fp-3.c",
+  "execute/ieee/fp-cmp-6.c",
+  "execute/ieee/fp-cmp-7.c",
+  "execute/ieee/fp-cmp-9.c",
+  "execute/pure-1.c",
+  "execute/shiftopt-1.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/203"
+why = "the address of a label is refused in a static initializer, E0618"
+outcome = "did not build"
+cases = [
+  "execute/20040302-1.c",
+  "execute/20041214-1.c",
+  "execute/20071210-1.c",
+  "execute/20071220-1.c",
+  "execute/20071220-2.c",
+  "execute/920302-1.c",
+  "execute/920501-4.c",
+  "execute/comp-goto-1.c",
+  "execute/pr70460.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/202"
+why = "a variable length array as a member of a local structure is refused, E0549"
+outcome = "did not build"
+cases = [
+  "execute/20020412-1.c",
+  "execute/20040308-1.c",
+  "execute/20040423-1.c",
+  "execute/20041218-2.c",
+  "execute/20070919-1.c",
+  "execute/align-nest.c",
+  "execute/pr41935.c",
+  "execute/pr82210.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/360"
+why = "it builds and then gives the wrong answer, and nobody has reduced it yet"
+outcome = "crashed"
+cases = [
+  "execute/20021127-1.c",
+  "execute/20050215-1.c",
+  "execute/bitfld-3.c",
+  "execute/divconst-2.c",
+  "execute/pr32244-1.c",
+  "execute/pr34971.c",
+  "execute/pr38236.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/227"
+why = "a builtin that belongs to no family is not declared, E0500"
+outcome = "did not build"
+cases = [
+  "execute/builtin-bitops-1.c",
+  "execute/pr105984.c",
+  "execute/pr123864.c",
+  "execute/pr47237.c",
+  "execute/pr85331.c",
+  "execute/pr94591.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/352"
+why = "a one bit integer has no lowering, E0653"
+outcome = "did not build"
+cases = [
+  "execute/20030714-1.c",
+  "execute/20210505-1.c",
+  "execute/minmaxcmp-1.c",
+  "execute/pr107881-1.c",
+  "execute/pr111431-1.c",
+  "execute/pr81555.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/291"
+why = "nothing here grows the stack for a variable length array, E0653"
+outcome = "did not build"
+cases = [
+  "execute/20040811-1.c",
+  "execute/20221006-1.c",
+  "execute/920929-1.c",
+  "execute/pr43220.c",
+  "execute/vla-dealloc-1.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/310"
+why = "a bit counting builtin has no lowering, E0686"
+outcome = "did not build"
+cases = [
+  "execute/ffs-1.c",
+  "execute/ffs-2.c",
+  "execute/pr37780.c",
+  "execute/pr61725.c",
+  "execute/pr97325.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/346"
+why = "a sixty four bit unsigned integer does not convert to or from floating point, E0653"
+outcome = "did not build"
+cases = [
+  "execute/20040831-1.c",
+  "execute/920710-1.c",
+  "execute/ieee/rbug.c",
+  "execute/pr47538.c",
+  "execute/pr79354.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/223"
+why = "__builtin_setjmp and __builtin_longjmp are not declared, E0500"
+outcome = "did not build"
+cases = [
+  "execute/built-in-setjmp.c",
+  "execute/pr60003.c",
+  "execute/pr64242.c",
+  "execute/pr84521.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/307"
+why = "a byte swap builtin has no lowering, E0686"
+outcome = "did not build"
+cases = [
+  "execute/bswap-1.c",
+  "execute/bswap-3.c",
+  "execute/pr90025.c",
+  "execute/pr97386-1.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/340"
+why = "va_arg of a long double or an __int128 is refused, E0653"
+outcome = "did not build"
+cases = [
+  "execute/pr92904.c",
+  "execute/stdarg-1.c",
+  "execute/va-arg-5.c",
+  "execute/va-arg-6.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/361"
+why = "the program asks for an optimizer as soon as __OPTIMIZE__ is defined"
+outcome = "crashed"
+opt = ["1", "2", "3", "s", "z"]
+cases = [
+  "execute/20030125-1.c",
+  "execute/builtin-constant.c",
+  "execute/fprintf-chk-1.c",
+  "execute/printf-chk-1.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/328"
+why = "it builds after the bulk copy lowering and then crashes"
+outcome = "crashed"
+cases = [
+  "execute/20230630-2.c",
+  "execute/20230630-4.c",
+  "execute/991118-1.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/335"
+why = "a structure passed by value too large to unroll needs a call to the runtime, E0653"
+outcome = "did not build"
+cases = [
+  "execute/pr20621-1.c",
+  "execute/pr28982b.c",
+  "execute/va-arg-22.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/353"
+why = "the address of a label has no lowering, E0653"
+outcome = "did not build"
+cases = [
+  "execute/920501-3.c",
+  "execute/920501-5.c",
+  "execute/990208-1.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/354"
+why = "the alias attribute emits no alias, so the name is undefined at link time"
+outcome = "did not build"
+cases = [
+  "execute/alias-2.c",
+  "execute/alias-3.c",
+  "execute/alias-4.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/350"
+why = "the rewrite panics on an instruction wanting more scratch registers than the class has"
+outcome = "did not build"
+cases = [
+  "execute/ieee/mul-subnormal-single-1.c",
+  "execute/pr29798.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/362"
+why = "va_arg of a structure has no lowering, E0653"
+outcome = "did not build"
+cases = [
+  "execute/920625-1.c",
+  "execute/920908-1.c",
+  "execute/931004-10.c",
+  "execute/931004-12.c",
+  "execute/931004-14.c",
+  "execute/931004-2.c",
+  "execute/931004-4.c",
+  "execute/931004-6.c",
+  "execute/931004-8.c",
+  "execute/pr44575.c",
+  "execute/stdarg-3.c",
+  "execute/strct-stdarg-1.c",
+  "execute/strct-varg-1.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc-compat/issues/39"
+why = "the link step passes no libraries, so a call to libm has nowhere to resolve"
+outcome = "did not build"
+case = "execute/20020720-1.c"
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc-compat/issues/39"
+why = "the link step passes no libraries, so a call to libm has nowhere to resolve"
+outcome = "did not build"
+case = "execute/990826-0.c"
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc-compat/issues/39"
+why = "the link step passes no libraries, so a call to libm has nowhere to resolve"
+outcome = "did not build"
+opt = ["1", "2", "3"]
+case = "execute/float-floor.c"
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc-compat/issues/39"
+why = "the link step passes no libraries, so a call to libm has nowhere to resolve"
+outcome = "did not build"
+opt = ["2", "3"]
+case = "execute/ieee/20041213-1.c"
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc-compat/issues/39"
+why = "the link step passes no libraries, so a call to libm has nowhere to resolve"
+outcome = "did not build"
+case = "execute/ieee/mzero4.c"
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/157"
+why = "__builtin_va_arg_pack is not declared, E0500"
+outcome = "did not build"
+case = "execute/va-arg-pack-1.c"
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/207"
+why = "decimal floating constants are not supported"
+outcome = "did not build"
+case = "execute/pr80692.c"
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/311"
+why = "an atomic builtin has no lowering, E0686"
+outcome = "did not build"
+case = "execute/pr122000.c"
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/335"
+why = "a structure passed by value too large to unroll needs a call to the runtime, E0653"
+outcome = "did not build"
+opt = ["0", "2", "3", "s", "z"]
+case = "execute/pr23135.c"
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/349"
+why = "inline assembly has no lowering, E0653"
+outcome = "did not build"
+opt = ["1", "2", "3", "s", "z"]
+case = "execute/20020107-1.c"
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/352"
+why = "a one bit integer has no lowering, E0653"
+outcome = "did not build"
+opt = ["1", "2", "3"]
+case = "execute/p18298.c"
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/355"
+why = "the address of an external function is a relocation a position independent link refuses"
+outcome = "did not build"
+route = ["driver"]
+case = "execute/pr54937.c"
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/356"
+why = "the aligned attribute on a function is ignored"
+outcome = "crashed"
+case = "execute/align-3.c"
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/357"
+why = "the size expression of an array parameter is not evaluated"
+outcome = "crashed"
+case = "execute/pr77767.c"
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/357"
+why = "the size expression of an array parameter is not evaluated"
+outcome = "wrong answer"
+case = "execute/970217-1.c"
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/358"
+why = "a compound assignment reads its left operand before the right one is evaluated"
+outcome = "crashed"
+case = "execute/pr58943.c"
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/359"
+why = "a call in a branch a constant condition never takes reaches the linker"
+outcome = "did not build"
+case = "execute/medce-1.c"
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/360"
+why = "it builds and then gives the wrong answer, and nobody has reduced it yet"
+outcome = "timed out"
+case = "execute/pr15296.c"
+
