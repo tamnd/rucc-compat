@@ -60,19 +60,10 @@ why = "`memcpy` and `memset` have no name in the rule set"
 outcome = "did not build"
 cases = [
   "single-exec/00140.c",
+  "single-exec/00204.c",
   "single-exec/00208.c",
   "single-exec/00216.c",
   "single-exec/00220.c",
-]
-
-# A variadic function reading its own arguments, which needs the register save area the x86-64
-# convention puts in the prologue.
-[[exec-exclude]]
-issue = "tamnd/rucc#289"
-why = "`va_start` and the object behind it have no name in the rule set"
-outcome = "did not build"
-cases = [
-  "single-exec/00204.c",
 ]
 
 # A variable length array, which is a frame that grows during the body rather than a missing
