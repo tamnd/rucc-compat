@@ -45,10 +45,10 @@ flags = ["-std=gnu17"]
 # which is why the two lists are separate and why this one is long while the one above is empty.
 
 # The lowering rule set is where this corpus stops. Everything below builds and runs on the two
-# hundred and twenty programs here, and the hundred and ninety five that pass are the ones the
-# rule set reaches all the way through. The rest mostly reach an IR opcode no rule names, which
-# is a `did not build` rather than a wrong answer, and each block below is one gap and the issue
-# that closes it. As a rule lands its block goes stale in one piece and comes out in one commit.
+# hundred and twenty programs here, and the two hundred and two that pass are the ones the rule set
+# reaches all the way through. The rest mostly reach an IR opcode no rule names, which is a `did not
+# build` rather than a wrong answer, and each block below is one gap and the issue that closes it.
+# As a rule lands its block goes stale in one piece and comes out in one commit.
 
 # Floating point, none of which is lowered, and which waits on the allocator having a second
 # register class before any of it can be written.
@@ -76,22 +76,6 @@ cases = [
   "single-exec/00208.c",
   "single-exec/00216.c",
   "single-exec/00220.c",
-]
-
-# A call through a function pointer, which is the one failure in the run whose message says what
-# it is rather than saying that something has no name.
-[[exec-exclude]]
-issue = "tamnd/rucc#288"
-why = "no rule calls through an address"
-outcome = "did not build"
-cases = [
-  "single-exec/00087.c",
-  "single-exec/00089.c",
-  "single-exec/00124.c",
-  "single-exec/00159.c",
-  "single-exec/00189.c",
-  "single-exec/00209.c",
-  "single-exec/00210.c",
 ]
 
 # A variadic function reading its own arguments, which needs the register save area the x86-64
