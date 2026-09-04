@@ -220,14 +220,25 @@ jobs:
   #
   # x86-64 Linux only, because that is the one target rucc generates code for today. The second
   # target and the second host are M6, and the matrix here grows when they arrive.
+  #
+  # Every level, because a level is not a setting on one answer. `-O0` and `-O2` run different
+  # passes over different code and the headers themselves change underneath them: glibc defines a
+  # family of functions inline behind `__OPTIMIZE__ && !__OPTIMIZE_SIZE__`, so a program compiled
+  # at `-O2` includes code that is simply not there at `-O0` or at `-Os`. A sweep at one level
+  # says nothing about the other five, and an optimizer whose output is only ever run at `-O0` is
+  # an optimizer nobody has tested. This is what tamnd/rucc#260 asks for.
+  #
+  # Twelve jobs rather than one that loops, so the whole sweep costs one job's wall clock and a
+  # level that goes red says which one it was in its own name.
   exec:
-    name: exec over ${{ matrix.corpus }}
+    name: exec over ${{ matrix.corpus }} at -O${{ matrix.opt }}
     needs: quick
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
         corpus: [c-testsuite, chibicc]
+        opt: ["0", "1", "2", "3", "s", "z"]
     steps:
       - uses: actions/checkout@v7.0.1
       - name: check out the compiler
@@ -266,13 +277,13 @@ jobs:
       - name: build them and run them
         run: |
           ./target/release/rucc-compat exec ${{ matrix.corpus }} \
-            --rucc rucc/target/release/rucc --cc gcc-16 \
+            --rucc rucc/target/release/rucc --cc gcc-16 --opt ${{ matrix.opt }} \
             --machine github-ubuntu-24.04 --report
       - name: keep the report
         if: always()
         uses: actions/upload-artifact@v4.6.2
         with:
-          name: exec-${{ matrix.corpus }}
+          name: exec-${{ matrix.corpus }}-O${{ matrix.opt }}
           path: results/
           if-no-files-found: ignore
 

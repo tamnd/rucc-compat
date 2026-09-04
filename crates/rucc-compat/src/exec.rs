@@ -455,7 +455,7 @@ pub fn run(
     let each = |case: &Case| -> Vec<Outcome> {
         let dir = scratch.join(stem(&case.name));
         let _ = fs::remove_dir_all(&dir);
-        let excused = corpus.exec_excuse(&case.name).cloned();
+        let excused = corpus.exec_excuse(&case.name, settings.opt.as_deref()).cloned();
         let mut mine = Vec::with_capacity(settings.routes.len());
         for (route, status) in check(case, corpus, oracle, &settings, &dir, &limits) {
             mine.push(Outcome { case: case.name.clone(), route, status, excused: excused.clone() });
@@ -966,6 +966,7 @@ mod tests {
             why: "it does not work yet".to_owned(),
             when: Vec::new(),
             outcome: Some(word.to_owned()),
+            opt: Vec::new(),
         }
     }
 

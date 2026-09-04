@@ -79,6 +79,21 @@ Something the reference compiler refuses as well is not an exclusion. It is a `s
 
 Neither is a case that fails on an extension rucc has decided against. GNU's nested functions are the one there is a settled answer on, and the answer is no, so the twenty three torture cases that use them are a `skip` with the reason written above them. The test for which of the two a case belongs in is whether an issue could ever close it. An exclusion waits for work somebody will do. A skip is for a case where nobody will, either because the reference refuses it too or because the feature it needs is one this compiler is not going to have, and an exclusion pointing at an issue that will never close is an exclusion nobody will ever remove.
 
+An `[[exec-exclude]]` block is the same thing for `exec`, and it carries two fields the pipeline list does not have. `outcome` is required and names which of `wrong answer`, `crashed`, `timed out` and `did not build` the entry admits to, so an entry that says a case does not build stops covering it the day it starts building and printing the wrong answer instead. `opt` is optional and names the optimization levels the entry speaks at:
+
+```toml
+[[exec-exclude]]
+case = "single-exec/00220.c"
+issue = "https://github.com/tamnd/rucc/issues/344"
+why = "an inline definition in a glibc header is emitted, and the alias it calls is unresolved"
+outcome = "did not build"
+opt = ["1", "2", "3"]
+```
+
+The levels are `0`, `1`, `2`, `3`, `s` and `z`, written the way they are written after `-O`, and anything else fails the load. Leaving it out means every level, which is what almost every entry wants. It is `when` one axis over and it is reached for on the same terms: only where the case really does pass at some levels and fail at others, since without it such an entry is stale wherever the case passes and the sweep comes out red at half the levels whichever way it is written.
+
+The reason those entries exist at all is that the headers change underneath the levels. glibc defines a family of functions inline behind `__OPTIMIZE__ && !__OPTIMIZE_SIZE__`, so a program compiled at `-O2` includes code that is simply not there at `-O0` or at `-Os`, and a gap in that code is a gap at three levels out of six. An entry naming a level with a reason that is really about a pass rather than about a header is usually an entry that should be an issue instead.
+
 ### Recording the hash
 
 `rucc-compat fetch <name> --record` downloads the tarball, prints the sha256 it computed and unpacks nothing. Check that against what upstream publishes, then commit it. A hash recorded by a machine nobody checked is not a hash, it is a record of what that machine downloaded once, which is exactly what an interrupted download looks like.

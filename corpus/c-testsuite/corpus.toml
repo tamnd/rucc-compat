@@ -92,3 +92,22 @@ outcome = "did not build"
 cases = [
   "single-exec/00174.c",
 ]
+
+# The first entry here that is one level's rather than every level's, and the reason is in the
+# header rather than in the program. glibc's `wchar.h` defines `btowc` and `wctob` inline behind
+# `__USE_EXTERN_INLINES`, which is on when `__OPTIMIZE__` is defined and `__OPTIMIZE_SIZE__` is
+# not, so the only levels that reach the definitions at all are `-O1` through `-O3`. This program
+# includes `wchar.h` and it builds everywhere else.
+#
+# Two gaps meet in those definitions and either one alone would be enough to link. rucc emits the
+# inline definition of `btowc` as an external definition when GNU semantics say it is not one,
+# which is tamnd/rucc#344, and it drops the asm label that makes the alias inside it refer to the
+# symbol libc actually defines, which is tamnd/rucc#345.
+[[exec-exclude]]
+issue = "tamnd/rucc#344"
+why = "an inline definition in a glibc header is emitted, and the alias it calls is unresolved"
+outcome = "did not build"
+opt = ["1", "2", "3"]
+cases = [
+  "single-exec/00220.c",
+]
