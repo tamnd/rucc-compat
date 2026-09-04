@@ -85,15 +85,18 @@ cases = [
   "single-exec/00207.c",
 ]
 
-# A call with more than six integer arguments, where the seventh goes on the stack. Where a call
-# puts one is the convention rather than a rule, so this is not a missing name either. The second
-# case was in the floating point block until that whole block came out, and it is the one program
-# in the suite that prints six comparisons in a single call, so it stops here now instead.
+# The one program in the suite that calls a math function, and the argument is a constant. GCC
+# folds `sin(2)` where it stands and never names the library, so it links with no `-lm` and nothing
+# here ever needed one. rucc does not fold it and emits the call, which is a call to a name only
+# libm defines, and the link step here passes no libraries on any of the three routes. Passing them
+# is the missing piece and it is the harness's rather than the compiler's: a program that calls
+# `sin` is entitled to `-lm`, and folding it is an optimization this corpus should not be waiting
+# on. This case was in the floating point block until that came out, and in the stack argument
+# block after that, and it was never really either of them.
 [[exec-exclude]]
-issue = "tamnd/rucc#257"
-why = "nothing passes an argument on the stack"
+issue = "tamnd/rucc-compat#39"
+why = "the link step passes no libraries, so a call to libm has nowhere to resolve"
 outcome = "did not build"
 cases = [
-  "single-exec/00170.c",
   "single-exec/00174.c",
 ]
