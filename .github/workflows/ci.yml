@@ -214,9 +214,10 @@ jobs:
   # half of the compiler. Every job above can be green while the executable prints the wrong
   # answer, because every job above is a question about compiling.
   #
-  # Two corpora rather than four. tcc names no oracle, so there is nothing to decide a run by
-  # and `exec` passes it over. gcc-torture names one and has no exclusion list written yet,
-  # which is #30 and is nineteen hundred programs of work to write down.
+  # Two corpora rather than three. tcc names no oracle, so there is nothing to decide a run by
+  # and `exec` passes it over. gcc-torture has an oracle and a list now, and it runs nightly in
+  # the job below rather than here, because it is nineteen hundred programs and this job runs on
+  # every commit.
   #
   # x86-64 Linux only, because that is the one target rucc generates code for today. The second
   # target and the second host are M6, and the matrix here grows when they arrive.
@@ -287,9 +288,76 @@ jobs:
           path: results/
           if-no-files-found: ignore
 
+  # The torture suite, built and run. This is the same thing the job above does and it is a
+  # separate job for one reason: it is nineteen hundred programs against eighty, so it costs
+  # about a quarter of an hour a level where the job above costs a minute and a half. Paying
+  # that on every commit would make every pull request in this repository wait on it, and the
+  # suite fails when rucc changes rather than when this repository does.
+  #
+  # So it runs on the nightly schedule and on demand, and the `if` here is what keeps it off
+  # pull requests. This is the last of what tamnd/rucc#260 asks for.
+  #
+  # Six jobs, one a level, for the same reason the job above is twelve: the whole sweep costs
+  # one job's wall clock and a level that goes red says which one it was in its own name.
+  torture:
+    name: torture at -O${{ matrix.opt }}
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: quick
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        opt: ["0", "1", "2", "3", "s", "z"]
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: check out the compiler
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: tamnd/rucc
+          path: rucc
+      - uses: Swatinem/rust-cache@v2.9.2
+      - name: build the compiler
+        run: cargo build --release --bin rucc --manifest-path rucc/Cargo.toml
+      - name: build the harness
+        run: cargo build --release
+      # The reference is the arbiter and it is also more than that here. Five hundred of these
+      # programs are ones gcc itself refuses under the dialect this unit names, and `exec`
+      # decides those by asking the reference rather than by a list, so a run without it would
+      # be a run that called five hundred of rucc's refusals failures.
+      - name: the reference compiler
+        run: |
+          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          sudo apt-get install -y gcc-16
+          gcc-16 --version | head -1
+      - name: name the cache after the tarball
+        id: tarball
+        run: |
+          sha=$(sed -n 's/^sha256 = "\(.*\)"$/\1/p' corpus/gcc-torture/corpus.toml)
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+      - name: reuse the download if we have it
+        uses: actions/cache@v6.1.0
+        with:
+          path: vendor/gcc-torture/*.tar.*
+          key: corpus-gcc-torture-${{ steps.tarball.outputs.sha }}
+      - name: fetch the corpus
+        run: ./target/release/rucc-compat fetch gcc-torture
+      - name: build them and run them
+        run: |
+          ./target/release/rucc-compat exec gcc-torture \
+            --rucc rucc/target/release/rucc --cc gcc-16 --opt ${{ matrix.opt }} \
+            --machine github-ubuntu-24.04 --report
+      - name: keep the report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: torture-O${{ matrix.opt }}
+          path: results/
+          if-no-files-found: ignore
+
   # A single required check, so branch protection does not have to list every job above. The
-  # differential, the pipeline and the execution are deliberately not in this list: all three
-  # build rucc from its main branch, and a pull request here is about this repository.
+  # differential, the pipeline, the execution and the torture suite are deliberately not in this
+  # list: all four build rucc from its main branch, and a pull request here is about this
+  # repository.
   ci:
     name: ci
     if: always()
