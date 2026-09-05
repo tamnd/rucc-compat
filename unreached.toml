@@ -42,68 +42,13 @@ pattern = "(add.i64 (value.i64 x) (shl.i64 (value.i64 y) (iconst.i64 3)))"
 why = "the same, at a scale of eight"
 issue = "https://github.com/tamnd/rucc-compat/issues/59"
 
-# The float comparisons nothing spells. C has six relational and equality operators, which give
-# the six ordered predicates, and `!=` gives `une`, and `__builtin_isunordered` gives `uno`.
-# That is eight of the sixteen. The other eight are what a negation of one of the first eight
-# means, and the front end writes a negation as an exclusive or with one rather than as a
-# flipped predicate. The rules are correct and waiting for the peephole that flips it.
+# The narrow integer equality. C promotes both operands of a comparison to at least `int`, so
+# the ten conditions are unreachable below four bytes, with one exception: the front end
+# converts a value to a truth by comparing it against zero at the value's own width, and the
+# peephole turns the negation of one of those into an equality at that width. The one byte form
+# is reached. The two byte form is the same thing one type over.
 
 [[rule]]
-pattern = "(fcmp_ord.f32.i1 (value.f32 x) (value.f32 y))"
-why = "nothing in C spells an ordered test on its own, and the negation of __builtin_isunordered stays an exclusive or with one rather than becoming this predicate"
-issue = "https://github.com/tamnd/rucc/issues/379"
-
-[[rule]]
-pattern = "(fcmp_ueq.f32.i1 (value.f32 x) (value.f32 y))"
-why = "the unordered form of ==, which is what !(x != y) means and is written as an exclusive or instead"
-issue = "https://github.com/tamnd/rucc/issues/379"
-
-[[rule]]
-pattern = "(fcmp_ult.f32.i1 (value.f32 x) (value.f32 y))"
-why = "the unordered form of <, which is what !(x >= y) means and is written as an exclusive or instead"
-issue = "https://github.com/tamnd/rucc/issues/379"
-
-[[rule]]
-pattern = "(fcmp_ule.f32.i1 (value.f32 x) (value.f32 y))"
-why = "the unordered form of <=, which is what !(x > y) means and is written as an exclusive or instead"
-issue = "https://github.com/tamnd/rucc/issues/379"
-
-[[rule]]
-pattern = "(fcmp_ugt.f32.i1 (value.f32 x) (value.f32 y))"
-why = "the unordered form of >, which is what !(x <= y) means and is written as an exclusive or instead"
-issue = "https://github.com/tamnd/rucc/issues/379"
-
-[[rule]]
-pattern = "(fcmp_uge.f32.i1 (value.f32 x) (value.f32 y))"
-why = "the unordered form of >=, which is what !(x < y) means and is written as an exclusive or instead"
-issue = "https://github.com/tamnd/rucc/issues/379"
-
-[[rule]]
-pattern = "(fcmp_ord.f64.i1 (value.f64 x) (value.f64 y))"
-why = "the same as the single precision one, at double precision"
-issue = "https://github.com/tamnd/rucc/issues/379"
-
-[[rule]]
-pattern = "(fcmp_ueq.f64.i1 (value.f64 x) (value.f64 y))"
-why = "the same as the single precision one, at double precision"
-issue = "https://github.com/tamnd/rucc/issues/379"
-
-[[rule]]
-pattern = "(fcmp_ult.f64.i1 (value.f64 x) (value.f64 y))"
-why = "the same as the single precision one, at double precision"
-issue = "https://github.com/tamnd/rucc/issues/379"
-
-[[rule]]
-pattern = "(fcmp_ule.f64.i1 (value.f64 x) (value.f64 y))"
-why = "the same as the single precision one, at double precision"
-issue = "https://github.com/tamnd/rucc/issues/379"
-
-[[rule]]
-pattern = "(fcmp_ugt.f64.i1 (value.f64 x) (value.f64 y))"
-why = "the same as the single precision one, at double precision"
-issue = "https://github.com/tamnd/rucc/issues/379"
-
-[[rule]]
-pattern = "(fcmp_uge.f64.i1 (value.f64 x) (value.f64 y))"
-why = "the same as the single precision one, at double precision"
-issue = "https://github.com/tamnd/rucc/issues/379"
+pattern = "(icmp_eq.i1 (value.i16 x) (value.i16 y))"
+why = "no program in the corpus negates a truth test on a short, so the rule is reachable and unreached, and a hand written case fires it"
+issue = "https://github.com/tamnd/rucc-compat/issues/61"
