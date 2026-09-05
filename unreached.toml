@@ -1,0 +1,108 @@
+# The lowering rules in rucc that no corpus here reaches, and why each one cannot be reached.
+#
+# The other half of what `rucc-compat coverage` measures. The percentage says how much of the
+# rule set ran and says nothing about which part did not, so a rule set that loses coverage in
+# one place and gains it in another reads as no change. This says which rules, by name.
+#
+# `rucc-compat coverage <sweep> --unreached` fails three ways, and all three are things a
+# number would hide. A rule nothing fired with no entry here is a rule nobody has decided
+# anything about. An entry on a rule that now fires is a promise already kept and still being
+# made. An entry on a pattern the rule set does not contain is excusing nothing, and would go
+# on excusing nothing after somebody wrote a rule that needed it.
+#
+# An entry needs pattern, why and issue, and the file does not load without them. The pattern
+# identifies the rule rather than the file and line the coverage files carry, because a line
+# moves the moment somebody adds a rule above it and a list keyed on lines would need
+# rewriting on every unrelated change. A pattern moves when the rule is rewritten, and that is
+# exactly when somebody should read the entry again.
+#
+# Every entry is a promise to remove the entry. When the issue closes, the rule starts firing
+# and the run fails until the entry goes with it.
+#
+# This is about the union of the whole sweep. One corpus at one level reaches a fraction of
+# the rule set, so asking this of one is asking it to explain most of the compiler.
+
+# The scaled index address written out as arithmetic. A load of an array element does reach a
+# `leaq (%rdi,%rsi,8)`, from the addressing mode built for the load, and these three are the
+# same address computed on its own and handed to something other than a memory operand.
+
+[[rule]]
+pattern = "(add.i64 (value.i64 x) (shl.i64 (value.i64 y) (iconst.i64 1)))"
+why = "the shift amount is never an iconst.i64 in the IR that reaches selection, because a literal shift count in C is an int and nothing folds the widening of a constant, so the operand is a sext and no pattern can match one"
+issue = "https://github.com/tamnd/rucc/issues/378"
+
+[[rule]]
+pattern = "(add.i64 (value.i64 x) (shl.i64 (value.i64 y) (iconst.i64 2)))"
+why = "the same, at a scale of four"
+issue = "https://github.com/tamnd/rucc/issues/378"
+
+[[rule]]
+pattern = "(add.i64 (value.i64 x) (shl.i64 (value.i64 y) (iconst.i64 3)))"
+why = "the same, at a scale of eight"
+issue = "https://github.com/tamnd/rucc/issues/378"
+
+# The float comparisons nothing spells. C has six relational and equality operators, which give
+# the six ordered predicates, and `!=` gives `une`, and `__builtin_isunordered` gives `uno`.
+# That is eight of the sixteen. The other eight are what a negation of one of the first eight
+# means, and the front end writes a negation as an exclusive or with one rather than as a
+# flipped predicate. The rules are correct and waiting for the peephole that flips it.
+
+[[rule]]
+pattern = "(fcmp_ord.f32.i1 (value.f32 x) (value.f32 y))"
+why = "nothing in C spells an ordered test on its own, and the negation of __builtin_isunordered stays an exclusive or with one rather than becoming this predicate"
+issue = "https://github.com/tamnd/rucc/issues/379"
+
+[[rule]]
+pattern = "(fcmp_ueq.f32.i1 (value.f32 x) (value.f32 y))"
+why = "the unordered form of ==, which is what !(x != y) means and is written as an exclusive or instead"
+issue = "https://github.com/tamnd/rucc/issues/379"
+
+[[rule]]
+pattern = "(fcmp_ult.f32.i1 (value.f32 x) (value.f32 y))"
+why = "the unordered form of <, which is what !(x >= y) means and is written as an exclusive or instead"
+issue = "https://github.com/tamnd/rucc/issues/379"
+
+[[rule]]
+pattern = "(fcmp_ule.f32.i1 (value.f32 x) (value.f32 y))"
+why = "the unordered form of <=, which is what !(x > y) means and is written as an exclusive or instead"
+issue = "https://github.com/tamnd/rucc/issues/379"
+
+[[rule]]
+pattern = "(fcmp_ugt.f32.i1 (value.f32 x) (value.f32 y))"
+why = "the unordered form of >, which is what !(x <= y) means and is written as an exclusive or instead"
+issue = "https://github.com/tamnd/rucc/issues/379"
+
+[[rule]]
+pattern = "(fcmp_uge.f32.i1 (value.f32 x) (value.f32 y))"
+why = "the unordered form of >=, which is what !(x < y) means and is written as an exclusive or instead"
+issue = "https://github.com/tamnd/rucc/issues/379"
+
+[[rule]]
+pattern = "(fcmp_ord.f64.i1 (value.f64 x) (value.f64 y))"
+why = "the same as the single precision one, at double precision"
+issue = "https://github.com/tamnd/rucc/issues/379"
+
+[[rule]]
+pattern = "(fcmp_ueq.f64.i1 (value.f64 x) (value.f64 y))"
+why = "the same as the single precision one, at double precision"
+issue = "https://github.com/tamnd/rucc/issues/379"
+
+[[rule]]
+pattern = "(fcmp_ult.f64.i1 (value.f64 x) (value.f64 y))"
+why = "the same as the single precision one, at double precision"
+issue = "https://github.com/tamnd/rucc/issues/379"
+
+[[rule]]
+pattern = "(fcmp_ule.f64.i1 (value.f64 x) (value.f64 y))"
+why = "the same as the single precision one, at double precision"
+issue = "https://github.com/tamnd/rucc/issues/379"
+
+[[rule]]
+pattern = "(fcmp_ugt.f64.i1 (value.f64 x) (value.f64 y))"
+why = "the same as the single precision one, at double precision"
+issue = "https://github.com/tamnd/rucc/issues/379"
+
+[[rule]]
+pattern = "(fcmp_uge.f64.i1 (value.f64 x) (value.f64 y))"
+why = "the same as the single precision one, at double precision"
+issue = "https://github.com/tamnd/rucc/issues/379"

@@ -139,6 +139,55 @@ impl Marks {
         Verdict::At
     }
 
+    /// What a list of rules the corpus does not reach has to say about this union.
+    ///
+    /// Three ways an entry or the absence of one is wrong, and all three are failures, which is
+    /// where this parts company with the floor above. A floor that is behind under-claims and hides
+    /// nothing. A list that is wrong hides something in every direction: an unfired rule with no
+    /// entry is a rule nobody has decided anything about, an entry on a rule that now fires is a
+    /// promise that has already been kept and is still being made, and an entry naming a pattern
+    /// the rule set does not contain is excusing nothing at all and would go on excusing nothing
+    /// after somebody wrote a rule that needed excusing.
+    ///
+    /// Every line it gives back is a failure. Nothing back is the answer this exists to produce:
+    /// every rule in the set either fired or is written down.
+    ///
+    /// This is only true of a union over the whole sweep. One run at one level reaches far less
+    /// than all of it, so a caller that has part of the picture wants the floor and not this.
+    #[must_use]
+    pub fn against_list(&self, list: &[Unreached]) -> Vec<String> {
+        let mut said = Vec::new();
+        for rule in self.unused() {
+            if !list.iter().any(|entry| entry.pattern == rule.pattern) {
+                said.push(format!(
+                    "nothing fired {} `{}` and no entry in unreached.toml says why, so either the \
+                     corpus is missing a case or the rule is one nothing needs",
+                    rule.at, rule.pattern
+                ));
+            }
+        }
+        for entry in list {
+            let mut named =
+                self.rules.iter().filter(|rule| rule.pattern == entry.pattern).peekable();
+            if named.peek().is_none() {
+                said.push(format!(
+                    "unreached.toml excuses `{}` and no rule in {} is written at it, so the entry \
+                     is stale and {} may be about something else now",
+                    entry.pattern, self.source, entry.issue
+                ));
+                continue;
+            }
+            for rule in named.filter(|rule| rule.fired) {
+                said.push(format!(
+                    "{} `{}` fired, so the unreached.toml entry saying {} is stale and {} may be \
+                     closed",
+                    rule.at, rule.pattern, entry.why, entry.issue
+                ));
+            }
+        }
+        said
+    }
+
     /// Takes in what another set of builds reached.
     ///
     /// # Errors
@@ -358,6 +407,55 @@ fn walk(dir: &Path, found: &mut Vec<PathBuf>) -> Result<(), String> {
     Ok(())
 }
 
+/// A rule the corpus does not reach, why it cannot, and the issue that changes that.
+///
+/// The other half of the answer, and the half a percentage cannot give. A number says how much of
+/// the rule set ran and says nothing about which part did not, so a rule set that loses coverage in
+/// one place and gains it in another reads as no change at all. A list says which rules, by name,
+/// and a rule leaving or joining it is a diff somebody writes and somebody else reads.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Unreached {
+    /// The pattern the rule is written at, which is what identifies it here.
+    ///
+    /// The pattern rather than the file and the line, even though a line is what a coverage file
+    /// carries and what a report prints. A line moves the moment somebody adds a rule above it, and
+    /// a list keyed on lines would need rewriting on every unrelated change to the rule file, which
+    /// is how a list stops being read. A pattern moves when the rule is rewritten, and a rewritten
+    /// rule is exactly the case where somebody should look at the entry again.
+    pub pattern: String,
+    /// Why nothing in the corpus reaches it.
+    pub why: String,
+    /// The issue that makes it reachable, since every entry here is a promise to remove the entry.
+    pub issue: String,
+}
+
+/// Reads `unreached.toml`.
+///
+/// # Errors
+///
+/// When an entry is missing any of its three fields. That is the point of the file: an entry with
+/// no reason and no issue on it does not load, so excusing a rule nothing reaches has to be
+/// something somebody wrote down and somebody else read.
+pub fn unreached(repo: &Path) -> Result<Vec<Unreached>, String> {
+    let path = repo.join("unreached.toml");
+    let text = match fs::read_to_string(&path) {
+        // No file is the same as an empty list, which says every rule should fire and is the right
+        // thing for a checkout that has not decided otherwise.
+        Err(_) => return Ok(Vec::new()),
+        Ok(text) => text,
+    };
+    let doc = crate::toml::parse("unreached.toml", &text).map_err(|e| e.message)?;
+    let mut list = Vec::new();
+    for fields in doc.named("rule") {
+        list.push(Unreached {
+            pattern: fields.need("pattern", "unreached.toml").map_err(|e| e.message)?.to_owned(),
+            why: fields.need("why", "unreached.toml").map_err(|e| e.message)?.to_owned(),
+            issue: fields.need("issue", "unreached.toml").map_err(|e| e.message)?.to_owned(),
+        });
+    }
+    Ok(list)
+}
+
 /// What to call the file one run of the compiler writes, under the directory it builds in.
 ///
 /// One per invocation rather than one per case, because a case built through assembly runs the
@@ -540,6 +638,68 @@ unused rules/x86-64.rules:12 (add.i32 x y)
         };
         assert!(why.contains("floor of 71.1"), "{why}");
         assert!(why.contains("raising to 100.0"), "{why}");
+    }
+
+    /// An entry for every rule nothing fired and nothing else, which is what a hundred percent
+    /// looks like once the part that cannot be reached is written down instead of counted.
+    #[test]
+    fn a_rule_nothing_fired_passes_when_an_entry_says_why_and_fails_when_none_does() {
+        let marks = parse(TWO, "a.cov").unwrap();
+        let said = marks.against_list(&[]);
+        assert_eq!(said.len(), 1, "{said:?}");
+        assert!(said[0].contains("(sub.i32 x y)"), "{}", said[0]);
+        assert!(said[0].contains("unreached.toml"), "{}", said[0]);
+
+        let excused = Unreached {
+            pattern: "(sub.i32 x y)".to_owned(),
+            why: "nothing in the corpus subtracts".to_owned(),
+            issue: "https://github.com/tamnd/rucc/issues/1".to_owned(),
+        };
+        assert!(marks.against_list(&[excused]).is_empty());
+    }
+
+    /// The staleness rule, in both of the directions a list can go stale. An entry on a rule that
+    /// now fires is a promise already kept and still being made, and an entry on a pattern the
+    /// rule set does not have is excusing nothing and would go on doing so.
+    #[test]
+    fn an_entry_that_has_stopped_being_true_fails_either_way_round() {
+        let marks = parse(TWO, "a.cov").unwrap();
+        let entry = |pattern: &str| Unreached {
+            pattern: pattern.to_owned(),
+            why: "it is the sort of thing nobody writes".to_owned(),
+            issue: "https://github.com/tamnd/rucc/issues/1".to_owned(),
+        };
+
+        // The add fired, so excusing it is stale. The sub is still unexcused, so that is the
+        // second line, and both are failures.
+        let said = marks.against_list(&[entry("(add.i32 x y)")]);
+        assert_eq!(said.len(), 2, "{said:?}");
+        assert!(
+            said.iter().any(|line| line.contains("fired, so the unreached.toml entry")),
+            "{said:?}"
+        );
+
+        let said = marks.against_list(&[entry("(sub.i32 x y)"), entry("(mul.i32 x y)")]);
+        assert_eq!(said.len(), 1, "{said:?}");
+        assert!(said[0].contains("no rule in rules/x86-64.rules is written at it"), "{}", said[0]);
+    }
+
+    /// The checked in list, read against the rule set it is about. Nothing here can say whether
+    /// the entries are true, since that takes a sweep, and it can say that the file loads and that
+    /// every entry carries the two things that make it readable.
+    #[test]
+    fn every_entry_in_the_checked_in_list_says_why_and_names_an_issue() {
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let list = unreached(&repo).expect("the checked in list loads");
+        assert!(!list.is_empty(), "there are rules the corpus does not reach and they are listed");
+        for entry in &list {
+            assert!(entry.pattern.starts_with('('), "a pattern is an application: {entry:?}");
+            assert!(entry.why.len() > 20, "a reason nobody can read is not a reason: {entry:?}");
+            assert!(
+                entry.issue.starts_with("https://github.com/tamnd/rucc/issues/"),
+                "an entry is a promise to remove the entry, so it names the issue: {entry:?}"
+            );
+        }
     }
 
     #[test]

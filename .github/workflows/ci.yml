@@ -360,28 +360,36 @@ jobs:
           path: results/
           if-no-files-found: ignore
 
-  # What the sweep reached of the compiler's lowering rule set, and the floor under that number.
+  # What the sweep reached of the compiler's lowering rule set, checked against the list of what
+  # it cannot reach.
   #
-  # This is the second of the three stages tamnd/rucc#261 asks for. The first was reporting the
-  # number so that its movement is visible, this is a threshold so it cannot fall, and a hundred
-  # percent with a checked in list of what the corpus cannot reach comes after that.
+  # This is the last of the three stages tamnd/rucc#261 asks for. The first was reporting the
+  # number so that its movement is visible, the second was a threshold so it could not fall, and
+  # this is every rule either fired or written down in `unreached.toml` with the reason and the
+  # issue that changes it.
   #
-  # It is one job rather than a step in each of the eighteen above because the number is about
+  # `--unreached` is what makes that a check rather than a number, and it fails three ways a
+  # percentage would hide: a rule nothing fired that no entry explains, an entry on a rule that
+  # now fires, and an entry on a pattern the rule set does not contain. So the list cannot go
+  # stale in either direction, which is the rule every exclusion list in this repository is kept
+  # under.
+  #
+  # `--floor` stays alongside it because the two say different things. The list is about which
+  # rules and the floor is about how many, and a change that adds a rule to the set and an entry
+  # to the list in the same breath satisfies the list and moves the number. The floor is written
+  # here rather than in a file of its own so that raising it is a change to the workflow that
+  # measured it, and when the number leaves it behind the job says so and passes, since a floor
+  # that is behind hides nothing.
+  #
+  # It is one job rather than a step in each of the eighteen above because the answer is about
   # the sweep and not about one corpus at one level. Those jobs are eighteen machines that never
   # meet, so each writes its own file and this one unions them, which is the only place the whole
-  # answer exists.
-  #
-  # On the schedule and on demand rather than on every commit, because the torture suite is
-  # eighteen of the nineteen hundred programs behind the number and it runs on the schedule. A
-  # floor over the two small corpora alone would be a different and much lower number, and two
-  # floors that mean different things is worse than one that is checked once a day.
-  #
-  # The floor is written here rather than in a file of its own so that raising it is a change to
-  # the workflow that measured it, reviewed in the same place as the corpus changes that earn it.
-  # When the number leaves it behind the job says so and passes, since a floor that is behind
-  # hides nothing.
+  # answer exists. That is also why it is on the schedule and on demand rather than on every
+  # commit: the torture suite is eighteen of the nineteen hundred programs behind the number and
+  # it runs on the schedule, and asking the same question of the two small corpora alone would
+  # report most of the rule set as unexplained.
   floor:
-    name: lowering rule coverage floor
+    name: lowering rule coverage
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     needs: [exec, torture]
     runs-on: ubuntu-24.04
@@ -397,8 +405,8 @@ jobs:
         uses: actions/download-artifact@v4.3.0
         with:
           path: sweep
-      - name: union it and check the floor
-        run: ./target/release/rucc-compat coverage sweep --report --floor 71.1
+      - name: union it and check every rule
+        run: ./target/release/rucc-compat coverage sweep --report --unreached --floor 92.6
       - name: keep the report
         if: always()
         uses: actions/upload-artifact@v4.6.2

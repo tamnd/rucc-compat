@@ -20,7 +20,7 @@ usage:
   rucc-compat run [corpus...] [options]
   rucc-compat check [corpus...] [options]
   rucc-compat exec [corpus...] [options]
-  rucc-compat coverage [file or directory...] [--report] [--floor PERCENT]
+  rucc-compat coverage [file or directory...] [--report] [--floor PERCENT] [--unreached]
 
 commands:
   list             what corpora there are and whether they are ready to run
@@ -48,6 +48,7 @@ options:
   --report         write results/<corpus>.md as well as printing the summary
   --record         fetch only: print the sha256 of the download and unpack nothing
   --floor PERCENT  coverage only: fail when less than that much of the rule set fired
+  --unreached      coverage only: check every rule nothing fired against unreached.toml
 
 Naming no corpus means all of them. The exit status is 1 when anything failed.
 
@@ -70,6 +71,13 @@ on the command line, so it means something only when that union is the whole swe
 was written for, and a floor asked of one corpus at one level will be under it and say so. A
 floor that the number has left a whole point or more behind is reported and does not fail,
 since a floor that is behind hides nothing.
+
+`--unreached` is the stronger form of the same question and the one CI asks. Every rule
+nothing fired has to have an entry in `unreached.toml` giving the reason and the issue that
+makes it reachable, and every entry has to be about a rule that exists and that nothing fired,
+so the list goes stale in neither direction. It wants the whole sweep for the same reason the
+floor does, and it wants it more, since one level on its own leaves most of the rule set
+untouched and would report most of it as unexplained.
 ";
 
 fn main() -> ExitCode {
@@ -435,12 +443,14 @@ fn exec_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, S
 fn coverage_of(repo: &Path, args: &[String]) -> Result<ExitCode, String> {
     let mut report = false;
     let mut floor = None;
+    let mut listed = false;
     let mut given = Vec::new();
     let mut at = 0;
     while at < args.len() {
         let arg = args[at].as_str();
         match arg {
             "--report" => report = true,
+            "--unreached" => listed = true,
             "--floor" => {
                 let text = value(args, &mut at, arg)?;
                 let percent: f64 =
@@ -486,22 +496,29 @@ fn coverage_of(repo: &Path, args: &[String]) -> Result<ExitCode, String> {
         fs::write(&path, all.markdown()).map_err(|e| e.to_string())?;
         println!("  wrote {}", path.display());
     }
-    // The floor is checked last, so that the list of rules nothing reached is on the terminal
-    // before the line saying the number is too low. Somebody reading a failure wants to know
-    // which rules stopped firing, and that list is the answer.
-    let Some(percent) = floor else {
-        return Ok(ExitCode::SUCCESS);
-    };
-    match all.against(percent) {
-        Verdict::Under(why) => {
-            println!("  {why}");
-            Ok(ExitCode::FAILURE)
+    // Both checks run last and in this order, so that the list of rules nothing reached is on the
+    // terminal before anything saying the number is wrong. Somebody reading a failure wants to
+    // know which rules stopped firing, and that list is the answer.
+    let mut failed = false;
+    if listed {
+        for line in all.against_list(&coverage::unreached(repo)?) {
+            println!("  {line}");
+            failed = true;
         }
-        Verdict::Over(why) => {
-            println!("  {why}");
-            Ok(ExitCode::SUCCESS)
+    }
+    if let Some(percent) = floor {
+        match all.against(percent) {
+            Verdict::Under(why) => {
+                println!("  {why}");
+                failed = true;
+            }
+            Verdict::Over(why) => println!("  {why}"),
+            Verdict::At => {}
         }
-        Verdict::At => Ok(ExitCode::SUCCESS),
+    }
+    match failed {
+        true => Ok(ExitCode::FAILURE),
+        false => Ok(ExitCode::SUCCESS),
     }
 }
 
