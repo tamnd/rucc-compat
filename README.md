@@ -152,4 +152,4 @@ CI is one Ubuntu image with one libc, one linker and one gcc, and the two things
 
 ## License
 
-The harness is MIT or Apache-2.0, at your option. Vendored code keeps its own license, which travels with the tree it came from and is named in the manifest that fetched it.
+The harness is Apache-2.0, in the file [LICENSE-APACHE](LICENSE-APACHE). Vendored code keeps its own license, which travels with the tree it came from and is named in the manifest that fetched it.
