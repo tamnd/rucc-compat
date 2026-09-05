@@ -340,6 +340,13 @@ pub struct Report {
     /// Empty unless the whole corpus ran, since a filtered run has no opinion about a case it
     /// did not reach.
     pub unmatched: Vec<Exclusion>,
+    /// The files a unit's `skip` array took out before anything ran, named as cases would be.
+    ///
+    /// These are not outcomes and they are not failures. They are the difference between the
+    /// number of programs a suite holds and the number this run had an opinion about, and a
+    /// report that leaves them out is one whose totals cannot be reconciled against the suite.
+    /// Empty unless the whole corpus ran.
+    pub never: Vec<String>,
     /// What the compiler under test says it is.
     pub rucc: String,
     /// What the reference says it is, since a number measured against gcc 13 and one measured
@@ -383,6 +390,35 @@ impl Report {
         self.outcomes.iter().filter(|o| o.is_failure()).count() + self.stale()
     }
 
+    /// One word per case rather than one per run, in the order the cases were run.
+    ///
+    /// A case is three runs and a summary in runs cannot be held against a suite counted in
+    /// programs. The word is `passed` when every path passed and otherwise the first path that
+    /// did not, which is the same rule the rerun ledger uses: a case that passes one way and
+    /// fails another has failed, and calling it half a pass would be inventing a ninth word.
+    #[must_use]
+    pub fn by_case(&self) -> Vec<(&str, &'static str)> {
+        let mut out: Vec<(&str, &'static str)> = Vec::new();
+        for outcome in &self.outcomes {
+            let word = outcome.word();
+            match out.last_mut() {
+                Some(row) if row.0 == outcome.case => {
+                    if row.1 == "passed" {
+                        row.1 = word;
+                    }
+                }
+                _ => out.push((outcome.case.as_str(), word)),
+            }
+        }
+        out
+    }
+
+    /// How many cases came out as this word, counted the way [`Report::by_case`] counts.
+    #[must_use]
+    pub fn each(&self, word: &str) -> usize {
+        self.by_case().into_iter().filter(|(_, w)| *w == word).count()
+    }
+
     /// Every one of the eight counts, in order, including the ones that are zero.
     ///
     /// The zeroes are there on purpose. A report that prints only the outcomes it saw is a
@@ -394,16 +430,22 @@ impl Report {
     }
 
     /// One line, for the terminal.
+    ///
+    /// The count of files the manifest never offered is on the end rather than left to the
+    /// report, because it is the one number here that says how much of the suite this line is
+    /// about, and a reader who only ever sees this line should not have to assume it is all of
+    /// it.
     #[must_use]
     pub fn summary(&self) -> String {
         let counts: Vec<String> =
             self.split().into_iter().map(|(word, n)| format!("{n} {word}")).collect();
         format!(
-            "{}: {} runs, {}, {} stale",
+            "{}: {} runs, {}, {} stale, {} never offered",
             self.corpus,
             self.outcomes.len(),
             counts.join(", "),
-            self.stale()
+            self.stale(),
+            self.never.len()
         )
     }
 }
@@ -428,7 +470,8 @@ pub fn run(
             ),
         });
     };
-    let all = differ::cases(repo, corpus, scratch)?;
+    let found = differ::cases(repo, corpus, scratch)?;
+    let all = found.cases;
     let cases: Vec<Case> = match &settings.unit {
         Some(unit) => all.iter().filter(|c| c.unit == *unit).cloned().collect(),
         None => all.clone(),
@@ -538,11 +581,18 @@ pub fn run(
             .collect(),
         false => Vec::new(),
     };
+    // Only on a whole run, for the same reason `unmatched` is. A run narrowed to twenty cases
+    // has no business saying how much of the corpus the manifest takes out.
+    let never = match settings.is_whole() {
+        true => found.never,
+        false => Vec::new(),
+    };
     Ok(Report {
         corpus: corpus.name.clone(),
         oracle,
         outcomes,
         unmatched,
+        never,
         rucc: version(&settings.rucc),
         cc: version(&settings.cc),
         machine: settings.machine.clone().unwrap_or_else(platform),
@@ -945,6 +995,27 @@ pub fn markdown(report: &Report, settings: &Settings) -> String {
     }
     let _ = writeln!(out);
 
+    // The counts above are per run, and a suite is advertised in programs. This is the bridge
+    // between the two, and it is the section an audit of the corpus reads first: a run that
+    // says nothing is failing while three quarters of the files were never offered to the
+    // compiler is a run whose headline is true and whose meaning is not.
+    let rows = report.by_case();
+    let _ = writeln!(out, "## Census\n");
+    let _ = writeln!(out, "| files | count |");
+    let _ = writeln!(out, "| --- | --- |");
+    let _ = writeln!(out, "| in the corpus | {} |", rows.len() + report.never.len());
+    let _ = writeln!(out, "| never offered, a `skip` in the manifest | {} |", report.never.len());
+    let _ = writeln!(out, "| offered | {} |", rows.len());
+    let _ = writeln!(
+        out,
+        "| skipped, the reference cannot pass them either | {} |",
+        report.each("skipped")
+    );
+    let _ =
+        writeln!(out, "| excluded, an entry admits to the failure | {} |", report.each("excluded"));
+    let _ = writeln!(out, "| passed on every path | {} |", report.each("passed"));
+    let _ = writeln!(out);
+
     let failing: Vec<&Outcome> = report.outcomes.iter().filter(|o| o.is_failure()).collect();
     if failing.is_empty() {
         let _ = writeln!(out, "Nothing is failing that is not excluded.\n");
@@ -984,20 +1055,59 @@ pub fn markdown(report: &Report, settings: &Settings) -> String {
         let _ = writeln!(out);
     }
 
-    let excluded: Vec<&Outcome> = report.outcomes.iter().filter(|o| o.is_covered()).collect();
+    // One row per case rather than one per path, because an exclusion is about a case and three
+    // identical rows for one entry is three times the reading for none of the information.
+    let mut excluded: Vec<&Outcome> = Vec::new();
+    for outcome in report.outcomes.iter().filter(|o| o.is_covered()) {
+        if excluded.last().is_none_or(|last| last.case != outcome.case) {
+            excluded.push(outcome);
+        }
+    }
     if !excluded.is_empty() {
         let _ = writeln!(out, "## Still excluded\n");
-        let _ = writeln!(out, "| case | path | outcome | issue |");
+        let _ = writeln!(out, "| case | outcome | issue | why |");
         let _ = writeln!(out, "| --- | --- | --- | --- |");
         for outcome in excluded {
-            let issue = outcome.excused.as_ref().map(|e| e.issue.clone()).unwrap_or_default();
-            let _ = writeln!(
-                out,
-                "| {} | {} | {} | {issue} |",
-                outcome.case,
-                outcome.route.word(),
-                outcome.status.word()
-            );
+            let (issue, why) = match &outcome.excused {
+                Some(entry) => (entry.issue.clone(), entry.why.replace('|', "\\|")),
+                None => (String::new(), String::new()),
+            };
+            let _ =
+                writeln!(out, "| {} | {} | {issue} | {why} |", outcome.case, outcome.status.word());
+        }
+        let _ = writeln!(out);
+    }
+
+    // The two sections nothing here is blamed for, and the reason they are printed at all. Both
+    // are subtractions from the suite, and a subtraction nobody can see is a subtraction nobody
+    // can argue with. A `skip` that is really an exclusion, or a reference that has started
+    // refusing files it used to take, are both visible here and invisible in the counts.
+    let mut skipped: Vec<&Outcome> = Vec::new();
+    for outcome in report.outcomes.iter().filter(|o| o.word() == "skipped") {
+        if skipped.last().is_none_or(|last| last.case != outcome.case) {
+            skipped.push(outcome);
+        }
+    }
+    if !skipped.is_empty() {
+        let _ = writeln!(out, "## Skipped, because the reference cannot pass them either\n");
+        let _ = writeln!(out, "| case | what the reference did |");
+        let _ = writeln!(out, "| --- | --- |");
+        for outcome in skipped {
+            let why = outcome.status.why().replace('|', "\\|").replace('\n', " ");
+            let _ = writeln!(out, "| {} | {why} |", outcome.case);
+        }
+        let _ = writeln!(out);
+    }
+
+    if !report.never.is_empty() {
+        let _ = writeln!(out, "## Never offered, because a `skip` in the manifest names them\n");
+        let _ = writeln!(
+            out,
+            "{} files, and the manifest says beside each entry why the reference refuses it.\n",
+            report.never.len()
+        );
+        for name in &report.never {
+            let _ = writeln!(out, "- `{name}`");
         }
         let _ = writeln!(out);
     }
@@ -1059,6 +1169,7 @@ mod tests {
             oracle: Oracle::SelfCheck,
             outcomes,
             unmatched: Vec::new(),
+            never: Vec::new(),
             rucc: "rucc 0.3.7".to_owned(),
             cc: "gcc (GCC) 16.2.0".to_owned(),
             machine: "linux x86_64".to_owned(),
@@ -1237,6 +1348,64 @@ mod tests {
         assert_eq!(split[0], ("passed", 1));
         assert_eq!(split[1], ("wrong answer", 1));
         assert_eq!(split[2], ("crashed", 0));
+    }
+
+    /// A case is three runs and a suite is counted in programs, so the two have to be
+    /// reconcilable or a summary of one cannot be held against the other.
+    #[test]
+    fn a_case_is_counted_once_and_by_the_worst_thing_that_happened_to_it() {
+        let named = |case: &str, route: Route, status: Status| Outcome {
+            case: case.to_owned(),
+            route,
+            status,
+            excused: None,
+        };
+        let done = report(vec![
+            named("u/a.c", Route::Assembly, Status::Passed),
+            named("u/a.c", Route::Object, Status::Passed),
+            named("u/a.c", Route::Driver, Status::Passed),
+            // Passes one way and not another, which is a failure of the case and is the whole
+            // reason the three paths are run rather than one.
+            named("u/b.c", Route::Assembly, Status::Passed),
+            named("u/b.c", Route::Object, Status::Wrong { why: String::new() }),
+            named("u/b.c", Route::Driver, Status::Passed),
+            named("u/c.c", Route::Assembly, Status::Skipped { why: "gcc said no".to_owned() }),
+        ]);
+        assert_eq!(
+            done.by_case(),
+            [("u/a.c", "passed"), ("u/b.c", "wrong answer"), ("u/c.c", "skipped")]
+        );
+        assert_eq!(done.each("passed"), 1);
+        assert_eq!(done.each("wrong answer"), 1);
+        assert_eq!(done.each("skipped"), 1);
+        // The run count is still per run, so the two numbers say different things and both are
+        // in the report.
+        assert_eq!(done.count("passed"), 5);
+    }
+
+    /// Two of the three ways a case does not run are decided outside the counts, and a report
+    /// that leaves them out is one whose total cannot be held against the size of the suite.
+    #[test]
+    fn the_report_says_what_was_skipped_and_what_was_never_offered_at_all() {
+        let mut done = report(vec![
+            outcome(Status::Skipped { why: "gcc refused it".to_owned() }, None),
+            Outcome {
+                case: "u/b.c".to_owned(),
+                route: Route::Object,
+                status: Status::Crashed { why: "abort".to_owned() },
+                excused: Some(excusing("crashed")),
+            },
+        ]);
+        done.never = vec!["u/old.c".to_owned(), "u/older.c".to_owned()];
+        let text = markdown(&done, &Settings::default());
+        assert!(text.contains("| in the corpus | 4 |"), "{text}");
+        assert!(text.contains("| never offered, a `skip` in the manifest | 2 |"), "{text}");
+        assert!(text.contains("| offered | 2 |"), "{text}");
+        assert!(text.contains("gcc refused it"), "{text}");
+        assert!(text.contains("`u/old.c`"), "{text}");
+        // The reason an exclusion gives is in the table beside it, so the list of what is still
+        // wrong can be read without opening a manifest.
+        assert!(text.contains("it does not work yet"), "{text}");
     }
 
     #[test]

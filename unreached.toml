@@ -24,22 +24,23 @@
 
 # The scaled index address written out as arithmetic. A load of an array element does reach a
 # `leaq (%rdi,%rsi,8)`, from the addressing mode built for the load, and these three are the
-# same address computed on its own and handed to something other than a memory operand.
+# same address computed on its own and handed to something other than a memory operand. They
+# are reachable: a hand written case fires all three. Nothing in the corpus writes one.
 
 [[rule]]
 pattern = "(add.i64 (value.i64 x) (shl.i64 (value.i64 y) (iconst.i64 1)))"
-why = "the shift amount is never an iconst.i64 in the IR that reaches selection, because a literal shift count in C is an int and nothing folds the widening of a constant, so the operand is a sext and no pattern can match one"
-issue = "https://github.com/tamnd/rucc/issues/378"
+why = "no program in the corpus takes a scaled index address as a value rather than as a memory operand, so the rule is reachable and unreached, and a hand written case fires it"
+issue = "https://github.com/tamnd/rucc-compat/issues/59"
 
 [[rule]]
 pattern = "(add.i64 (value.i64 x) (shl.i64 (value.i64 y) (iconst.i64 2)))"
 why = "the same, at a scale of four"
-issue = "https://github.com/tamnd/rucc/issues/378"
+issue = "https://github.com/tamnd/rucc-compat/issues/59"
 
 [[rule]]
 pattern = "(add.i64 (value.i64 x) (shl.i64 (value.i64 y) (iconst.i64 3)))"
 why = "the same, at a scale of eight"
-issue = "https://github.com/tamnd/rucc/issues/378"
+issue = "https://github.com/tamnd/rucc-compat/issues/59"
 
 # The float comparisons nothing spells. C has six relational and equality operators, which give
 # the six ordered predicates, and `!=` gives `une`, and `__builtin_isunordered` gives `uno`.

@@ -217,7 +217,7 @@ pub fn run(
     register: &Register,
     scratch: &Path,
 ) -> Result<Report, Error> {
-    let cases = cases(repo, corpus, scratch)?;
+    let cases = cases(repo, corpus, scratch)?.cases;
     let cases: Vec<Case> = match &settings.unit {
         Some(unit) => cases.into_iter().filter(|c| c.unit == *unit).collect(),
         None => cases,
@@ -619,6 +619,21 @@ pub fn system_includes(cc: &Path) -> Vec<String> {
     flags
 }
 
+/// What walking a corpus tree came to: the cases, and the files that never became one.
+///
+/// The second list is the point. A summary that counts only what ran cannot be reconciled
+/// against the number of programs a suite is advertised to hold, and the difference between
+/// those two numbers is exactly the thing an audit of a corpus wants to see. It is kept here
+/// rather than derived from the manifest afterwards because a `skip` entry may name a
+/// directory, and the length of an array is not the size of the hole it makes.
+#[derive(Debug, Clone, Default)]
+pub struct Found {
+    /// Every case, in name order.
+    pub cases: Vec<Case>,
+    /// Every file a unit's `skip` array took out, named the way a case would have been.
+    pub never: Vec<String>,
+}
+
 /// Works out everything a corpus asks to be preprocessed.
 ///
 /// Header units get a file of one line each, written into `scratch`, because a header set is
@@ -628,7 +643,7 @@ pub fn system_includes(cc: &Path) -> Vec<String> {
 /// # Errors
 ///
 /// When the tree is missing, or a unit names a directory that is not there.
-pub fn cases(repo: &Path, corpus: &Corpus, scratch: &Path) -> Result<Vec<Case>, Error> {
+pub fn cases(repo: &Path, corpus: &Corpus, scratch: &Path) -> Result<Found, Error> {
     let tree = corpus.tree(repo);
     if !tree.is_dir() {
         return Err(Error {
@@ -641,18 +656,19 @@ pub fn cases(repo: &Path, corpus: &Corpus, scratch: &Path) -> Result<Vec<Case>, 
     }
     fs::create_dir_all(scratch)
         .map_err(|e| Error { message: format!("{}: {e}", scratch.display()) })?;
-    let mut cases = Vec::new();
+    let mut found = Found::default();
     for unit in &corpus.units {
         match unit.kind {
-            UnitKind::Source => sources(&tree, unit, &mut cases)?,
-            UnitKind::Headers => headers(&tree, unit, scratch, &mut cases)?,
+            UnitKind::Source => sources(&tree, unit, &mut found)?,
+            UnitKind::Headers => headers(&tree, unit, scratch, &mut found)?,
         }
     }
-    cases.sort_by(|a, b| a.name.cmp(&b.name));
-    Ok(cases)
+    found.cases.sort_by(|a, b| a.name.cmp(&b.name));
+    found.never.sort();
+    Ok(found)
 }
 
-fn sources(tree: &Path, unit: &Unit, cases: &mut Vec<Case>) -> Result<(), Error> {
+fn sources(tree: &Path, unit: &Unit, out: &mut Found) -> Result<(), Error> {
     let flags = absolute(&unit.flags, tree);
     // A file the manifest lists is named from the tree, and a file found by walking is named
     // from the directory the unit already names, so that a case is called `single-exec/00001.c`
@@ -665,15 +681,17 @@ fn sources(tree: &Path, unit: &Unit, cases: &mut Vec<Case>) -> Result<(), Error>
     if let Some(dir) = &unit.dir {
         let root = resolve(dir, tree);
         let mut walked = Vec::new();
-        walk(&root, &root, &unit.skip, ".c", &mut walked)?;
+        let mut never = Vec::new();
+        walk(&root, &root, &unit.skip, ".c", &mut walked, &mut never)?;
         walked.sort();
         found.extend(walked.into_iter().map(|name| {
             let path = root.join(&name);
             (name, path)
         }));
+        out.never.extend(never.into_iter().map(|name| format!("{}/{name}", unit.name)));
     }
     for (name, file) in found {
-        cases.push(Case {
+        out.cases.push(Case {
             unit: unit.name.clone(),
             name: format!("{}/{name}", unit.name),
             file,
@@ -684,21 +702,23 @@ fn sources(tree: &Path, unit: &Unit, cases: &mut Vec<Case>) -> Result<(), Error>
     Ok(())
 }
 
-fn headers(tree: &Path, unit: &Unit, scratch: &Path, cases: &mut Vec<Case>) -> Result<(), Error> {
+fn headers(tree: &Path, unit: &Unit, scratch: &Path, out: &mut Found) -> Result<(), Error> {
     let flags = absolute(&unit.flags, tree);
     let mut names = unit.files.clone();
     if let Some(dir) = &unit.dir {
         let root = resolve(dir, tree);
         let mut found = Vec::new();
-        walk(&root, &root, &unit.skip, ".h", &mut found)?;
+        let mut never = Vec::new();
+        walk(&root, &root, &unit.skip, ".h", &mut found, &mut never)?;
         found.sort();
         names.extend(found);
+        out.never.extend(never.into_iter().map(|name| format!("{}/{name}", unit.name)));
     }
     for name in names {
         let stub = scratch.join(format!("{}_{}.c", unit.name, name.replace(['/', '.', '-'], "_")));
         fs::write(&stub, format!("#include <{name}>\n"))
             .map_err(|e| Error { message: format!("{}: {e}", stub.display()) })?;
-        cases.push(Case {
+        out.cases.push(Case {
             unit: unit.name.clone(),
             name: format!("{}/{name}", unit.name),
             file: stub,
@@ -710,12 +730,17 @@ fn headers(tree: &Path, unit: &Unit, scratch: &Path, cases: &mut Vec<Case>) -> R
 }
 
 /// Every file under `root` whose name ends in `ext`, named relative to `root`.
+///
+/// The names a `skip` entry took out go into `never` rather than nowhere, and a skipped
+/// directory is walked into to fill it, because a manifest that hides eight hundred files
+/// behind one entry and a manifest that hides one should not read the same in a report.
 fn walk(
     root: &Path,
     dir: &Path,
     skip: &[String],
     ext: &str,
     found: &mut Vec<String>,
+    never: &mut Vec<String>,
 ) -> Result<(), Error> {
     let listing =
         fs::read_dir(dir).map_err(|e| Error { message: format!("{}: {e}", dir.display()) })?;
@@ -727,10 +752,15 @@ fn walk(
         // should read differently depending on which machine ran the harness.
         let name = relative.to_string_lossy().replace('\\', "/");
         if skip.iter().any(|s| name == *s || name.starts_with(&format!("{s}/"))) {
+            if path.is_dir() {
+                walk(root, &path, &[], ext, never, &mut Vec::new())?;
+            } else if name.ends_with(ext) {
+                never.push(name);
+            }
             continue;
         }
         if path.is_dir() {
-            walk(root, &path, skip, ext, found)?;
+            walk(root, &path, skip, ext, found, never)?;
         } else if name.ends_with(ext) {
             found.push(name);
         }
@@ -1016,12 +1046,16 @@ mod tests {
             flags: Vec::new(),
             link: Vec::new(),
         };
-        let mut cases = Vec::new();
-        sources(&root, &unit, &mut cases).unwrap();
+        let mut found = Found::default();
+        sources(&root, &unit, &mut found).unwrap();
+        let cases = &found.cases;
         let names: Vec<&str> = cases.iter().map(|c| c.name.as_str()).collect();
         // The header is not a case, the skip took one out, and a case is named from the
         // directory the unit already named rather than repeating it.
         assert_eq!(names, ["suite/a.c", "suite/b.c", "suite/deep/c.c"]);
+        // The one the skip took out is named rather than dropped, because a census that cannot
+        // say what it left out is not a census.
+        assert_eq!(found.never, ["suite/skipped.c"]);
         // The compilers still run in the tree, so a relative include in the corpus resolves
         // the way it would in a real build of it.
         assert_eq!(cases[0].dir, root);

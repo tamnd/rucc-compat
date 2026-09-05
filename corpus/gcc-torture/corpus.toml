@@ -20,7 +20,7 @@ extract = [
 # The tarball is the whole of GCC, a hundred megabytes of it, and the tests are eight. `extract`
 # is why that is not a hundred megabytes on every machine that runs the harness. What comes out
 # is the execution tests and the two license files, and nothing here is committed: `vendor/` is
-# ignored, so no GPL code enters a repository that is MIT and Apache.
+# ignored, so no GPL code enters a repository that is Apache 2.0.
 #
 # The reason this suite is worth the download is that it is not a set of programs somebody wrote
 # to be tested. Every file is a bug report that was once a wrong answer from a released compiler,

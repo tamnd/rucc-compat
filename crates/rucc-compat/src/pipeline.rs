@@ -209,7 +209,7 @@ pub fn run(
     settings: &Settings,
     scratch: &Path,
 ) -> Result<Report, Error> {
-    let all = differ::cases(repo, corpus, scratch)?;
+    let all = differ::cases(repo, corpus, scratch)?.cases;
     let cases: Vec<Case> = match &settings.unit {
         Some(unit) => all.iter().filter(|c| c.unit == *unit).cloned().collect(),
         None => all.clone(),
