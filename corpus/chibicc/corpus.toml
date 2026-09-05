@@ -113,19 +113,3 @@ cases = [
   "test/arith.c",
   "test/float.c",
 ]
-
-# The alignment of a local, which this file measures by taking the address of one and asking for
-# it modulo sixteen. Both answers conform, since the objects it asks about have an alignment of
-# one and of four, and the one gcc gives is the one this file was written against.
-#
-# It fails under gcc at `-O0` on a different assertion of its own, one that subtracts the
-# addresses of two unrelated objects, so at that level it is skipped as a program no compiler
-# passes and this entry says nothing. At `-O2` gcc's frame happens to satisfy that assertion and
-# the alignment one is what is left, which is what this entry is for.
-[[exec-exclude]]
-issue = "tamnd/rucc#347"
-why = "a local of sixteen bytes is not raised to sixteen byte alignment the way gcc raises it"
-outcome = "wrong answer"
-cases = [
-  "test/alignof.c",
-]
