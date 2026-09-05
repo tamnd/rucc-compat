@@ -842,7 +842,6 @@ why = "it builds and then gives the wrong answer, and nobody has reduced it yet"
 outcome = "crashed"
 cases = [
   "execute/20021127-1.c",
-  "execute/20050215-1.c",
   "execute/bitfld-3.c",
   "execute/pr32244-1.c",
   "execute/pr34971.c",
@@ -959,10 +958,18 @@ cases = [
 issue = "https://github.com/tamnd/rucc/issues/328"
 why = "it builds after the bulk copy lowering and then crashes"
 outcome = "crashed"
+cases = ["execute/991118-1.c"]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/415"
+why = "scalar_storage_order is refused where it is written rather than ignored, so it does not build"
+outcome = "did not build"
 cases = [
   "execute/20230630-2.c",
   "execute/20230630-4.c",
-  "execute/991118-1.c",
+  "execute/pr86659-1.c",
+  "execute/pr86659-2.c",
+  "execute/pr87623.c",
 ]
 
 [[exec-exclude]]
@@ -1072,30 +1079,6 @@ why = "the address of an external function is a relocation a position independen
 outcome = "did not build"
 route = ["driver"]
 case = "execute/pr54937.c"
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/356"
-why = "the aligned attribute on a function is ignored"
-outcome = "crashed"
-case = "execute/align-3.c"
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/357"
-why = "the size expression of an array parameter is not evaluated"
-outcome = "crashed"
-case = "execute/pr77767.c"
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/357"
-why = "the size expression of an array parameter is not evaluated"
-outcome = "wrong answer"
-case = "execute/970217-1.c"
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/358"
-why = "a compound assignment reads its left operand before the right one is evaluated"
-outcome = "crashed"
-case = "execute/pr58943.c"
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/359"
