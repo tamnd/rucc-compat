@@ -16,6 +16,9 @@
 //! - [`exec`] builds the programs and runs them, which is the only question that covers the
 //!   back half of the compiler, since everything above it is a question about compiling and all
 //!   of them can be green while the executable prints the wrong answer.
+//! - [`coverage`] reads what the compiler says about which of its lowering rules a build fired,
+//!   and unions those over a corpus, which is the one coverage question nothing but a corpus can
+//!   answer.
 //! - [`lexer`] splits an output back into preprocessing tokens, which is what the first and
 //!   strictest of those three comparisons is over.
 //! - [`ledger`] remembers which cases were not green, so the next run can be pointed at those
@@ -28,6 +31,7 @@
 use std::path::{Path, PathBuf};
 
 pub mod corpus;
+pub mod coverage;
 pub mod differ;
 pub mod exec;
 pub mod fetch;
