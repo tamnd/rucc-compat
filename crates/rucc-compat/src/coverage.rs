@@ -58,6 +58,28 @@ pub struct Marks {
     pub files: usize,
 }
 
+/// What a floor says about a coverage number.
+///
+/// Three answers rather than two, because a floor can be wrong in either direction and only one
+/// of those is a failure. A number under the floor is the thing the floor exists to catch: rules
+/// the corpus used to reach and no longer does, which is either a corpus that shrank or a rule set
+/// that grew without anything to exercise the new part of it. A floor well behind the number is
+/// bookkeeping that has gone stale, and it is reported rather than failed, because a floor that
+/// is behind hides nothing and failing there would turn an improvement into a red build.
+///
+/// That is the one place this parts company with the exclusion lists, which do fail when they go
+/// stale. An exclusion that no longer excludes anything is actively hiding a case that passes. A
+/// floor that is behind is only under-claiming.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Verdict {
+    /// Under the floor, with the line saying by how much.
+    Under(String),
+    /// A whole point or more above the floor, with the line saying what to raise it to.
+    Over(String),
+    /// At the floor, or above it by less than a rule or two, which is not worth a line.
+    At,
+}
+
 impl Marks {
     /// How many rules something fired.
     #[must_use]
@@ -84,6 +106,37 @@ impl Marks {
                     / f64::from(u32::try_from(total).unwrap_or(u32::MAX))
             }
         }
+    }
+
+    /// What a floor has to say about this number.
+    ///
+    /// The floor is a percentage, because the percentage is the figure everything else here
+    /// quotes and a floor written in some other unit would be a second number to keep in step
+    /// with the first. It is compared against the figure as printed rather than against the exact
+    /// quotient, so that a run whose report says the floor and a run whose report says less than
+    /// the floor are the two cases and there is no third one where the report reads as though it
+    /// passed and the exit status says otherwise.
+    #[must_use]
+    pub fn against(&self, floor: f64) -> Verdict {
+        let mine = (self.percent() * 10.0).round() / 10.0;
+        if mine < floor {
+            return Verdict::Under(format!(
+                "{:.1} percent of {} is under the floor of {floor:.1} percent, and {} of the {} \
+                 rules fired",
+                mine,
+                self.source,
+                self.fired(),
+                self.rules.len()
+            ));
+        }
+        if mine - floor >= 1.0 {
+            return Verdict::Over(format!(
+                "the floor of {floor:.1} percent is {:.1} behind the {mine:.1} percent this \
+                 reached, so it is worth raising to {mine:.1}",
+                mine - floor
+            ));
+        }
+        Verdict::At
     }
 
     /// Takes in what another set of builds reached.
@@ -449,6 +502,44 @@ unused rules/x86-64.rules:12 (add.i32 x y)
         assert_eq!(all.fired(), 2);
         assert_eq!(all.files, 2);
         let _ = fs::remove_dir_all(&dir);
+    }
+
+    /// The floor is the thing that keeps the number from falling back, so what it has to get
+    /// right is the boundary. Equal to the floor passes, since a floor is a floor and not a
+    /// target, and anything under it fails however little the difference is.
+    #[test]
+    fn a_number_at_the_floor_passes_and_a_number_under_it_does_not() {
+        let mut marks = parse(TWO, "a.cov").unwrap();
+        assert_eq!(marks.percent(), 50.0);
+        assert_eq!(marks.against(50.0), Verdict::At);
+        assert_eq!(marks.against(49.9), Verdict::At);
+        let Verdict::Under(why) = marks.against(50.1) else {
+            panic!("half of two is under any floor over fifty")
+        };
+        assert!(why.contains("50.0 percent"), "{why}");
+        assert!(why.contains("floor of 50.1"), "{why}");
+        assert!(why.contains("1 of the 2 rules"), "{why}");
+
+        marks.merge(&parse(OTHER, "b.cov").unwrap(), "b.cov").unwrap();
+        assert_eq!(marks.against(100.0), Verdict::At);
+    }
+
+    /// A floor the number has left behind is stale bookkeeping and not a failure, which is the
+    /// one place this parts company with the exclusion lists. The line has to name the number to
+    /// raise it to, since otherwise the reader goes and works it out from the summary.
+    #[test]
+    fn a_floor_the_number_has_left_a_whole_point_behind_is_said_and_not_failed() {
+        let mut marks = parse(TWO, "a.cov").unwrap();
+        marks.merge(&parse(OTHER, "b.cov").unwrap(), "b.cov").unwrap();
+        assert_eq!(marks.percent(), 100.0);
+        // Under a point behind is not worth a line, since one rule of a set this size moves the
+        // number by more than that on its own.
+        assert_eq!(marks.against(99.5), Verdict::At);
+        let Verdict::Over(why) = marks.against(71.1) else {
+            panic!("a hundred is well over seventy one")
+        };
+        assert!(why.contains("floor of 71.1"), "{why}");
+        assert!(why.contains("raising to 100.0"), "{why}");
     }
 
     #[test]

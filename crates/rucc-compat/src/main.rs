@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use rucc_compat::corpus::{self, Corpus, Source};
-use rucc_compat::coverage::{self, Marks};
+use rucc_compat::coverage::{self, Marks, Verdict};
 use rucc_compat::differ::{self, Settings};
 use rucc_compat::exec::{self, Route};
 use rucc_compat::pipeline;
@@ -20,7 +20,7 @@ usage:
   rucc-compat run [corpus...] [options]
   rucc-compat check [corpus...] [options]
   rucc-compat exec [corpus...] [options]
-  rucc-compat coverage [file or directory...] [--report]
+  rucc-compat coverage [file or directory...] [--report] [--floor PERCENT]
 
 commands:
   list             what corpora there are and whether they are ready to run
@@ -47,6 +47,7 @@ options:
   --failed         run only cases the last run here did not call green
   --report         write results/<corpus>.md as well as printing the summary
   --record         fetch only: print the sha256 of the download and unpack nothing
+  --floor PERCENT  coverage only: fail when less than that much of the rule set fired
 
 Naming no corpus means all of them. The exit status is 1 when anything failed.
 
@@ -63,6 +64,12 @@ nothing to decide a run by. A corpus with no oracle is reported as such and pass
 `--rule-coverage` writes one file holding the union over every corpus the command ran, in the
 format the compiler's own `-Zrule-coverage` writes, so that `coverage` can be given several of
 them from several sweeps and union those in turn.
+
+`--floor` is the number that cannot fall. It is measured against the union of everything named
+on the command line, so it means something only when that union is the whole sweep the floor
+was written for, and a floor asked of one corpus at one level will be under it and say so. A
+floor that the number has left a whole point or more behind is reported and does not fail,
+since a floor that is behind hides nothing.
 ";
 
 fn main() -> ExitCode {
@@ -427,15 +434,28 @@ fn exec_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, S
 /// Unions what one or more sweeps recorded and says which lowering rules nothing fired.
 fn coverage_of(repo: &Path, args: &[String]) -> Result<ExitCode, String> {
     let mut report = false;
+    let mut floor = None;
     let mut given = Vec::new();
-    for arg in args {
-        match arg.as_str() {
+    let mut at = 0;
+    while at < args.len() {
+        let arg = args[at].as_str();
+        match arg {
             "--report" => report = true,
+            "--floor" => {
+                let text = value(args, &mut at, arg)?;
+                let percent: f64 =
+                    text.parse().map_err(|_| format!("`{text}` is not a percentage"))?;
+                if !(0.0..=100.0).contains(&percent) {
+                    return Err(format!("`{text}` is not a percentage"));
+                }
+                floor = Some(percent);
+            }
             other if other.starts_with('-') => {
                 return Err(format!("`{other}` is not an option of coverage"));
             }
             other => given.push(PathBuf::from(other)),
         }
+        at += 1;
     }
     if given.is_empty() {
         return Err("coverage needs a file or a directory to read, see --help".to_owned());
@@ -466,7 +486,23 @@ fn coverage_of(repo: &Path, args: &[String]) -> Result<ExitCode, String> {
         fs::write(&path, all.markdown()).map_err(|e| e.to_string())?;
         println!("  wrote {}", path.display());
     }
-    Ok(ExitCode::SUCCESS)
+    // The floor is checked last, so that the list of rules nothing reached is on the terminal
+    // before the line saying the number is too low. Somebody reading a failure wants to know
+    // which rules stopped firing, and that list is the answer.
+    let Some(percent) = floor else {
+        return Ok(ExitCode::SUCCESS);
+    };
+    match all.against(percent) {
+        Verdict::Under(why) => {
+            println!("  {why}");
+            Ok(ExitCode::FAILURE)
+        }
+        Verdict::Over(why) => {
+            println!("  {why}");
+            Ok(ExitCode::SUCCESS)
+        }
+        Verdict::At => Ok(ExitCode::SUCCESS),
+    }
 }
 
 /// The corpora the names ask for, or every one of them when no name was given.

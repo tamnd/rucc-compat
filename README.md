@@ -75,7 +75,11 @@ Two different things get called lowering coverage. Whether every IR opcode has a
 
 The file is the whole rule set rather than the part of it that fired, one line per rule saying `fired` or `unused`, which is what lets a union be taken without the rule file being at hand. Two files written by different builds of the compiler are refused rather than unioned, because a percentage over two rule sets is a number about neither, and the message names which file was the odd one.
 
-Reporting the number is the first stage of three. A threshold that it cannot fall below comes second, and a hundred percent with a checked in list of the rules the corpus cannot reach and the reason each one is unreachable comes last. Going to a hundred percent before the corpus is large enough would be an invitation to write a test that exists to make a number go up. `spec/20-execution-testing.md` section 20.9 in the compiler repository is the design.
+`--floor PERCENT` is the second of the three stages, which is the threshold the number cannot fall below. It is measured against the union of everything named on the command line, so it says something only when that union is the whole sweep the floor was written for, and a floor asked of one corpus at one level will be under it and say so. A floor the number has left a whole point or more behind is reported and does not fail, which is the one place this parts company with the exclusion lists: an exclusion that no longer excludes anything is hiding a case that passes, and a floor that is behind is only under-claiming.
+
+CI checks the floor in one job on the nightly schedule rather than in each of the eighteen jobs that run the sweep. Those jobs are eighteen machines that never meet, each writes its own file, and the union of all of them is the only place the whole answer exists. The number is over the two small corpora and the torture suite together, and the torture suite runs nightly, so a floor on every commit would be a different and much lower number.
+
+Reporting the number was the first stage and the floor is the second. A hundred percent with a checked in list of the rules the corpus cannot reach and the reason each one is unreachable comes last. Going to a hundred percent before the corpus is large enough would be an invitation to write a test that exists to make a number go up. `spec/20-execution-testing.md` section 20.9 in the compiler repository is the design.
 
 ## How long a sweep takes
 

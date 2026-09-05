@@ -360,6 +360,53 @@ jobs:
           path: results/
           if-no-files-found: ignore
 
+  # What the sweep reached of the compiler's lowering rule set, and the floor under that number.
+  #
+  # This is the second of the three stages tamnd/rucc#261 asks for. The first was reporting the
+  # number so that its movement is visible, this is a threshold so it cannot fall, and a hundred
+  # percent with a checked in list of what the corpus cannot reach comes after that.
+  #
+  # It is one job rather than a step in each of the eighteen above because the number is about
+  # the sweep and not about one corpus at one level. Those jobs are eighteen machines that never
+  # meet, so each writes its own file and this one unions them, which is the only place the whole
+  # answer exists.
+  #
+  # On the schedule and on demand rather than on every commit, because the torture suite is
+  # eighteen of the nineteen hundred programs behind the number and it runs on the schedule. A
+  # floor over the two small corpora alone would be a different and much lower number, and two
+  # floors that mean different things is worse than one that is checked once a day.
+  #
+  # The floor is written here rather than in a file of its own so that raising it is a change to
+  # the workflow that measured it, reviewed in the same place as the corpus changes that earn it.
+  # When the number leaves it behind the job says so and passes, since a floor that is behind
+  # hides nothing.
+  floor:
+    name: lowering rule coverage floor
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: [exec, torture]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: Swatinem/rust-cache@v2.9.2
+      - name: build the harness
+        run: cargo build --release
+      # Every artifact of the sweep, which is more than the coverage files. The rest of what is
+      # in them is markdown, and `coverage` reads a directory by looking for the extension the
+      # compiler writes rather than by taking everything it finds.
+      - name: collect what the sweep recorded
+        uses: actions/download-artifact@v4.3.0
+        with:
+          path: sweep
+      - name: union it and check the floor
+        run: ./target/release/rucc-compat coverage sweep --report --floor 71.1
+      - name: keep the report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: rule-coverage
+          path: results/
+          if-no-files-found: ignore
+
   # A single required check, so branch protection does not have to list every job above. The
   # differential, the pipeline, the execution and the torture suite are deliberately not in this
   # list: all four build rucc from its main branch, and a pull request here is about this
