@@ -22,6 +22,7 @@ use std::process::Command;
 use std::time::Duration;
 
 use crate::corpus::{Corpus, Exclusion, Oracle};
+use crate::coverage::{self, Marks};
 use crate::differ::{self, Case};
 use crate::ledger;
 use crate::pipeline::{named, said, stem};
@@ -137,6 +138,11 @@ pub struct Settings {
     /// report that came out different at two settings of this is a bug in the harness rather
     /// than news about the compiler.
     pub jobs: Option<usize>,
+    /// Whether to ask the compiler under test which of its lowering rules each build fired.
+    ///
+    /// Only the compiler under test is asked, since the flag is one of ours and the reference has
+    /// never heard of it.
+    pub coverage: bool,
 }
 
 impl Default for Settings {
@@ -154,6 +160,7 @@ impl Default for Settings {
             timeout: None,
             memory: Some(MEMORY),
             jobs: None,
+            coverage: false,
         }
     }
 }
@@ -347,6 +354,11 @@ pub struct Report {
     pub memory: Option<u64>,
     /// How long each case got.
     pub timeout: Duration,
+    /// Which lowering rules the builds in this run fired, when the run asked.
+    ///
+    /// About the rule set and not about any one case, which is why it is here rather than on an
+    /// outcome. A caller sweeping several corpora unions these and quotes the union.
+    pub fired: Option<Marks>,
 }
 
 impl Report {
@@ -452,7 +464,7 @@ pub fn run(
     // Several at a time. Each case owns a scratch directory named after itself and reads nothing
     // any other case wrote, so the only thing the threads share is the two compiler binaries and
     // neither of those is written to. See [`work`] for why this is not every core.
-    let each = |case: &Case| -> Vec<Outcome> {
+    let each = |case: &Case| -> (Vec<Outcome>, Result<Option<Marks>, String>) {
         let dir = scratch.join(stem(&case.name));
         let _ = fs::remove_dir_all(&dir);
         let mut mine = Vec::with_capacity(settings.routes.len());
@@ -463,16 +475,34 @@ pub fn run(
                 corpus.exec_excuse(&case.name, settings.opt.as_deref(), route.word()).cloned();
             mine.push(Outcome { case: case.name.clone(), route, status, excused });
         }
+        // Read before the directory goes, since what the compiler wrote about this case is in it.
+        let fired = match settings.coverage {
+            true => coverage::gather(&dir),
+            false => Ok(None),
+        };
         // Kept when something went wrong, because a case that failed is a case somebody is about
         // to want to look at, and thrown away otherwise, because a corpus of two thousand cases
         // times three routes is a great deal of disk to leave behind for nothing.
         if mine.iter().all(|o| o.status == Status::Passed) {
             let _ = fs::remove_dir_all(&dir);
         }
-        mine
+        (mine, fired)
     };
-    let outcomes: Vec<Outcome> =
-        work::spread(cases, work::jobs(settings.jobs), each).into_iter().flatten().collect();
+    let produced = work::spread(cases, work::jobs(settings.jobs), each);
+
+    // The union is taken here rather than per case, because what a corpus reached is one answer
+    // however many programs it took to reach it, and because merging in the order the cases were
+    // in is what keeps the answer the same at every setting of `--jobs`.
+    let mut outcomes: Vec<Outcome> = Vec::with_capacity(produced.len() * settings.routes.len());
+    let mut fired = settings.coverage.then(Marks::default);
+    for (case, (mine, gathered)) in cases.iter().zip(produced) {
+        outcomes.extend(mine);
+        let gathered =
+            gathered.map_err(|message| Error { message: format!("{}: {message}", corpus.name) })?;
+        if let (Some(all), Some(marks)) = (fired.as_mut(), gathered) {
+            all.merge(&marks, &case.name).map_err(|message| Error { message })?;
+        }
+    }
 
     // One row per case and not per route, since `--failed` narrows by case. Green is the same
     // thing the run being green means, which is neither a failure nor a stale exclusion: an
@@ -519,6 +549,7 @@ pub fn run(
         opt: settings.opt.clone(),
         memory,
         timeout: limits.timeout,
+        fired,
     })
 }
 
@@ -541,7 +572,7 @@ pub fn check(
     // the first two routes need it as the assembler and the linker anyway. A program it refuses
     // is not a program we are failing to compile.
     let theirs = dir.join("reference");
-    let theirs = match build(&settings.cc, Route::Driver, &inputs, case, settings, &theirs) {
+    let theirs = match build(&settings.cc, false, Route::Driver, &inputs, case, settings, &theirs) {
         Ok(exe) => exe,
         Err(why) => return every(&Status::Skipped { why }),
     };
@@ -574,7 +605,7 @@ pub fn check(
     let mut out = Vec::with_capacity(settings.routes.len());
     for route in &settings.routes {
         let at = dir.join(route.word());
-        let status = match build(&settings.rucc, *route, &inputs, case, settings, &at) {
+        let status = match build(&settings.rucc, true, *route, &inputs, case, settings, &at) {
             Err(why) => Status::DidNotBuild { why },
             Ok(exe) => match sandbox::run(&exe, &[] as &[&str], &at, limits) {
                 Err(why) => Status::DidNotBuild { why },
@@ -617,6 +648,7 @@ fn inputs(case: &Case, corpus: &Corpus) -> Vec<PathBuf> {
 /// the caller turns it into an outcome that says which of the two compilers refused it.
 fn build(
     compiler: &Path,
+    mine: bool,
     route: Route,
     inputs: &[PathBuf],
     case: &Case,
@@ -625,9 +657,11 @@ fn build(
 ) -> Result<PathBuf, String> {
     fs::create_dir_all(out).map_err(|e| format!("{}: {e}", out.display()))?;
     let exe = out.join("run");
+    let recording = |what: &str| recording(mine, settings, out, what);
     match route {
         Route::Driver => {
             let mut args = flags(case, settings);
+            args.extend(recording("driver"));
             for input in inputs {
                 args.extend(spelled(input, &case.dir));
             }
@@ -646,6 +680,7 @@ fn build(
             for (index, input) in inputs.iter().enumerate() {
                 let part = out.join(format!("part{index}.{ext}"));
                 let mut args = flags(case, settings);
+                args.extend(recording(&format!("part{index}")));
                 args.push(flag.into());
                 args.extend(spelled(input, &case.dir));
                 args.push("-o".into());
@@ -673,6 +708,22 @@ fn build(
         }
     }
     Ok(exe)
+}
+
+/// The flag that asks for which lowering rules a build fired, when this build is one to ask.
+///
+/// Only ever handed to the compiler under test: it is an unstable option of ours and the
+/// reference compiler would refuse the whole build over it. One file per invocation rather than
+/// per case, since a case built through assembly runs the compiler once per input and the second
+/// run would otherwise write over what the first one recorded.
+fn recording(mine: bool, settings: &Settings, out: &Path, what: &str) -> Vec<OsString> {
+    match mine && settings.coverage {
+        false => Vec::new(),
+        true => {
+            let file = out.join(coverage::file_name(what));
+            vec![format!("-Zrule-coverage={}", file.display()).into()]
+        }
+    }
 }
 
 /// Runs a compiler once and says what it said if it refused.
@@ -872,6 +923,19 @@ pub fn markdown(report: &Report, settings: &Settings) -> String {
         "Each run gets {} seconds and a memory limit of {memory}.\n",
         report.timeout.as_secs()
     );
+    if let Some(fired) = &report.fired {
+        // The rules this corpus reached, which is about the rule set rather than about any case
+        // here, and is a number only a corpus can produce. The list of the ones nothing reached
+        // is its own report, since it is a list of work rather than a line of a summary.
+        let _ = writeln!(
+            out,
+            "Lowering rules fired: {} of {}, which is {:.1} percent of `{}`.\n",
+            fired.fired(),
+            fired.rules.len(),
+            fired.percent(),
+            fired.source
+        );
+    }
 
     let _ = writeln!(out, "## Counts\n");
     let _ = writeln!(out, "| outcome | runs |");
@@ -1001,6 +1065,7 @@ mod tests {
             opt: None,
             memory: None,
             timeout: Duration::from_secs(10),
+            fired: None,
         }
     }
 
@@ -1203,6 +1268,40 @@ mod tests {
             spelled(Path::new("/tree/test/common"), dir),
             ["-x", "c", "test/common", "-x", "none"]
         );
+    }
+
+    /// The flag is ours and the reference has never heard of it, so handing it over would turn
+    /// every case in the corpus into a program gcc refused, which the harness would read as the
+    /// corpus being invalid rather than as the harness being wrong.
+    #[test]
+    fn only_the_compiler_under_test_is_asked_which_rules_it_fired() {
+        let out = Path::new("/tmp/case/object");
+        let on = Settings { coverage: true, ..Settings::default() };
+        assert_eq!(
+            recording(true, &on, out, "part0"),
+            [OsString::from("-Zrule-coverage=/tmp/case/object/part0.cov")]
+        );
+        assert!(recording(false, &on, out, "driver").is_empty());
+        // And nothing at all is asked for when nobody asked.
+        assert!(recording(true, &Settings::default(), out, "part0").is_empty());
+        // One file per invocation, since the two parts of a case are two runs of the compiler.
+        assert_ne!(recording(true, &on, out, "part0"), recording(true, &on, out, "part1"));
+    }
+
+    #[test]
+    fn the_report_says_what_the_run_reached_of_the_rule_set_when_it_was_asked() {
+        let mut done = report(vec![outcome(Status::Passed, None)]);
+        assert!(!markdown(&done, &Settings::default()).contains("Lowering rules"));
+
+        let text = "\
+# rucc rule coverage: 1 of 2 rules in rules/x86-64.rules fired
+fired rules/x86-64.rules:12 (add.i32 x y)
+unused rules/x86-64.rules:19 (sub.i32 x y)
+";
+        done.fired = Some(coverage::parse(text, "a.cov").unwrap());
+        let text = markdown(&done, &Settings::default());
+        assert!(text.contains("Lowering rules fired: 1 of 2"), "{text}");
+        assert!(text.contains("50.0 percent"), "{text}");
     }
 
     #[test]
