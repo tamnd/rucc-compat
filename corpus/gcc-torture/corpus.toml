@@ -499,18 +499,18 @@ why = "an atomic builtin has no lowering, E0686"
 # changes its mind, and there are a few more of them at `-Os` than at `-O0` because some of what
 # gcc refuses it only works out once it has folded something.
 #
-# 314 cases are named here across the six levels, and 45 blocks name them, because the reasons
+# 310 cases are named here across the six levels, and 44 blocks name them, because the reasons
 # are far fewer than the programs. The blocks are sorted by size and the first three are a third
 # of the list: inline assembly, an eighty bit float and a vector type are what the torture suite
 # is mostly made of.
 #
 # Two of the questions that issue left open have answers now. The timeout stays at ten seconds:
-# every program that passes finishes far inside it, and the one that does not is `pr15296.c`,
-# which is a loop the compiler turned into one that does not end and is a bug rather than a slow
-# test. And all three build paths run, because they disagree: `pr54937.c` fails on the driver
-# path and passes on the other two, which is the one relocation a position independent link
-# refuses, and the driver path is the one that makes such a link. A list written against one
-# path would have called that a pass.
+# every program that passes finishes far inside it and nothing is on the list for being slow. The
+# one program that used to run out of it was `pr15296.c`, which was a loop the compiler had turned
+# into one that does not end, and it is a pass now. And all three build paths run, because they
+# disagree: `pr54937.c` fails on the driver path and passes on the other two, which is the one
+# relocation a position independent link refuses, and the driver path is the one that makes such a
+# link. A list written against one path would have called that a pass.
 #
 # Those numbers are what a machine says, not what a machine said once, and they were wrong here
 # for a while in two ways worth writing down. Six sweeps at six levels ran at once and shared a
@@ -844,10 +844,8 @@ cases = [
   "execute/20021127-1.c",
   "execute/20050215-1.c",
   "execute/bitfld-3.c",
-  "execute/divconst-2.c",
   "execute/pr32244-1.c",
   "execute/pr34971.c",
-  "execute/pr38236.c",
 ]
 
 [[exec-exclude]]
@@ -1001,10 +999,7 @@ cases = [
 issue = "https://github.com/tamnd/rucc/issues/350"
 why = "the rewrite panics on an instruction wanting more scratch registers than the class has"
 outcome = "did not build"
-cases = [
-  "execute/ieee/mul-subnormal-single-1.c",
-  "execute/pr29798.c",
-]
+case = "execute/pr29798.c"
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc-compat/issues/39"
@@ -1113,10 +1108,3 @@ issue = "https://github.com/tamnd/rucc/issues/359"
 why = "a call in a branch a constant condition never takes reaches the linker"
 outcome = "did not build"
 case = "execute/medce-1.c"
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/360"
-why = "it builds and then gives the wrong answer, and nobody has reduced it yet"
-outcome = "timed out"
-case = "execute/pr15296.c"
-
