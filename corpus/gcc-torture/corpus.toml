@@ -996,12 +996,6 @@ cases = [
 ]
 
 [[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/350"
-why = "the rewrite panics on an instruction wanting more scratch registers than the class has"
-outcome = "did not build"
-case = "execute/pr29798.c"
-
-[[exec-exclude]]
 issue = "https://github.com/tamnd/rucc-compat/issues/39"
 why = "the link step passes no libraries, so a call to libm has nowhere to resolve"
 outcome = "did not build"
