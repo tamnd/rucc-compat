@@ -3,6 +3,12 @@
 # Fetched corpora. Reproducible from the manifests, and far too large to keep in the history.
 /vendor
 
+# Reports. Written by `--report`, one per corpus per run, and by `scripts/on-hardware.sh`, which
+# files them under the name of the machine they came from. Neither belongs in the history: a
+# report is about one run on one machine, and the machines this is run on are not this
+# repository's business to name.
+/results
+
 # Editor and OS noise
 .DS_Store
 .idea/
