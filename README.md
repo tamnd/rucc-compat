@@ -62,6 +62,21 @@ The exclusions work the way the pipeline check's do, in a separate `[[exec-exclu
 
 Every level is run, and not as a setting on one answer. `-O0` and `-O2` run different passes over different code, and the headers change underneath them as well, since glibc defines a family of functions inline behind `__OPTIMIZE__` being set and `__OPTIMIZE_SIZE__` not being set. A sweep at one level says nothing about the other five.
 
+## Which lowering rules the corpus reaches
+
+Two different things get called lowering coverage. Whether every IR opcode has a rule to lower it is a property of the compiler, it is checked when the compiler is built, and no corpus is needed to find the answer out. Whether every rule that is written ever fires is a property of the corpus, and nothing but a corpus can answer it. A rule that is written, proved and never selected has never run on a real machine, and rules nothing fires are where dead entries in the rule set collect, since nothing else would ever notice one.
+
+```
+./target/release/rucc-compat exec c-testsuite chibicc --rule-coverage results/rule-coverage.cov
+./target/release/rucc-compat coverage results/rule-coverage.cov --report
+```
+
+`--rule-coverage` hands the compiler under test `-Zrule-coverage=FILE` on every build, which is the compiler writing down which of its rules lowered the program. The harness unions those over every case and every corpus the command ran and writes one file in the same format, so the second command can be given several of them from several sweeps and union those in turn. Only the compiler under test is asked, since the flag is one of ours and the reference compiler would refuse the whole build over it.
+
+The file is the whole rule set rather than the part of it that fired, one line per rule saying `fired` or `unused`, which is what lets a union be taken without the rule file being at hand. Two files written by different builds of the compiler are refused rather than unioned, because a percentage over two rule sets is a number about neither, and the message names which file was the odd one.
+
+Reporting the number is the first stage of three. A threshold that it cannot fall below comes second, and a hundred percent with a checked in list of the rules the corpus cannot reach and the reason each one is unreachable comes last. Going to a hundred percent before the corpus is large enough would be an invitation to write a test that exists to make a number go up. `spec/20-execution-testing.md` section 20.9 in the compiler repository is the design.
+
 ## How long a sweep takes
 
 Every one of the three commands is a map over cases that do not look at each other. Each case gets a scratch directory named after itself, reads nothing another case wrote, and the only things any of them share are the two compiler binaries, which nobody writes to. So they run several at a time, and `--jobs N` says how many.
