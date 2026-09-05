@@ -1275,12 +1275,13 @@ mod tests {
     /// corpus being invalid rather than as the harness being wrong.
     #[test]
     fn only_the_compiler_under_test_is_asked_which_rules_it_fired() {
-        let out = Path::new("/tmp/case/object");
+        let out = Path::new("case").join("object");
+        let out = out.as_path();
         let on = Settings { coverage: true, ..Settings::default() };
-        assert_eq!(
-            recording(true, &on, out, "part0"),
-            [OsString::from("-Zrule-coverage=/tmp/case/object/part0.cov")]
-        );
+        // Built from the path rather than written out, since what separates a directory from a
+        // file in it is the platform's business and this is a test about the flag.
+        let want = OsString::from(format!("-Zrule-coverage={}", out.join("part0.cov").display()));
+        assert_eq!(recording(true, &on, out, "part0"), [want]);
         assert!(recording(false, &on, out, "driver").is_empty());
         // And nothing at all is asked for when nobody asked.
         assert!(recording(true, &Settings::default(), out, "part0").is_empty());
