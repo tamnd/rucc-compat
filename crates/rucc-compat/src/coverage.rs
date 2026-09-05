@@ -426,6 +426,10 @@ pub struct Unreached {
     /// Why nothing in the corpus reaches it.
     pub why: String,
     /// The issue that makes it reachable, since every entry here is a promise to remove the entry.
+    ///
+    /// It belongs to either repository. A rule nothing reaches is a gap in the compiler when the
+    /// shape cannot be written, and a gap in the corpus when it can be written and nothing here
+    /// writes it, and those are worked on in different places.
     pub issue: String,
 }
 
@@ -695,8 +699,14 @@ unused rules/x86-64.rules:12 (add.i32 x y)
         for entry in &list {
             assert!(entry.pattern.starts_with('('), "a pattern is an application: {entry:?}");
             assert!(entry.why.len() > 20, "a reason nobody can read is not a reason: {entry:?}");
+            // Either repository, because a rule can be unreached for a reason that lives in the
+            // compiler and for a reason that lives in the corpus, and both are somebody's work.
+            let issues = [
+                "https://github.com/tamnd/rucc/issues/",
+                "https://github.com/tamnd/rucc-compat/issues/",
+            ];
             assert!(
-                entry.issue.starts_with("https://github.com/tamnd/rucc/issues/"),
+                issues.iter().any(|head| entry.issue.starts_with(head)),
                 "an entry is a promise to remove the entry, so it names the issue: {entry:?}"
             );
         }
