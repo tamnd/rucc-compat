@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use rucc_compat::corpus::{self, Corpus, Source};
+use rucc_compat::coverage::{self, Marks};
 use rucc_compat::differ::{self, Settings};
 use rucc_compat::exec::{self, Route};
 use rucc_compat::pipeline;
@@ -19,6 +20,7 @@ usage:
   rucc-compat run [corpus...] [options]
   rucc-compat check [corpus...] [options]
   rucc-compat exec [corpus...] [options]
+  rucc-compat coverage [file or directory...] [--report]
 
 commands:
   list             what corpora there are and whether they are ready to run
@@ -26,6 +28,7 @@ commands:
   run              preprocess with rucc and with cc and report the differences
   check            take a corpus through rucc alone: tast, ir, and the ir round trip
   exec             build the programs, run them, and say whether they were right
+  coverage         union what exec recorded and say which lowering rules nothing fired
 
 options:
   --rucc PATH      the compiler under test, or $RUCC, or `rucc`
@@ -35,6 +38,8 @@ options:
   --opt LEVEL      exec only: the level to pass both compilers after -O
   --machine NAME   exec only: what to call this machine in the report
   --timeout N      exec only: seconds per run, over what the manifest asks for
+  --rule-coverage FILE
+                   exec only: ask which lowering rules fired and union it into FILE
   --unit NAME      run only the unit of that name
   --limit N        stop after N cases, for a quick look
   --jobs N         how many cases to have in the air at once, default half the machine
@@ -54,6 +59,10 @@ a manifest tracks work rather than hiding it.
 
 `exec` runs a corpus only when its manifest names an oracle, since without one there is
 nothing to decide a run by. A corpus with no oracle is reported as such and passed over.
+
+`--rule-coverage` writes one file holding the union over every corpus the command ran, in the
+format the compiler's own `-Zrule-coverage` writes, so that `coverage` can be given several of
+them from several sweeps and union those in turn.
 ";
 
 fn main() -> ExitCode {
@@ -87,6 +96,7 @@ fn run() -> Result<ExitCode, String> {
         "run" => run_them(&repo, &all, rest),
         "check" => check_them(&repo, &all, rest),
         "exec" => exec_them(&repo, &all, rest),
+        "coverage" => coverage_of(&repo, rest),
         other => Err(format!("`{other}` is not a command, try --help")),
     }
 }
@@ -293,6 +303,7 @@ fn exec_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, S
     };
     let mut routes = Vec::new();
     let mut report = false;
+    let mut written = None;
     let mut names = Vec::new();
     let mut at = 0;
     while at < args.len() {
@@ -303,6 +314,10 @@ fn exec_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, S
             "--cc" => settings.cc = PathBuf::from(value(args, &mut at, arg)?),
             "--unit" => settings.unit = Some(value(args, &mut at, arg)?),
             "--opt" => settings.opt = Some(value(args, &mut at, arg)?),
+            "--rule-coverage" => {
+                written = Some(PathBuf::from(value(args, &mut at, arg)?));
+                settings.coverage = true;
+            }
             "--machine" => settings.machine = Some(value(args, &mut at, arg)?),
             "--path" => {
                 let word = value(args, &mut at, arg)?;
@@ -348,6 +363,7 @@ fn exec_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, S
     let scratch =
         repo.join("target").join("exec").join(settings.opt.as_deref().unwrap_or("default"));
     let mut failures = 0;
+    let mut fired = Marks::default();
     for corpus in wanted {
         if corpus.oracle.is_none() {
             // Not a failure. A header set has no program in it to run, and a corpus of real
@@ -383,9 +399,74 @@ fn exec_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, S
             fs::write(&path, exec::markdown(&done, &settings)).map_err(|e| e.to_string())?;
             println!("  wrote {}", path.display());
         }
+        if let Some(marks) = &done.fired {
+            fired.merge(marks, &corpus.name)?;
+        }
         failures += done.failures();
     }
+    if let Some(path) = written {
+        if fired.rules.is_empty() {
+            // Asking for a number and being given an empty file is how somebody ends up quoting
+            // one that was never measured, so this says what happened instead.
+            return Err(format!(
+                "nothing recorded which rules it fired, so there is nothing to write to {}. \
+                 Either nothing was built or this compiler does not have -Zrule-coverage",
+                path.display()
+            ));
+        }
+        if let Some(dir) = path.parent().filter(|d| !d.as_os_str().is_empty()) {
+            fs::create_dir_all(dir).map_err(|e| e.to_string())?;
+        }
+        fs::write(&path, fired.listing()).map_err(|e| format!("{}: {e}", path.display()))?;
+        println!("{}", fired.summary());
+        println!("  wrote {}", path.display());
+    }
     Ok(if failures == 0 { ExitCode::SUCCESS } else { ExitCode::FAILURE })
+}
+
+/// Unions what one or more sweeps recorded and says which lowering rules nothing fired.
+fn coverage_of(repo: &Path, args: &[String]) -> Result<ExitCode, String> {
+    let mut report = false;
+    let mut given = Vec::new();
+    for arg in args {
+        match arg.as_str() {
+            "--report" => report = true,
+            other if other.starts_with('-') => {
+                return Err(format!("`{other}` is not an option of coverage"));
+            }
+            other => given.push(PathBuf::from(other)),
+        }
+    }
+    if given.is_empty() {
+        return Err("coverage needs a file or a directory to read, see --help".to_owned());
+    }
+    let mut all = Marks::default();
+    for path in &given {
+        let whose = path.display().to_string();
+        // A directory is every coverage file under it, however deep, which is what a scratch tree
+        // left behind by a sweep looks like. A file is itself.
+        let mine = match path.is_dir() {
+            true => coverage::gather(path)?
+                .ok_or_else(|| format!("{whose}: no coverage files anywhere under it"))?,
+            false => {
+                let text = fs::read_to_string(path).map_err(|e| format!("{whose}: {e}"))?;
+                coverage::parse(&text, &whose)?
+            }
+        };
+        all.merge(&mine, &whose)?;
+    }
+    println!("{}", all.summary());
+    for rule in all.unused() {
+        println!("  nothing fired {} {}", rule.at, rule.pattern);
+    }
+    if report {
+        let dir = repo.join("results");
+        fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+        let path = dir.join("rule-coverage.md");
+        fs::write(&path, all.markdown()).map_err(|e| e.to_string())?;
+        println!("  wrote {}", path.display());
+    }
+    Ok(ExitCode::SUCCESS)
 }
 
 /// The corpora the names ask for, or every one of them when no name was given.
