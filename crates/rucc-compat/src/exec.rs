@@ -656,6 +656,17 @@ fn build(
             // The reference compiler is the assembler and the linker, which is what makes this
             // route depend on nothing of ours after the assembly text.
             let mut args: Vec<OsString> = parts.into_iter().map(PathBuf::into_os_string).collect();
+            // Whether the link makes a position independent executable is pinned rather than
+            // inherited, because it is a distribution's choice and not a fact about the program.
+            // Debian and Ubuntu build gcc to default to `-pie` and a gcc built from source
+            // defaults the other way, so `execute/pr54937.c` failed here on one machine and
+            // passed on another with the same compiler version, which is the sort of difference
+            // an exclusion list cannot say anything true about. The driver route is left alone:
+            // rucc's own driver decides that for itself, and a gap that only a position
+            // independent link finds is one worth keeping a route that finds it.
+            if cfg!(target_os = "linux") {
+                args.push("-no-pie".into());
+            }
             args.push("-o".into());
             args.push(exe.clone().into_os_string());
             once(&settings.cc, &args, out)?;
