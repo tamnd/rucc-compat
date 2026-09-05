@@ -275,11 +275,16 @@ jobs:
       # The machine is named rather than left to the report to work out, because what the report
       # would otherwise print is the operating system and the architecture and nothing about
       # which of the two runners this was.
+      # `--rule-coverage` asks the compiler which of its lowering rules each build fired and
+      # writes the union over this corpus at this level. One file per job rather than one for
+      # the sweep, because the jobs are twelve machines that never meet, and the file goes up
+      # with the report so that a union across all of them can be taken from the artifacts.
       - name: build them and run them
         run: |
           ./target/release/rucc-compat exec ${{ matrix.corpus }} \
             --rucc rucc/target/release/rucc --cc gcc-16 --opt ${{ matrix.opt }} \
-            --machine github-ubuntu-24.04 --report
+            --machine github-ubuntu-24.04 --report \
+            --rule-coverage results/${{ matrix.corpus }}-O${{ matrix.opt }}.cov
       - name: keep the report
         if: always()
         uses: actions/upload-artifact@v4.6.2
@@ -345,7 +350,8 @@ jobs:
         run: |
           ./target/release/rucc-compat exec gcc-torture \
             --rucc rucc/target/release/rucc --cc gcc-16 --opt ${{ matrix.opt }} \
-            --machine github-ubuntu-24.04 --report
+            --machine github-ubuntu-24.04 --report \
+            --rule-coverage results/gcc-torture-O${{ matrix.opt }}.cov
       - name: keep the report
         if: always()
         uses: actions/upload-artifact@v4.6.2
