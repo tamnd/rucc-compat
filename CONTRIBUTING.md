@@ -168,3 +168,7 @@ What it does not cover is a Windows machine. The far half is a POSIX shell scrip
 ## Style
 
 The same rules as the compiler repository. Plain English, no em dashes, no hard wrapped prose, comments that say why rather than what. The harness has no dependencies, for the same reason the compiler has none: a test harness that cannot build is a test harness nobody runs.
+
+## License
+
+The harness is under Apache-2.0 and a contribution to it is offered under the same terms, which is what section 5 of the license says about a contribution submitted for inclusion in the work. There is nothing separate to sign. A vendored corpus keeps whatever license it came with, which is why the manifest records one and why a fetch that unpacks a tree without the license file in it fails.
