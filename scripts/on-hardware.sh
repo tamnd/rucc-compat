@@ -69,6 +69,11 @@ for host in $hosts; do
   echo
   echo "== $host"
 
+  # rsync makes the last directory of a path and not the ones above it, so the two trees are made
+  # here first. This is also the first thing that talks to the machine, so a host that is not
+  # reachable says so before anything large is copied.
+  ssh "$host" "mkdir -p '$remote/compat' '$remote/rucc'"
+
   # Both trees go over, because the compiler is what is being measured and building it there
   # rather than shipping a binary is what makes the answer about that machine. target and .git
   # are excluded because they are large and neither is wanted on the far side, and vendor is

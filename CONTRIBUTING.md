@@ -161,6 +161,10 @@ The host list is yours and it stays out of this repository. Pass it in the envir
 
 The far half is `scripts/on-hardware-remote.sh`, which is a file rather than a string the near half builds. That is so the quoting is a shell script somebody can read, and so a machine that goes red can be worked on by hand: ssh in, change to the directory, and run it again.
 
+It works the machine out rather than being told about it. The reference compiler is the first of `gcc-16`, `/opt/gcc-16.2.0/bin/gcc-16`, `gcc` and `cc` that is there, and how many levels run at once is how many cores there are, up to the six, because six sweeps on four cores is six processes competing for one core each and these are somebody's machines. A machine whose reference is not gcc 16 still runs and is still judged on failures, but stale entries there are printed rather than red: an older gcc accepts programs gcc 16 refuses, so a case that is skipped on one machine runs on the other and passing it is not the list going stale. A corpus that will not download is named and dropped rather than failing the run, because a tarball server answering 504 has nothing to say about the compiler.
+
+What it does not cover is a Windows machine. The far half is a POSIX shell script and rucc does not host on Windows yet, so a Windows box is out of scope until that milestone. Its Linux subsystem is not a substitute worth the plumbing: it is another Linux machine, which the Linux hosts already are.
+
 ## Style
 
 The same rules as the compiler repository. Plain English, no em dashes, no hard wrapped prose, comments that say why rather than what. The harness has no dependencies, for the same reason the compiler has none: a test harness that cannot build is a test harness nobody runs.

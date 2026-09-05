@@ -490,7 +490,7 @@ why = "an atomic builtin has no lowering, E0686"
 # It is shorter than that issue expected. The guess there was nineteen hundred programs of red.
 # The unit is 1772 programs, which is the 1907 in the tarball less the 135 skipped above, and at
 # `-O0` 1309 of them pass, 296 are named below and 167 are refused by gcc 16 as well. At `-O3`
-# it is 1293, 309 and 170. The reason for the gap between the guess and the count is that the
+# it is 1293, 314 and 165. The reason for the gap between the guess and the count is that the
 # issue was written when a call to an unknown builtin stopped five hundred files at once, and it
 # said to wait until the lowering rule set stopped moving so fast. It has.
 #
