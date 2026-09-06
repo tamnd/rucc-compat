@@ -762,16 +762,10 @@ cases = [
 ]
 
 [[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/346"
-why = "a sixty four bit unsigned integer does not convert to or from floating point, E0653"
+issue = "https://github.com/tamnd/rucc/issues/349"
+why = "inline assembly has no lowering, E0653"
 outcome = "did not build"
-cases = [
-  "execute/20040831-1.c",
-  "execute/920710-1.c",
-  "execute/ieee/rbug.c",
-  "execute/pr47538.c",
-  "execute/pr79354.c",
-]
+case = "execute/pr79354.c"
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/223"

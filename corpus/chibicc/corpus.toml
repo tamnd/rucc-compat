@@ -102,14 +102,11 @@ skip = [
 # the same oracle before it runs us, so a program neither compiler passes is reported as skipped
 # and needs no entry that could go stale.
 
-# The conversions between a sixty four bit unsigned integer and a floating point type, which SSE
-# has no instruction for in either direction. `test/arith.c` wants an eighty bit float as well
-# and would still be here on tamnd/rucc#326 if this landed first.
+# `test/float.c` is not here, because the conversions between a sixty four bit unsigned integer
+# and a floating point type landed in tamnd/rucc#539. `test/arith.c` wanted an eighty bit float
+# as well, so it stays under the issue that is about that rather than under the one that closed.
 [[exec-exclude]]
-issue = "tamnd/rucc#346"
-why = "nothing converts a sixty four bit unsigned integer to or from floating point"
+issue = "tamnd/rucc#326"
+why = "an eighty bit float has no type in the rule set"
 outcome = "did not build"
-cases = [
-  "test/arith.c",
-  "test/float.c",
-]
+case = "test/arith.c"
