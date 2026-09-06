@@ -362,6 +362,20 @@ case = "execute/pr123753.c"
 issue = "https://github.com/tamnd/rucc/issues/200"
 why = "a vector has no increment or decrement, E0509"
 
+# These five have an execution entry already and had no build entry, so `check` was failing on
+# them while `exec` was not. The attribute is refused in the walk, which is before either command
+# reaches the back end, so both lists want it and this is the missing half.
+[[exclude]]
+cases = [
+  "execute/20230630-2.c",
+  "execute/20230630-4.c",
+  "execute/pr86659-1.c",
+  "execute/pr86659-2.c",
+  "execute/pr87623.c",
+]
+issue = "https://github.com/tamnd/rucc/issues/415"
+why = "scalar_storage_order is refused where it is written rather than ignored, E0688"
+
 [[exclude]]
 cases = [
   "execute/20020412-1.c",
