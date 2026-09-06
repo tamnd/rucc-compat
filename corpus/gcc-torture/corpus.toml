@@ -837,16 +837,6 @@ cases = [
 ]
 
 [[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/360"
-why = "arithmetic on a bit-field is done at the width of the type and not at the width of the field"
-outcome = "crashed"
-cases = [
-  "execute/bitfld-3.c",
-  "execute/pr32244-1.c",
-  "execute/pr34971.c",
-]
-
-[[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/227"
 why = "a builtin that belongs to no family is not declared, E0500"
 outcome = "did not build"
@@ -952,12 +942,6 @@ cases = [
   "execute/fprintf-chk-1.c",
   "execute/printf-chk-1.c",
 ]
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/328"
-why = "it builds after the bulk copy lowering and then crashes"
-outcome = "crashed"
-cases = ["execute/991118-1.c"]
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/415"
