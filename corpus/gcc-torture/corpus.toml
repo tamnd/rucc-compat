@@ -329,19 +329,7 @@ why = "complex arithmetic is missing the piece this file starts with, E0506, E05
 
 [[exclude]]
 cases = [
-  "execute/ieee/fp-cmp-cond-1.c",
-  "execute/pr105613.c",
   "execute/pr108292.c",
-  "execute/pr109040.c",
-  "execute/pr110817-1.c",
-  "execute/pr110817-2.c",
-  "execute/pr110817-3.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/200"
-why = "a comparison of two vectors has no result type yet, E0508"
-
-[[exclude]]
-cases = [
   "execute/pr126405-3.c",
   "execute/pr85169.c",
 ]
@@ -642,23 +630,10 @@ cases = [
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/200"
-why = "a comparison of two vectors has no result type yet, E0508"
-outcome = "did not build"
-cases = [
-  "execute/ieee/fp-cmp-cond-1.c",
-  "execute/pr105613.c",
-  "execute/pr108292.c",
-  "execute/pr109040.c",
-  "execute/pr110817-1.c",
-  "execute/pr110817-2.c",
-  "execute/pr110817-3.c",
-]
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/200"
 why = "one lane of a vector is readable and is not yet assignable, E0506"
 outcome = "did not build"
 cases = [
+  "execute/pr108292.c",
   "execute/pr126405-3.c",
   "execute/pr85169.c",
 ]
@@ -716,6 +691,7 @@ cases = [
   "execute/20050502-1.c",
   "execute/20141107-1.c",
   "execute/20230510-1.c",
+  "execute/pr105613.c",
   "execute/pr117095.c",
   "execute/pr122943.c",
   "execute/pr49218.c",
