@@ -680,7 +680,6 @@ why = "the program asks for an optimizer as soon as __OPTIMIZE__ is defined"
 outcome = "did not build"
 opt = ["1", "2", "3", "s", "z"]
 cases = [
-  "execute/20010119-1.c",
   "execute/20030216-1.c",
   "execute/20041114-1.c",
   "execute/compare-3.c",
