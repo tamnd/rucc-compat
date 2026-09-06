@@ -328,15 +328,6 @@ issue = "https://github.com/tamnd/rucc/issues/201"
 why = "complex arithmetic is missing the piece this file starts with, E0506, E0509 or E0519"
 
 [[exclude]]
-cases = [
-  "execute/pr108292.c",
-  "execute/pr126405-3.c",
-  "execute/pr85169.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/200"
-why = "one lane of a vector is readable and is not yet assignable, E0506"
-
-[[exclude]]
 case = "execute/pr123753.c"
 issue = "https://github.com/tamnd/rucc/issues/200"
 why = "a vector has no increment or decrement, E0509"
@@ -391,6 +382,7 @@ why = "decimal floating constants are not supported"
 
 [[exclude]]
 cases = [
+  "execute/pr108292.c",
   "execute/pr108789.c",
   "execute/pr64006.c",
   "execute/pr68381.c",
@@ -623,16 +615,6 @@ cases = [
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/200"
-why = "one lane of a vector is readable and is not yet assignable, E0506"
-outcome = "did not build"
-cases = [
-  "execute/pr108292.c",
-  "execute/pr126405-3.c",
-  "execute/pr85169.c",
-]
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/200"
 why = "a vector has no increment or decrement, E0509"
 outcome = "did not build"
 case = "execute/pr123753.c"
@@ -693,6 +675,7 @@ issue = "https://github.com/tamnd/rucc/issues/309"
 why = "an overflow checked arithmetic builtin has no lowering, E0686"
 outcome = "did not build"
 cases = [
+  "execute/pr108292.c",
   "execute/pr108789.c",
   "execute/pr64006.c",
   "execute/pr68381.c",
