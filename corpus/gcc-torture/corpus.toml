@@ -377,20 +377,9 @@ why = "decimal floating constants are not supported"
 
 [[exclude]]
 cases = [
-  "execute/pr108292.c",
-  "execute/pr108789.c",
-  "execute/pr64006.c",
-  "execute/pr68381.c",
-  "execute/pr71554.c",
   "execute/pr84169.c",
-  "execute/pr85095.c",
-  "execute/pr89434.c",
-  "execute/pr90311.c",
   "execute/pr91450-1.c",
   "execute/pr91450-2.c",
-  "execute/pr91635.c",
-  "execute/pr93213.c",
-  "execute/pr93494.c",
 ]
 issue = "https://github.com/tamnd/rucc/issues/309"
 why = "an overflow checked arithmetic builtin has no lowering, E0686"
@@ -428,27 +417,6 @@ cases = [
 ]
 issue = "https://github.com/tamnd/rucc/issues/312"
 why = "a builtin that asks about the frame has no lowering, E0686"
-
-[[exclude]]
-cases = [
-  "execute/ffs-1.c",
-  "execute/ffs-2.c",
-  "execute/pr37780.c",
-  "execute/pr61725.c",
-  "execute/pr97325.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/310"
-why = "a bit counting builtin has no lowering, E0686"
-
-[[exclude]]
-cases = [
-  "execute/bswap-1.c",
-  "execute/bswap-3.c",
-  "execute/pr90025.c",
-  "execute/pr97386-1.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/307"
-why = "a byte swap builtin has no lowering, E0686"
 
 [[exclude]]
 cases = [
@@ -656,6 +624,7 @@ cases = [
   "execute/pr84748.c",
   "execute/pr85582-2.c",
   "execute/pr85582-3.c",
+  "execute/pr93213.c",
   "execute/pr98474.c",
 ]
 
@@ -664,20 +633,9 @@ issue = "https://github.com/tamnd/rucc/issues/309"
 why = "an overflow checked arithmetic builtin has no lowering, E0686"
 outcome = "did not build"
 cases = [
-  "execute/pr108292.c",
-  "execute/pr108789.c",
-  "execute/pr64006.c",
-  "execute/pr68381.c",
-  "execute/pr71554.c",
   "execute/pr84169.c",
-  "execute/pr85095.c",
-  "execute/pr89434.c",
-  "execute/pr90311.c",
   "execute/pr91450-1.c",
   "execute/pr91450-2.c",
-  "execute/pr91635.c",
-  "execute/pr93213.c",
-  "execute/pr93494.c",
 ]
 
 [[exec-exclude]]
@@ -804,18 +762,6 @@ cases = [
 ]
 
 [[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/310"
-why = "a bit counting builtin has no lowering, E0686"
-outcome = "did not build"
-cases = [
-  "execute/ffs-1.c",
-  "execute/ffs-2.c",
-  "execute/pr37780.c",
-  "execute/pr61725.c",
-  "execute/pr97325.c",
-]
-
-[[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/346"
 why = "a sixty four bit unsigned integer does not convert to or from floating point, E0653"
 outcome = "did not build"
@@ -836,17 +782,6 @@ cases = [
   "execute/pr60003.c",
   "execute/pr64242.c",
   "execute/pr84521.c",
-]
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/307"
-why = "a byte swap builtin has no lowering, E0686"
-outcome = "did not build"
-cases = [
-  "execute/bswap-1.c",
-  "execute/bswap-3.c",
-  "execute/pr90025.c",
-  "execute/pr97386-1.c",
 ]
 
 [[exec-exclude]]
@@ -963,6 +898,12 @@ issue = "https://github.com/tamnd/rucc/issues/311"
 why = "an atomic builtin has no lowering, E0686"
 outcome = "did not build"
 case = "execute/pr122000.c"
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/542"
+why = "always_inline is not honoured, so an inline definition marked with it is an undefined reference"
+outcome = "did not build"
+case = "execute/stdarg-4.c"
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/335"
