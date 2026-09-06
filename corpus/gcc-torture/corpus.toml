@@ -499,7 +499,7 @@ why = "an atomic builtin has no lowering, E0686"
 # changes its mind, and there are a few more of them at `-Os` than at `-O0` because some of what
 # gcc refuses it only works out once it has folded something.
 #
-# 310 cases are named here across the six levels, and 44 blocks name them, because the reasons
+# 306 cases are named here across the six levels, and 40 blocks name them, because the reasons
 # are far fewer than the programs. The blocks are sorted by size and the first three are a third
 # of the list: inline assembly, an eighty bit float and a vector type are what the torture suite
 # is mostly made of.
@@ -838,10 +838,9 @@ cases = [
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/360"
-why = "it builds and then gives the wrong answer, and nobody has reduced it yet"
+why = "arithmetic on a bit-field is done at the width of the type and not at the width of the field"
 outcome = "crashed"
 cases = [
-  "execute/20021127-1.c",
   "execute/bitfld-3.c",
   "execute/pr32244-1.c",
   "execute/pr34971.c",
