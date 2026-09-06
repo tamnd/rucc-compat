@@ -327,11 +327,6 @@ cases = [
 issue = "https://github.com/tamnd/rucc/issues/201"
 why = "complex arithmetic is missing the piece this file starts with, E0506, E0509 or E0519"
 
-[[exclude]]
-case = "execute/pr123753.c"
-issue = "https://github.com/tamnd/rucc/issues/200"
-why = "a vector has no increment or decrement, E0509"
-
 # These five have an execution entry already and had no build entry, so `check` was failing on
 # them while `exec` was not. The attribute is refused in the walk, which is before either command
 # reaches the back end, so both lists want it and this is the missing half.
@@ -612,12 +607,6 @@ cases = [
   "execute/regstack-1.c",
   "execute/stdarg-2.c",
 ]
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/200"
-why = "a vector has no increment or decrement, E0509"
-outcome = "did not build"
-case = "execute/pr123753.c"
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/201"
