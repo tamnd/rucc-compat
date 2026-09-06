@@ -293,11 +293,6 @@ issue = "https://github.com/tamnd/rucc/issues/226"
 why = "__builtin_fmax is not declared, E0500"
 
 [[exclude]]
-case = "execute/ieee/pr72824-2.c"
-issue = "https://github.com/tamnd/rucc/issues/200"
-why = "a vector built with the vector_size attribute is a scalar to an initializer, E0635"
-
-[[exclude]]
 cases = [
   "execute/va-arg-pack-1.c",
 ]
@@ -341,24 +336,45 @@ cases = [
   "execute/pr110817-1.c",
   "execute/pr110817-2.c",
   "execute/pr110817-3.c",
-  "execute/pr121957.c",
-  "execute/pr123625-2.c",
-  "execute/pr123625-3.c",
-  "execute/pr123625.c",
-  "execute/pr123753.c",
-  "execute/pr126405-2.c",
-  "execute/pr126405-3.c",
-  "execute/pr126405.c",
-  "execute/pr70903.c",
-  "execute/pr71626-1.c",
-  "execute/pr71626-2.c",
-  "execute/pr85169.c",
-  "execute/pr94412.c",
-  "execute/pr94524-1.c",
-  "execute/pr94524-2.c",
 ]
 issue = "https://github.com/tamnd/rucc/issues/200"
-why = "a vector built with the vector_size attribute cannot be subscripted, E0504"
+why = "a comparison of two vectors has no result type yet, E0508"
+
+[[exclude]]
+cases = [
+  "execute/pr126405-3.c",
+  "execute/pr85169.c",
+]
+issue = "https://github.com/tamnd/rucc/issues/200"
+why = "one lane of a vector is readable and is not yet assignable, E0506"
+
+[[exclude]]
+cases = [
+  "execute/pr123625.c",
+  "execute/pr53645-2.c",
+  "execute/pr53645.c",
+]
+issue = "https://github.com/tamnd/rucc/issues/200"
+why = "a compound literal of vector type is not built, E0515 or E0571"
+
+[[exclude]]
+case = "execute/pr123753.c"
+issue = "https://github.com/tamnd/rucc/issues/200"
+why = "a vector has no increment or decrement, E0509"
+
+# These five have an execution entry already and had no build entry, so `check` was failing on
+# them while `exec` was not. The attribute is refused in the walk, which is before either command
+# reaches the back end, so both lists want it and this is the missing half.
+[[exclude]]
+cases = [
+  "execute/20230630-2.c",
+  "execute/20230630-4.c",
+  "execute/pr86659-1.c",
+  "execute/pr86659-2.c",
+  "execute/pr87623.c",
+]
+issue = "https://github.com/tamnd/rucc/issues/415"
+why = "scalar_storage_order is refused where it is written rather than ignored, E0688"
 
 [[exclude]]
 cases = [
@@ -388,14 +404,6 @@ cases = [
 ]
 issue = "https://github.com/tamnd/rucc/issues/203"
 why = "the address of a label is refused in a static initializer, E0618"
-
-[[exclude]]
-cases = [
-  "execute/pr53645-2.c",
-  "execute/pr53645.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/200"
-why = "a vector built with the vector_size attribute is not a type here, E0504"
 
 [[exclude]]
 case = "execute/pr80692.c"
@@ -544,6 +552,8 @@ cases = [
   "execute/pr108498-1.c",
   "execute/pr110252-2.c",
   "execute/pr114552.c",
+  "execute/pr121957.c",
+  "execute/pr123625-3.c",
   "execute/pr38533.c",
   "execute/pr40022.c",
   "execute/pr40657.c",
@@ -632,35 +642,42 @@ cases = [
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/200"
-why = "a vector built with the vector_size attribute cannot be subscripted, E0504"
+why = "a comparison of two vectors has no result type yet, E0508"
 outcome = "did not build"
 cases = [
   "execute/ieee/fp-cmp-cond-1.c",
-  "execute/ieee/pr72824-2.c",
   "execute/pr105613.c",
   "execute/pr108292.c",
   "execute/pr109040.c",
   "execute/pr110817-1.c",
   "execute/pr110817-2.c",
   "execute/pr110817-3.c",
-  "execute/pr121957.c",
-  "execute/pr123625-2.c",
-  "execute/pr123625-3.c",
-  "execute/pr123625.c",
-  "execute/pr123753.c",
-  "execute/pr126405-2.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/200"
+why = "one lane of a vector is readable and is not yet assignable, E0506"
+outcome = "did not build"
+cases = [
   "execute/pr126405-3.c",
-  "execute/pr126405.c",
+  "execute/pr85169.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/200"
+why = "a compound literal of vector type is not built, E0515 or E0571"
+outcome = "did not build"
+cases = [
+  "execute/pr123625.c",
   "execute/pr53645-2.c",
   "execute/pr53645.c",
-  "execute/pr70903.c",
-  "execute/pr71626-1.c",
-  "execute/pr71626-2.c",
-  "execute/pr85169.c",
-  "execute/pr94412.c",
-  "execute/pr94524-1.c",
-  "execute/pr94524-2.c",
 ]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/200"
+why = "a vector has no increment or decrement, E0509"
+outcome = "did not build"
+case = "execute/pr123753.c"
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/201"
@@ -730,25 +747,6 @@ cases = [
   "execute/pr91635.c",
   "execute/pr93213.c",
   "execute/pr93494.c",
-]
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/200"
-why = "a vector built with the vector_size attribute builds and then gives the wrong answer"
-outcome = "crashed"
-cases = [
-  "execute/20050316-1.c",
-  "execute/20050316-2.c",
-  "execute/20050316-3.c",
-  "execute/20050604-1.c",
-  "execute/pr92618.c",
-  "execute/scal-to-vec1.c",
-  "execute/scal-to-vec2.c",
-  "execute/scal-to-vec3.c",
-  "execute/simd-1.c",
-  "execute/simd-2.c",
-  "execute/simd-4.c",
-  "execute/simd-6.c",
 ]
 
 [[exec-exclude]]
@@ -1062,9 +1060,3 @@ why = "the address of an external function is a relocation a position independen
 outcome = "did not build"
 route = ["driver"]
 case = "execute/pr54937.c"
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/359"
-why = "a call in a branch a constant condition never takes reaches the linker"
-outcome = "did not build"
-case = "execute/medce-1.c"
