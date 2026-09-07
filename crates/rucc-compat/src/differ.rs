@@ -2,6 +2,7 @@
 
 use std::fmt::Write as _;
 use std::fs;
+use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -691,15 +692,70 @@ fn sources(tree: &Path, unit: &Unit, out: &mut Found) -> Result<(), Error> {
         out.never.extend(never.into_iter().map(|name| format!("{}/{name}", unit.name)));
     }
     for (name, file) in found {
+        // After the unit's own, so that a program naming a dialect gets the one it named rather
+        // than the one the unit set for everything else.
+        let mut flags = flags.clone();
+        flags.extend(dg_options(&file));
         out.cases.push(Case {
             unit: unit.name.clone(),
             name: format!("{}/{name}", unit.name),
             file,
             dir: tree.to_path_buf(),
-            flags: flags.clone(),
+            flags,
         });
     }
     Ok(())
+}
+
+/// How much of a file is read looking for a `dg-options` line.
+///
+/// A DejaGnu directive goes at the top, above the program, and every one of the forty three in
+/// `gcc.c-torture/execute` is on the first line. Reading a bounded piece rather than the file
+/// keeps this off the amalgamations, which are megabytes and have no directives in them at all.
+const DIRECTIVE_WINDOW: u64 = 8 * 1024;
+
+/// The options the program says it needs, from its own `dg-options` line.
+///
+/// A DejaGnu test records the flags it must be compiled with, and a harness that does not read
+/// them is compiling a different program from the one the author wrote. Seven of the ones here
+/// do not even link without theirs.
+///
+/// A file with no such line, or one this cannot read, gets nothing added and is compiled the way
+/// it was before, so this can only ever add flags a program asked for by name.
+fn dg_options(file: &Path) -> Vec<String> {
+    let Ok(handle) = fs::File::open(file) else { return Vec::new() };
+    let mut head = String::new();
+    let mut window = io::Read::take(handle, DIRECTIVE_WINDOW);
+    if io::Read::read_to_string(&mut window, &mut head).is_err() {
+        return Vec::new();
+    }
+    head.lines().flat_map(directive).collect()
+}
+
+/// The options on one line, and nothing when the line is not one or is not one this reads.
+///
+/// Two spellings of the list are in the suite, `dg-options "-a -b"` and `dg-options { "-a" }`,
+/// and both mean the same thing.
+///
+/// A line carrying a target selector is left alone rather than guessed at. `{ target { x86_64-*-*
+/// i?86-*-* } }` says the options are for some machines and not others, and answering that
+/// properly is a piece of DejaGnu rather than a piece of string handling. All four of the ones
+/// here name `-m` options for machines nothing sweeps, so reading them would buy nothing and
+/// getting them wrong would compile a program for a processor it is not running on.
+fn directive(line: &str) -> Vec<String> {
+    let Some(rest) = line.split_once("dg-options").map(|(_, rest)| rest.trim_start()) else {
+        return Vec::new();
+    };
+    let (listed, after) = match rest.chars().next() {
+        Some('"') => rest[1..].split_once('"'),
+        Some('{') => rest[1..].split_once('}'),
+        _ => None,
+    }
+    .unwrap_or(("", ""));
+    if after.contains("target") {
+        return Vec::new();
+    }
+    listed.split_whitespace().map(|opt| opt.trim_matches('"').to_owned()).collect()
 }
 
 fn headers(tree: &Path, unit: &Unit, scratch: &Path, out: &mut Found) -> Result<(), Error> {
@@ -1060,6 +1116,54 @@ mod tests {
         // the way it would in a real build of it.
         assert_eq!(cases[0].dir, root);
         assert_eq!(cases[0].file, root.join("tests/a.c"));
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn the_options_a_program_names_for_itself_are_read_off_its_directive_line() {
+        // The four shapes the suite writes, copied from it rather than invented.
+        assert_eq!(directive(r#"/* { dg-options "-fgnu89-inline" } */"#), ["-fgnu89-inline"]);
+        assert_eq!(directive(r#"/* { dg-options { "-fwrapv" } } */"#), ["-fwrapv"]);
+        assert_eq!(
+            directive(r#"/* { dg-options " -fno-tree-ccp -fno-tree-vrp" } */"#),
+            ["-fno-tree-ccp", "-fno-tree-vrp"]
+        );
+        // A machine the sweep is not running on, left alone rather than guessed at.
+        let selected = r#"/* { dg-options "-mno-mmx" { target { x86_64-*-* i?86-*-* } } } */"#;
+        assert_eq!(directive(selected), Vec::<String>::new());
+        // A line that is not a directive, and a program that mentions the word in its own text.
+        assert_eq!(directive("int main (void) { return 0; }"), Vec::<String>::new());
+        assert_eq!(directive(r#"  puts ("dg-options");"#), Vec::<String>::new());
+    }
+
+    #[test]
+    fn a_program_that_names_its_own_options_gets_them_after_the_unit_s() {
+        let root = std::env::temp_dir().join(format!("rucc-compat-dg-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(root.join("tests")).unwrap();
+        fs::write(root.join("tests/plain.c"), "int main (void) { return 0; }\n").unwrap();
+        let asking =
+            "/* { dg-options \"-fgnu89-inline\" } */\nextern inline int f (void) { return 0; }\n";
+        fs::write(root.join("tests/asking.c"), asking).unwrap();
+        let unit = Unit {
+            name: "suite".to_owned(),
+            kind: UnitKind::Source,
+            files: Vec::new(),
+            dir: Some("tests".to_owned()),
+            skip: Vec::new(),
+            flags: vec!["-std=gnu17".to_owned()],
+            link: Vec::new(),
+        };
+        let mut found = Found::default();
+        sources(&root, &unit, &mut found).unwrap();
+        let flags = |name: &str| {
+            let case = found.cases.iter().find(|c| c.name == name).unwrap();
+            case.flags.clone()
+        };
+        // After the unit's, so that a program naming a dialect gets the one it named.
+        assert_eq!(flags("suite/asking.c"), ["-std=gnu17", "-fgnu89-inline"]);
+        // And a program that names nothing is compiled the way it was before.
+        assert_eq!(flags("suite/plain.c"), ["-std=gnu17"]);
         let _ = fs::remove_dir_all(&root);
     }
 

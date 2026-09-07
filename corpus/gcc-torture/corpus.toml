@@ -431,17 +431,20 @@ why = "an atomic builtin has no lowering, E0686"
 #
 # It is shorter than that issue expected. The guess there was nineteen hundred programs of red.
 # The unit is 1772 programs, which is the 1907 in the tarball less the 135 skipped above, and at
-# `-O0` 1463 of them pass, 142 are named below and 167 are refused by gcc 16 as well. At `-O3`
-# it is 1442, 165 and 165. The reason for the gap between the guess and the count is that the
+# `-O0` 1470 of them pass, 148 are named below and 154 are refused by gcc 16 as well. At `-O3`
+# it is 1447, 163 and 162. The reason for the gap between the guess and the count is that the
 # issue was written when a call to an unknown builtin stopped five hundred files at once, and it
 # said to wait until the lowering rule set stopped moving so fast. It has.
 #
 # The programs gcc refuses are not on this list and are not in the skip list either. They are
 # decided by running the reference, so they cannot go stale and nobody has to notice when gcc
 # changes its mind, and there are a few more of them at `-Os` than at `-O0` because some of what
-# gcc refuses it only works out once it has folded something.
+# gcc refuses it only works out once it has folded something. There are fewer of them than there
+# used to be, thirteen fewer at `-O0` and three fewer at `-O3`, because a program that names its
+# own options in a `dg-options` line is now compiled with them and some of what gcc was refusing
+# it was refusing for want of the dialect the program asked for.
 #
-# 165 cases are named here across the six levels, and 35 blocks name them, because the reasons
+# 165 cases are named here across the six levels, and 32 blocks name them, because the reasons
 # are far fewer than the programs. The blocks are roughly sorted by size, and the largest two are
 # complex arithmetic and `__int128`. Inline assembly used to be the first of them by a long way,
 # at seventy three cases, and it is three now that a template with no instructions in it lowers:
@@ -659,30 +662,6 @@ cases = [
 ]
 
 [[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/583"
-why = "the mode attribute is ignored, so the array these check byte by byte is four times the size they asked for"
-outcome = "crashed"
-cases = [
-  "execute/memclr.c",
-  "execute/memcpy-a1.c",
-  "execute/memcpy-a2.c",
-  "execute/memcpy-a4.c",
-  "execute/memcpy-a8.c",
-  "execute/misalign.c",
-]
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/585"
-why = "x87 subtraction and division have their operands the wrong way round"
-outcome = "crashed"
-cases = [
-  "execute/960215-1.c",
-  "execute/conversion.c",
-  "execute/ieee/20010226-1.c",
-  "execute/regstack-1.c",
-]
-
-[[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/349"
 why = "a template with instructions in it needs an assembler and an asm goto needs an edge, E0653"
 outcome = "did not build"
@@ -691,12 +670,6 @@ cases = [
   "execute/pr121957.c",
   "execute/pr123625-3.c",
 ]
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/584"
-why = "__builtin_expect drops the side effects of its hint argument"
-outcome = "crashed"
-case = "execute/pr85156.c"
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/223"
@@ -820,37 +793,77 @@ why = "always_inline is not honoured, so an inline definition marked with it is 
 outcome = "did not build"
 case = "execute/stdarg-4.c"
 
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/335"
-why = "a structure passed by value too large to unroll needs a call to the runtime, E0653"
-outcome = "did not build"
-opt = ["0", "2", "3", "s", "z"]
-case = "execute/pr23135.c"
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/588"
-why = "an inline definition gets no out of line copy, so the call left after inlining has nothing to reach"
-outcome = "did not build"
-opt = ["1", "2", "3", "s", "z"]
-case = "execute/20020107-1.c"
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/588"
-why = "an inline definition gets no out of line copy, so the call left after inlining has nothing to reach"
-outcome = "did not build"
-opt = ["3"]
-cases = [
-  "execute/20001121-1.c",
-  "execute/930526-1.c",
-  "execute/961223-1.c",
-  "execute/loop-2c.c",
-  "execute/restrict-1.c",
-  "execute/unroll-1.c",
-]
-
+# This used to name the three levels an optimizer runs at, because those were the levels that
+# inlined `foo` into `main` and put the `_Bool` it returns somewhere the backend had to lower it.
+# Now that the file's own `-fgnu89-inline` is read it fails everywhere, since that option makes
+# the definition one this file emits rather than one it merely declares, and a function that
+# returns a `_Bool` has to be lowered whether or not anything inlined it.
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/352"
 why = "a one bit integer has no lowering, E0653"
 outcome = "did not build"
-opt = ["1", "2", "3"]
 case = "execute/p18298.c"
+
+# The options each of these asks for and rucc turns down, in the order they are listed:
+# `-fnon-call-exceptions`, `-fwrapv` five times, `-finstrument-functions`, the three
+# `-fno-tree-*` options on one line, `-ffast-math`, `-fno-ira-share-spill-slots`,
+# `-ftree-loop-distribution`, `-fno-strict-overflow`, `-fexpensive-optimizations` with
+# `-fno-tree-bit-ccp`, `-ftree-vectorize` with `-fno-vect-cost-model`, `-fno-inline`, and
+# `-finput-charset=utf-8`. Three of them, `execute/920612-1.c`, `execute/pr23135.c` and
+# `execute/pr40386.c`, name one option that is accepted alongside the one that is not.
+#
+# `execute/pr23135.c` was on the tamnd/rucc#335 list at five of the six levels before this, for a
+# structure passed by value too large to unroll. That gap is still there and is still what stops
+# the program once the option is accepted. It is listed here rather than there because the option
+# is refused before anything looks at the program, so this is what the run reports today.
+#
+# None of the rest is a program this could not otherwise build. They arrived the day the harness
+# started reading the `dg-options` line, which is the right thing to do and is what turns a
+# missing flag from something invisible into something counted. Fourteen distinct options are
+# named here and tamnd/rucc#489 is where the flag surface is tracked.
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/489"
+why = "the program names an option in its own dg-options line that the driver does not accept"
+outcome = "did not build"
+cases = [
+  "execute/20101011-1.c",
+  "execute/920612-1.c",
+  "execute/920711-1.c",
+  "execute/930529-1.c",
+  "execute/eeprof-1.c",
+  "execute/pr111863-1.c",
+  "execute/pr22493-1.c",
+  "execute/pr23047.c",
+  "execute/pr23135.c",
+  "execute/pr39501.c",
+  "execute/pr40386.c",
+  "execute/pr43236.c",
+  "execute/pr57124.c",
+  "execute/pr68381.c",
+  "execute/pr68532.c",
+  "execute/stkalign.c",
+  "execute/wchar_t-1.c",
+]
+
+# Thirteen of the sixteen calls in this program are right and the three behind its own
+# `#ifdef __OPTIMIZE__` are not, which is why it passes at -O0 and is listed at the five levels
+# an optimizer runs at. The file's comment calls those three extensions to gcc2 whose failure
+# indicates an optimization regression, and that is what this is: the builtin is allowed to answer
+# zero for anything it does not know. It reached the gate with the `-fgnu89-inline` its own
+# dg-options line asks for, and without that option it was never compiling the program it says.
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/604"
+why = "__builtin_constant_p is answered before inlining, so a constant that only appears after it reads zero"
+outcome = "crashed"
+opt = ["1", "2", "3", "s", "z"]
+case = "execute/bcp-1.c"
+
+# gcc 16.2.0 aborts on its own build of this program at -O0 and returns zero once the option is
+# passed, and rucc and gcc give the same two answers on the two functions it checks, so there is
+# no difference between the compilers here at all. The option is written with the other spelling
+# of the directive, `dg-additional-options`, which nothing reads yet.
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc-compat/issues/80"
+why = "the program asks for -fno-trapping-math and the harness does not read the directive it asks with"
+outcome = "crashed"
+case = "execute/20031003-1.c"
