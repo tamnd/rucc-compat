@@ -425,6 +425,32 @@ cases = [
 issue = "https://github.com/tamnd/rucc/issues/311"
 why = "an atomic builtin has no lowering, E0686"
 
+# The same seventeen programs the execution list names for the same reason, and they stop here
+# first because the driver reads its command line before it reads anything else. The options are
+# listed in the comment above the block that names them down there.
+[[exclude]]
+cases = [
+  "execute/20101011-1.c",
+  "execute/920612-1.c",
+  "execute/920711-1.c",
+  "execute/930529-1.c",
+  "execute/eeprof-1.c",
+  "execute/pr111863-1.c",
+  "execute/pr22493-1.c",
+  "execute/pr23047.c",
+  "execute/pr23135.c",
+  "execute/pr39501.c",
+  "execute/pr40386.c",
+  "execute/pr43236.c",
+  "execute/pr57124.c",
+  "execute/pr68381.c",
+  "execute/pr68532.c",
+  "execute/stkalign.c",
+  "execute/wchar_t-1.c",
+]
+issue = "https://github.com/tamnd/rucc/issues/489"
+why = "the program names an option in its own dg-options line that the driver does not accept"
+
 # The execution list, which is what tamnd/rucc-compat#30 asked for. `exec` builds each of these
 # programs three ways and runs it, and the self check inside the program decides whether the run
 # was right, so this list is about what the compiler produced rather than about what it accepted.
