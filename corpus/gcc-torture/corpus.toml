@@ -450,9 +450,10 @@ why = "an atomic builtin has no lowering, E0686"
 # every program that passes finishes far inside it and nothing is on the list for being slow. The
 # one program that used to run out of it was `pr15296.c`, which was a loop the compiler had turned
 # into one that does not end, and it is a pass now. And all three build paths run, because they
-# disagree: `pr54937.c` fails on the driver path and passes on the other two, which is the one
-# relocation a position independent link refuses, and the driver path is the one that makes such a
-# link. A list written against one path would have called that a pass.
+# can disagree: `pr54937.c` used to fail on the driver path and pass on the other two, which was
+# the one relocation a position independent link refuses, and the driver path is the one that makes
+# such a link. A list written against one path would have called that a pass. It is fixed and it is
+# still the reason all three run.
 #
 # Those numbers are what a machine says, not what a machine said once, and they were wrong here
 # for a while in two ways worth writing down. Six sweeps at six levels ran at once and shared a
@@ -908,10 +909,3 @@ why = "a one bit integer has no lowering, E0653"
 outcome = "did not build"
 opt = ["1", "2", "3"]
 case = "execute/p18298.c"
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/355"
-why = "the address of an external function is a relocation a position independent link refuses"
-outcome = "did not build"
-route = ["driver"]
-case = "execute/pr54937.c"
