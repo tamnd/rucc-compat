@@ -38,20 +38,22 @@ skip = [
   "sqlite3rc.h",
 ]
 
-# Two cases rucc does not get through yet, each naming the issue that will take it off this
-# list. An entry whose case has started passing fails the run, so the list shrinks as the work
-# lands rather than sitting here.
+# One case rucc does not get through yet, naming the issue that will take it off this list. An
+# entry whose case has started passing fails the run, so the list shrinks as the work lands
+# rather than sitting here.
 #
-# Both used to reach three byte swap builtins first, through a glibc header that defines static
-# inline functions over them which neither file calls and which this compiler emitted anyway.
-# That was tamnd/rucc#308 and closing it was never going to be enough for either file, which is
-# why neither entry named it: the amalgamation writes its own atomics and the shell writes its
-# own `ceil` and `floor`, and those are what each one is really waiting on.
-
-[[exclude]]
-case = "amalgamation/sqlite3.c"
-issue = "https://github.com/tamnd/rucc/issues/311"
-why = "an atomic builtin has no lowering, E0686"
+# It used to reach three byte swap builtins first, through a glibc header that defines static
+# inline functions over them which the file never calls and which this compiler emitted anyway.
+# That was tamnd/rucc#308 and closing it was never going to be enough on its own, which is why
+# the entry does not name it: the shell writes its own `ceil` and `floor`, and that is what it
+# is really waiting on.
+#
+# The amalgamation used to be on this list too, blaming an atomic builtin and tamnd/rucc#311.
+# That was written from what a check said rather than from what a build does, and it was wrong.
+# The amalgamation reaches no atomic builtin, and it goes through this harness clean. What it
+# does hit is further down than anything here runs: a real build on x86-64 Linux stops at a
+# `zext` producing an `i128` in `sqlite3Multiply128`, which is tamnd/rucc#351, and that is a
+# backend refusal rather than a front end one. The record of that build is tamnd/rucc#590.
 
 [[exclude]]
 case = "shell/shell.c"
