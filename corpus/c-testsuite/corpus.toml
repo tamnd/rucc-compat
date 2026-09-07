@@ -44,28 +44,20 @@ flags = ["-std=gnu17"]
 
 # `exec` is the harder half and is where the list below comes from. Getting a program through
 # the front end and getting the right answer out of the program are different claims, which is
-# why the two lists are separate and why this one is long while the one above is empty.
+# why the two lists are separate.
 
-# The lowering rule set is where this corpus stops. Everything below builds and runs on the two
-# hundred and twenty programs here, and the two hundred and seven that pass are the ones the rule
-# set reaches all the way through. The rest mostly reach an IR opcode no rule names, which is a `did
-# not build` rather than a wrong answer, and each block below is one gap and the issue that closes
-# it. As a rule lands its block goes stale in one piece and comes out in one commit.
+# There are two entries left in it. Two hundred and eighteen of the two hundred and twenty programs
+# here build, run and give the recorded answer, one of the other two is a gap in the compiler and
+# one is a gap in the harness, and each block says which and names the issue that closes it. As a
+# gap closes its block goes stale in one piece and comes out in one commit, which is what the rest
+# of this file is the record of.
 
-# Structures of `long double` passed through a variadic function and a plain one. The eighty bit
-# float is on the x87 stack rather than in a register file, so the rule set names no type for it
-# and nothing reads or writes one.
-#
-# This entry pointed at tamnd/rucc#289 until a variadic function could read its own arguments,
-# and then at tamnd/rucc#287 until a structure could be copied. The next thing in the same file
-# is what it points at now.
-[[exec-exclude]]
-issue = "tamnd/rucc#326"
-why = "an eighty bit float has no type in the rule set"
-outcome = "did not build"
-cases = [
-  "single-exec/00204.c",
-]
+# `single-exec/00204.c` was here and is not any more. It passes structures of `long double` through
+# a variadic function and a plain one, and the eighty bit float is on the x87 stack rather than in
+# a register file, so the rule set named no type for it and nothing read or wrote one. The entry
+# pointed at tamnd/rucc#289 until a variadic function could read its own arguments, then at
+# tamnd/rucc#287 until a structure could be copied, and last at tamnd/rucc#326 for the float
+# itself, which has landed.
 
 # A variable length array, which is a frame that grows during the body rather than a missing
 # rule, and is the only one of these blocks whose work is not in the rule set.

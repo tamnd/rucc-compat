@@ -88,25 +88,21 @@ skip = [
 ]
 
 
-# Every file here is built with `test/common`, and `test/common` has seven functions that give
-# back a structure by value, so one gap in the back end used to block all seventeen cases before
-# any of them got as far as its own subject. That made the whole corpus one entry rather than
-# seventeen, and it pointed in turn at tamnd/rucc#281 for the address of a name at file scope,
-# then tamnd/rucc#289 for a variadic function reading its own arguments, then tamnd/rucc#287 for
-# a structure being copied, and last tamnd/rucc#325 for a structure coming back in two registers.
-# That one landed and the whole block came out at once, which is what a block written as one gap
-# rather than as seventeen is for. What is below is what was behind it.
+# Nothing is excluded here any more. Every file is built with `test/common`, and `test/common` has
+# seven functions that give back a structure by value, so one gap in the back end used to block all
+# seventeen cases before any of them got as far as its own subject. That made the whole corpus one
+# entry rather than seventeen, and it pointed in turn at tamnd/rucc#281 for the address of a name
+# at file scope, then tamnd/rucc#289 for a variadic function reading its own arguments, then
+# tamnd/rucc#287 for a structure being copied, and last tamnd/rucc#325 for a structure coming back
+# in two registers. That one landed and the whole block came out at once, which is what a block
+# written as one gap rather than as seventeen is for.
 #
-# `test/line.c` is not here, because it expects the line after `#line 500` to be 501 rather than
-# 500 and GCC 16 fails its own build of it on that assertion. `exec` runs the reference against
-# the same oracle before it runs us, so a program neither compiler passes is reported as skipped
-# and needs no entry that could go stale.
-
-# `test/float.c` is not here, because the conversions between a sixty four bit unsigned integer
-# and a floating point type landed in tamnd/rucc#539. `test/arith.c` wanted an eighty bit float
-# as well, so it stays under the issue that is about that rather than under the one that closed.
-[[exec-exclude]]
-issue = "tamnd/rucc#326"
-why = "an eighty bit float has no type in the rule set"
-outcome = "did not build"
-case = "test/arith.c"
+# What was behind it was two files. `test/float.c` wanted the conversions between a sixty four bit
+# unsigned integer and a floating point type, which landed in tamnd/rucc#539. `test/arith.c` wanted
+# an eighty bit float, which landed in tamnd/rucc#326, and then it wanted GNU's `a ?: b` to
+# evaluate its left side once rather than twice, which landed in tamnd/rucc#613.
+#
+# `test/line.c` is not here either, because it expects the line after `#line 500` to be 501 rather
+# than 500 and GCC 16 fails its own build of it on that assertion. `exec` runs the reference
+# against the same oracle before it runs us, so a program neither compiler passes is reported as
+# skipped and needs no entry that could go stale.
