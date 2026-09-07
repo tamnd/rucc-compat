@@ -833,16 +833,6 @@ cases = [
 ]
 
 [[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/354"
-why = "the alias attribute emits no alias, so the name is undefined at link time"
-outcome = "did not build"
-cases = [
-  "execute/alias-2.c",
-  "execute/alias-3.c",
-  "execute/alias-4.c",
-]
-
-[[exec-exclude]]
 issue = "https://github.com/tamnd/rucc-compat/issues/39"
 why = "the link step passes no libraries, so a call to libm has nowhere to resolve"
 outcome = "did not build"
