@@ -33,31 +33,24 @@ dir = "test"
 # is deliberately not, because that holds the freestanding headers chibicc ships in place of
 # the machine's, and comparing a compiler against a corpus is more use when the corpus reads
 # the headers the compiler will meet in real work.
-flags = ["-std=gnu17", "-I", "."]
+# `-fpermissive` is here for the same reason the dialect is. GCC 14 turned four rules that had
+# been warnings into errors, and chibicc is from 2020, so eleven of these files were on the wrong
+# side of a change that came four years after they were written. This is the flag GCC put there
+# for exactly that, and both compilers read it, so the eleven are compared rather than skipped.
+flags = ["-std=gnu17", "-fpermissive", "-I", "."]
 # The `assert` every one of these files calls is defined in `test/common`, along with the
 # objects and functions the cases that reach across a translation unit reach for. It goes
 # through the compiler under test with the case rather than being built once by the reference,
 # because a helper built by the reference would hide every bug in the code that calls it.
 link = ["test/common"]
 skip = [
-  # A pointer given a value whose target type is something else. GCC 14 turned this from a
-  # warning into an error and chibicc was written in 2020, so more than half of the suite is
-  # on the wrong side of the change. The reference compiler refuses every one of these files
-  # under every dialect, which makes them nothing an exclusion could point an issue at.
-  "atomic.c",
-  "initializer.c",
-  "pointer.c",
-  "struct.c",
-  "unicode.c",
-  "varargs.c",
-  "variable.c",
-  "vla.c",
-  # The other three rules GCC 14 promoted at the same time: a call to a function nothing
-  # declared, an integer made from a pointer with no cast, and a declaration with no type in
-  # it at all.
-  "alloca.c",
-  "asm.c",
-  "const.c",
+  # Twelve entries, and every one of them is a file gcc 16 will not compile whatever it is
+  # told. Eleven more were here until the unit asked for `-fpermissive` above, on a comment
+  # claiming the reference refused them under every dialect, which measuring says it does not:
+  # gcc takes all eleven once it is asked to take them, and eight of those are the one rule
+  # about a pointer given a value whose target type is something else. That comment had been
+  # here since the corpus went in and nobody had run the experiment it asserted the answer to.
+  #
   # A declaration of a standard function that disagrees with the one the machine's headers
   # give. chibicc ships its own headers and these files were written against those, so what
   # they say about `printf` and `vsprintf` is not what `stdio.h` here says.
@@ -88,9 +81,57 @@ skip = [
 ]
 
 
-# Nothing is excluded here any more. Every file is built with `test/common`, and `test/common` has
-# seven functions that give back a structure by value, so one gap in the back end used to block all
-# seventeen cases before any of them got as far as its own subject. That made the whole corpus one
+# The exclusions below are all new and all came from the eleven files `-fpermissive` opened up. The
+# list had been empty, which is worth saying plainly: it was empty because eleven of the twenty nine
+# cases were being skipped on an assertion about gcc, and five of those eleven pass now. The other
+# points at three gaps this compiler really has, which is what the eleven were hiding.
+[[exclude]]
+case = "test/atomic.c"
+issue = "https://github.com/tamnd/rucc/issues/389"
+why = "stdatomic.h is not shipped, so the header the file opens with is not found, E0341"
+
+[[exclude]]
+case = "test/initializer.c"
+issue = "https://github.com/tamnd/rucc/issues/661"
+why = "an array designator written without the `=` after it is refused, E0400"
+
+[[exclude]]
+case = "test/varargs.c"
+issue = "https://github.com/tamnd/rucc/issues/662"
+why = "va_end of something that is not a va_list is an error where gcc warns, E0582"
+
+# `test/initializer.c` is not on the execution list and does not need to be. gcc's own build of it
+# returns one, because the file asserts things chibicc decided rather than things the language
+# says, so the run reports it as skipped before rucc is asked anything. The pipeline check has no
+# reference to consult and therefore does need the entry above.
+[[exec-exclude]]
+case = "test/asm.c"
+issue = "https://github.com/tamnd/rucc/issues/349"
+why = "an asm with instructions in its template needs an assembler, E0653"
+outcome = "did not build"
+
+[[exec-exclude]]
+case = "test/atomic.c"
+issue = "https://github.com/tamnd/rucc/issues/389"
+why = "stdatomic.h is not shipped, so the header the file opens with is not found, E0341"
+outcome = "did not build"
+
+[[exec-exclude]]
+case = "test/varargs.c"
+issue = "https://github.com/tamnd/rucc/issues/662"
+why = "va_end of something that is not a va_list is an error where gcc warns, E0582"
+outcome = "did not build"
+
+[[exec-exclude]]
+case = "test/vla.c"
+issue = "https://github.com/tamnd/rucc/issues/291"
+why = "nothing here grows the stack for a variable length array, E0653"
+outcome = "did not build"
+
+# Before those four there was nothing here, and the way that happened is worth keeping. Every file
+# is built with `test/common`, and `test/common` has seven functions that give back a structure by
+# value, so one gap in the back end used to block all seventeen cases before any of them got as far
+# as its own subject. That made the whole corpus one
 # entry rather than seventeen, and it pointed in turn at tamnd/rucc#281 for the address of a name
 # at file scope, then tamnd/rucc#289 for a variadic function reading its own arguments, then
 # tamnd/rucc#287 for a structure being copied, and last tamnd/rucc#325 for a structure coming back
