@@ -47,7 +47,9 @@ skip = [
   # this file itself under the dialect this unit names. Nothing rucc does or does not do is
   # visible in it, which is what makes it a skip rather than an exclusion. A hundred and four
   # files were here on the same reasoning and are gone, because each of them names the dialect it
-  # was written in on its own `dg-additional-options` line and the harness now reads it.
+  # was written in on its own `dg-additional-options` line and the harness now reads it. Thirty
+  # more are gone into the `[[settled]]` block below, which is where a file the reference compiles
+  # and rucc will not belongs. Seven entries are left and every one of them is about gcc.
   "930513-1.c",
   # Files that include a source file from `gcc.dg`, which is a sibling directory of this one and
   # not part of what `extract` unpacks. Unpacking the rest of the test suite to run five more
@@ -60,44 +62,53 @@ skip = [
   # A `va_start` written with one argument, which C23 allows and gnu17 does not, so gcc refuses
   # it under the dialect this unit names.
   "pr117432.c",
-  # A function defined inside another one, which is GNU's nested functions. A call to one goes
-  # through a trampoline written on the stack, and this compiler will not have them, which
-  # `spec/13-gnu-compat.md` section 13.3 settles and the row in `features.toml` says as well.
-  # gcc takes these thirty files and rucc reports an error on each. That is a divergence rather
-  # than a gap, so there is no issue for an exclusion to point at and nothing here will ever
-  # start working, which is what makes it a skip. Six of the thirty arrived from the block above
-  # once the harness started reading the dialect they ask for: what was stopping them was never
-  # the missing type, it was the nested function underneath it.
-  "20000822-1.c",
-  "20010209-1.c",
-  "20010605-1.c",
-  "20030501-1.c",
-  "20040520-1.c",
-  "20061220-1.c",
-  "20090219-1.c",
-  "920415-1.c",
-  "920428-2.c",
-  "920501-7.c",
-  "920612-2.c",
-  "920721-4.c",
-  "921017-1.c",
-  "921215-1.c",
-  "931002-1.c",
-  "comp-goto-2.c",
-  "nest-align-1.c",
-  "nest-stdar-1.c",
-  "nestfunc-1.c",
-  "nestfunc-2.c",
-  "nestfunc-3.c",
-  "nestfunc-5.c",
-  "nestfunc-6.c",
-  "nestfunc-7.c",
-  "pr103405.c",
-  "pr22061-3.c",
-  "pr22061-4.c",
-  "pr24135.c",
-  "pr51447.c",
-  "pr71494.c",
+]
+
+# A function defined inside another one, which is GNU's nested functions. A call to one goes
+# through a trampoline written on the stack, and this compiler will not have them. gcc takes these
+# thirty files and rucc reports an error on each, so nothing about the reference is visible here
+# and a `skip` would be the wrong shelf: a skip says the reference cannot get through the file
+# either, and it can. An exclusion is the wrong shelf as well, because an exclusion names the issue
+# that will remove it and no issue will. The decision was argued and finished, and this is where a
+# finished decision goes.
+#
+# Six of the thirty were in the skip array on the wrong reason before this, filed under a missing
+# type on the function above them. What was stopping them was never the missing type. It was the
+# nested function underneath it, which is what reading the dialect they ask for made visible.
+[[settled]]
+spec = "spec/13-gnu-compat.md section 13.3"
+why = "a call to a nested function needs an executable trampoline on the stack"
+cases = [
+  "execute/20000822-1.c",
+  "execute/20010209-1.c",
+  "execute/20010605-1.c",
+  "execute/20030501-1.c",
+  "execute/20040520-1.c",
+  "execute/20061220-1.c",
+  "execute/20090219-1.c",
+  "execute/920415-1.c",
+  "execute/920428-2.c",
+  "execute/920501-7.c",
+  "execute/920612-2.c",
+  "execute/920721-4.c",
+  "execute/921017-1.c",
+  "execute/921215-1.c",
+  "execute/931002-1.c",
+  "execute/comp-goto-2.c",
+  "execute/nest-align-1.c",
+  "execute/nest-stdar-1.c",
+  "execute/nestfunc-1.c",
+  "execute/nestfunc-2.c",
+  "execute/nestfunc-3.c",
+  "execute/nestfunc-5.c",
+  "execute/nestfunc-6.c",
+  "execute/nestfunc-7.c",
+  "execute/pr103405.c",
+  "execute/pr22061-3.c",
+  "execute/pr22061-4.c",
+  "execute/pr24135.c",
+  "execute/pr51447.c",
+  "execute/pr71494.c",
 ]
 
 # What is left is 155 cases out of 1870, so 1715 of them pass. The one thing that was holding
@@ -123,8 +134,8 @@ skip = [
 # it came out in one piece.
 #
 # Ninety eight more programs are offered here than were before, because the skip array above went
-# from 135 entries to 37 once the harness started reading the `dg-additional-options` line each of
-# them writes. Ninety seven of the ninety eight pass. Sixty seven came off this list at the same
+# from 135 entries to 7 once the harness started reading the `dg-additional-options` line each of
+# them writes and the thirty nested function files moved to the block that fits them. Ninety seven of the ninety eight pass. Sixty seven came off this list at the same
 # time and for the same reason read from the other side: they were listed for a gap that was never
 # there, and what was actually stopping them was the dialect they had asked for and not been
 # given. Fifteen went on, which is the price of reading that line. Fourteen of the fifteen name an
@@ -385,11 +396,11 @@ why = "the program names an option in its own dg-options line that the driver do
 # was right, so this list is about what the compiler produced rather than about what it accepted.
 #
 # It is shorter than that issue expected. The guess there was nineteen hundred programs of red.
-# The unit is 1870 programs, which is the 1907 in the tarball less the 37 skipped above, and at
-# `-O0` 1549 of them pass, 168 are named below and 153 are refused by gcc 16 as well. At `-O3`
-# it is 1532, 183 and 155. The reason for the gap between the guess and the count is that the
-# issue was written when a call to an unknown builtin stopped five hundred files at once, and it
-# said to wait until the lowering rule set stopped moving so fast. It has.
+# The unit is 1870 programs, which is the 1907 in the tarball less the 7 skipped and the 30
+# settled above, and at `-O0` 1549 of them pass, 168 are named below and 153 are refused by gcc 16
+# as well. At `-O3` it is 1532, 183 and 155. The reason for the gap between the guess and the
+# count is that the issue was written when a call to an unknown builtin stopped five hundred files
+# at once, and it said to wait until the lowering rule set stopped moving so fast. It has.
 #
 # The programs gcc refuses are not on this list and are not in the skip list either. They are
 # decided by running the reference, so they cannot go stale and nobody has to notice when gcc

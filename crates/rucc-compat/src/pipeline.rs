@@ -23,7 +23,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use crate::corpus::{Corpus, Exclusion};
+use crate::corpus::{Corpus, Exclusion, Settled};
 use crate::differ::{self, Case};
 use crate::ledger;
 use crate::toml::Error;
@@ -158,6 +158,13 @@ pub struct Report {
     /// Empty unless the whole corpus ran, since a filtered run has no opinion about a case it
     /// did not reach.
     pub unmatched: Vec<Exclusion>,
+    /// The cases a `[[settled]]` entry took out, which the reference compiles and rucc will not.
+    ///
+    /// Reported here as well as by `exec`, because the driver reads its command line and walks
+    /// the program before it produces anything to run, so a case rucc has decided not to compile
+    /// stops on this path first and would otherwise be a hole in this count and not in that one.
+    /// Empty unless the whole corpus ran.
+    pub settled: Vec<Settled>,
 }
 
 impl Report {
@@ -187,11 +194,12 @@ impl Report {
     pub fn summary(&self) -> String {
         let excused = self.outcomes.iter().filter(|o| o.excused.is_some()).count();
         format!(
-            "{}: {} cases, {} passed, {} excluded, {} failing, {} stale",
+            "{}: {} cases, {} passed, {} excluded, {} settled, {} failing, {} stale",
             self.corpus,
             self.outcomes.len(),
             self.passed(),
             excused,
+            self.settled.len(),
             self.outcomes.iter().filter(|o| o.is_failure()).count(),
             self.stale()
         )
@@ -209,7 +217,8 @@ pub fn run(
     settings: &Settings,
     scratch: &Path,
 ) -> Result<Report, Error> {
-    let all = differ::cases(repo, corpus, scratch)?.cases;
+    let found = differ::cases(repo, corpus, scratch)?;
+    let all = found.cases;
     let cases: Vec<Case> = match &settings.unit {
         Some(unit) => all.iter().filter(|c| c.unit == *unit).cloned().collect(),
         None => all.clone(),
@@ -264,7 +273,13 @@ pub fn run(
             .collect(),
         false => Vec::new(),
     };
-    Ok(Report { corpus: corpus.name.clone(), outcomes, unmatched })
+    // Only on a whole run, for the same reason `unmatched` is. A run narrowed to twenty cases
+    // has no business saying how much of the corpus is set aside.
+    let settled = match settings.is_whole() {
+        true => found.settled,
+        false => Vec::new(),
+    };
+    Ok(Report { corpus: corpus.name.clone(), outcomes, unmatched, settled })
 }
 
 /// Takes one case through the three runs.
@@ -429,6 +444,19 @@ pub fn markdown(report: &Report, settings: &Settings) -> String {
         }
         let _ = writeln!(out);
     }
+    // Last, and named rather than counted, for the reason the same section in `exec` is: every
+    // other subtraction on this page is the reference compiler's decision reported back, and this
+    // one is ours. A reader who wants to argue with the numbers should be arguing with this.
+    if !report.settled.is_empty() {
+        let _ = writeln!(out, "## Settled, because rucc has decided not to compile them\n");
+        let _ = writeln!(out, "| case | where it was decided | what the difference is |");
+        let _ = writeln!(out, "| --- | --- | --- |");
+        for entry in &report.settled {
+            let why = entry.why.replace('|', "\\|");
+            let _ = writeln!(out, "| {} | `{}` | {why} |", entry.case, entry.spec);
+        }
+        let _ = writeln!(out);
+    }
     out
 }
 
@@ -453,6 +481,7 @@ mod tests {
                 outcome("t/b.c", failed(Step::RoundTrip), None),
             ],
             unmatched: Vec::new(),
+            settled: Vec::new(),
         };
         assert_eq!(report.passed(), 1);
         assert_eq!(report.failures(), 1);
@@ -464,6 +493,7 @@ mod tests {
             corpus: "c-testsuite".to_owned(),
             outcomes: vec![outcome("t/a.c", failed(Step::Tast), Some("#142"))],
             unmatched: Vec::new(),
+            settled: Vec::new(),
         };
         assert_eq!(report.failures(), 0);
     }
@@ -474,6 +504,7 @@ mod tests {
             corpus: "c-testsuite".to_owned(),
             outcomes: vec![outcome("t/a.c", Status::Passed, Some("#142"))],
             unmatched: Vec::new(),
+            settled: Vec::new(),
         };
         assert_eq!(report.stale(), 1);
         assert_eq!(report.failures(), 1);
@@ -494,6 +525,7 @@ mod tests {
             corpus: "c-testsuite".to_owned(),
             outcomes: vec![outcome("t/a.c", Status::Passed, None)],
             unmatched: vec![entry],
+            settled: Vec::new(),
         };
         assert_eq!(report.failures(), 1);
     }

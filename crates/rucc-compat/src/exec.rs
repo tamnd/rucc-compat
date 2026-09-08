@@ -21,7 +21,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::Duration;
 
-use crate::corpus::{Corpus, Exclusion, Oracle};
+use crate::corpus::{Corpus, Exclusion, Oracle, Settled};
 use crate::coverage::{self, Marks};
 use crate::differ::{self, Case};
 use crate::ledger;
@@ -347,6 +347,14 @@ pub struct Report {
     /// report that leaves them out is one whose totals cannot be reconciled against the suite.
     /// Empty unless the whole corpus ran.
     pub never: Vec<String>,
+    /// The cases a `[[settled]]` entry took out, which the reference compiles and rucc will not.
+    ///
+    /// Counted apart from `never` because the two are opposite claims. A skipped file says the
+    /// reference cannot get through it either, so nothing here is about rucc. A settled case says
+    /// rucc has looked at what the file needs and turned it down, which is entirely about rucc,
+    /// and a report that added the two together would be hiding the second behind the first.
+    /// Empty unless the whole corpus ran.
+    pub settled: Vec<Settled>,
     /// What the compiler under test says it is.
     pub rucc: String,
     /// What the reference says it is, since a number measured against gcc 13 and one measured
@@ -431,21 +439,23 @@ impl Report {
 
     /// One line, for the terminal.
     ///
-    /// The count of files the manifest never offered is on the end rather than left to the
-    /// report, because it is the one number here that says how much of the suite this line is
-    /// about, and a reader who only ever sees this line should not have to assume it is all of
-    /// it.
+    /// The two counts of what was not offered are on the end rather than left to the report,
+    /// because between them they say how much of the suite this line is about, and a reader who
+    /// only ever sees this line should not have to assume it is all of it. They are two numbers
+    /// rather than one because a file the reference cannot compile says nothing about rucc and a
+    /// case rucc has decided not to compile says only about rucc.
     #[must_use]
     pub fn summary(&self) -> String {
         let counts: Vec<String> =
             self.split().into_iter().map(|(word, n)| format!("{n} {word}")).collect();
         format!(
-            "{}: {} runs, {}, {} stale, {} never offered",
+            "{}: {} runs, {}, {} stale, {} never offered, {} settled",
             self.corpus,
             self.outcomes.len(),
             counts.join(", "),
             self.stale(),
-            self.never.len()
+            self.never.len(),
+            self.settled.len()
         )
     }
 }
@@ -587,12 +597,17 @@ pub fn run(
         true => found.never,
         false => Vec::new(),
     };
+    let settled = match settings.is_whole() {
+        true => found.settled,
+        false => Vec::new(),
+    };
     Ok(Report {
         corpus: corpus.name.clone(),
         oracle,
         outcomes,
         unmatched,
         never,
+        settled,
         rucc: version(&settings.rucc),
         cc: version(&settings.cc),
         machine: settings.machine.clone().unwrap_or_else(platform),
@@ -1003,8 +1018,17 @@ pub fn markdown(report: &Report, settings: &Settings) -> String {
     let _ = writeln!(out, "## Census\n");
     let _ = writeln!(out, "| files | count |");
     let _ = writeln!(out, "| --- | --- |");
-    let _ = writeln!(out, "| in the corpus | {} |", rows.len() + report.never.len());
+    let _ = writeln!(
+        out,
+        "| in the corpus | {} |",
+        rows.len() + report.never.len() + report.settled.len()
+    );
     let _ = writeln!(out, "| never offered, a `skip` in the manifest | {} |", report.never.len());
+    let _ = writeln!(
+        out,
+        "| settled, rucc has decided not to compile them | {} |",
+        report.settled.len()
+    );
     let _ = writeln!(out, "| offered | {} |", rows.len());
     let _ = writeln!(
         out,
@@ -1099,6 +1123,25 @@ pub fn markdown(report: &Report, settings: &Settings) -> String {
         let _ = writeln!(out);
     }
 
+    // Named one at a time rather than counted, and with the section of the specification that
+    // settled each one, because this is the list a reader is most entitled to argue with. Every
+    // other subtraction on this page is somebody else's decision reported back. This one is ours.
+    if !report.settled.is_empty() {
+        let _ = writeln!(out, "## Settled, because rucc has decided not to compile them\n");
+        let _ = writeln!(
+            out,
+            "{} cases the reference compiles. No issue will remove these, so each names where the decision was argued instead.\n",
+            report.settled.len()
+        );
+        let _ = writeln!(out, "| case | where it was decided | what the difference is |");
+        let _ = writeln!(out, "| --- | --- | --- |");
+        for entry in &report.settled {
+            let why = entry.why.replace('|', "\\|");
+            let _ = writeln!(out, "| {} | `{}` | {why} |", entry.case, entry.spec);
+        }
+        let _ = writeln!(out);
+    }
+
     if !report.never.is_empty() {
         let _ = writeln!(out, "## Never offered, because a `skip` in the manifest names them\n");
         let _ = writeln!(
@@ -1170,6 +1213,7 @@ mod tests {
             outcomes,
             unmatched: Vec::new(),
             never: Vec::new(),
+            settled: Vec::new(),
             rucc: "rucc 0.3.7".to_owned(),
             cc: "gcc (GCC) 16.2.0".to_owned(),
             machine: "linux x86_64".to_owned(),
@@ -1406,6 +1450,33 @@ mod tests {
         // The reason an exclusion gives is in the table beside it, so the list of what is still
         // wrong can be read without opening a manifest.
         assert!(text.contains("it does not work yet"), "{text}");
+    }
+
+    /// What is settled is counted apart from what was never offered, and named with its citation.
+    ///
+    /// One number for both would be the thing this category was added to stop. A file the
+    /// reference cannot compile says nothing about rucc, and a case rucc has decided not to
+    /// compile says only about rucc, so a reader who sees one total cannot tell how much of a
+    /// suite is going unmeasured on our account rather than on gcc's.
+    #[test]
+    fn the_report_counts_what_is_settled_apart_from_what_was_never_offered() {
+        let mut done = report(vec![outcome(Status::Passed, None)]);
+        done.never = vec!["u/old.c".to_owned()];
+        done.settled = vec![Settled {
+            case: "u/nested.c".to_owned(),
+            spec: "spec/06-lexer-and-parser.md section 6.9".to_owned(),
+            why: "a nested function needs a trampoline on the stack".to_owned(),
+        }];
+        let text = markdown(&done, &Settings::default());
+        assert!(text.contains("| in the corpus | 3 |"), "{text}");
+        assert!(text.contains("| never offered, a `skip` in the manifest | 1 |"), "{text}");
+        assert!(text.contains("| settled, rucc has decided not to compile them | 1 |"), "{text}");
+        assert!(text.contains("| offered | 1 |"), "{text}");
+        // Named with where the decision was argued, because this is the one subtraction on the
+        // page that is ours and a reader is entitled to go and disagree with it.
+        assert!(text.contains("`spec/06-lexer-and-parser.md section 6.9`"), "{text}");
+        assert!(text.contains("a nested function needs a trampoline"), "{text}");
+        assert!(done.summary().contains("1 settled"), "{}", done.summary());
     }
 
     #[test]
