@@ -42,116 +42,13 @@ dir = "."
 # written against, and it is what the differential compares under as well.
 flags = ["-std=gnu17"]
 skip = [
-  # A function with no type in front of it, or an object with none. GCC 14 turned both from a
-  # warning into an error and this suite is older than that in places, so gcc 16 refuses these
-  # ninety seven files itself under the dialect this unit names. Nothing rucc does or does not
-  # do is visible in them, which is what makes them a skip rather than an exclusion.
-  "20000717-3.c",
-  "20020819-1.c",
-  "20041019-1.c",
-  "20120427-1.c",
-  "20120427-2.c",
-  "920409-1.c",
-  "920411-1.c",
-  "920415-1.c",
-  "920428-1.c",
-  "920428-2.c",
-  "920429-1.c",
-  "920501-1.c",
-  "920501-7.c",
-  "920501-9.c",
-  "920520-1.c",
-  "920603-1.c",
-  "920721-2.c",
-  "920721-3.c",
-  "920728-1.c",
-  "920730-1.c",
-  "920731-1.c",
-  "920812-1.c",
-  "920908-2.c",
-  "920909-1.c",
-  "921013-1.c",
-  "921017-1.c",
-  "921123-1.c",
-  "921124-1.c",
-  "921202-1.c",
-  "921207-1.c",
-  "921208-2.c",
-  "921215-1.c",
-  "921218-1.c",
-  "921218-2.c",
-  "930106-1.c",
-  "930111-1.c",
-  "930208-1.c",
-  "930429-2.c",
+  # A function with no type in front of it, and nothing on the command line asking for the
+  # dialect that allowed it. GCC 14 turned that from a warning into an error, so gcc 16 refuses
+  # this file itself under the dialect this unit names. Nothing rucc does or does not do is
+  # visible in it, which is what makes it a skip rather than an exclusion. A hundred and four
+  # files were here on the same reasoning and are gone, because each of them names the dialect it
+  # was written in on its own `dg-additional-options` line and the harness now reads it.
   "930513-1.c",
-  "930513-2.c",
-  "930518-1.c",
-  "930527-1.c",
-  "930603-1.c",
-  "930603-3.c",
-  "930621-1.c",
-  "930622-1.c",
-  "930630-1.c",
-  "930702-1.c",
-  "930713-1.c",
-  "930719-1.c",
-  "930818-1.c",
-  "930916-1.c",
-  "930921-1.c",
-  "930929-1.c",
-  "930930-1.c",
-  "931009-1.c",
-  "931012-1.c",
-  "931017-1.c",
-  "931018-1.c",
-  "931031-1.c",
-  "931102-1.c",
-  "931102-2.c",
-  "931208-1.c",
-  "931228-1.c",
-  "940115-1.c",
-  "940122-1.c",
-  "941101-1.c",
-  "941110-1.c",
-  "941202-1.c",
-  "950322-1.c",
-  "950426-1.c",
-  "950512-1.c",
-  "950605-1.c",
-  "950621-1.c",
-  "960218-1.c",
-  "960402-1.c",
-  "960830-1.c",
-  "961112-1.c",
-  "990106-1.c",
-  "cmpdi-1.c",
-  "cmpsf-1.c",
-  "cmpsi-1.c",
-  "cmpsi-2.c",
-  "comp-goto-2.c",
-  "dbra-1.c",
-  "divmod-1.c",
-  "inst-check.c",
-  "int-compare.c",
-  "loop-2.c",
-  "loop-2d.c",
-  "loop-3.c",
-  "loop-3b.c",
-  "loop-3c.c",
-  "mod-1.c",
-  "pr55875.c",
-  "strct-pack-3.c",
-  "tstdi-1.c",
-  # A call to a function nothing declared, the third of the rules GCC 14 promoted. Same story.
-  "20000412-3.c",
-  "20010605-2.c",
-  "20020314-1.c",
-  "20031211-2.c",
-  "20040223-1.c",
-  "921110-1.c",
-  "930718-1.c",
-  "pr22061-1.c",
   # Files that include a source file from `gcc.dg`, which is a sibling directory of this one and
   # not part of what `extract` unpacks. Unpacking the rest of the test suite to run five more
   # files is not a trade worth making, and gcc cannot compile them here either.
@@ -166,9 +63,11 @@ skip = [
   # A function defined inside another one, which is GNU's nested functions. A call to one goes
   # through a trampoline written on the stack, and this compiler will not have them, which
   # `spec/13-gnu-compat.md` section 13.3 settles and the row in `features.toml` says as well.
-  # gcc takes these twenty four files and rucc reports an error on each. That is a divergence
-  # rather than a gap, so there is no issue for an exclusion to point at and nothing here will
-  # ever start working, which is what makes it a skip.
+  # gcc takes these thirty files and rucc reports an error on each. That is a divergence rather
+  # than a gap, so there is no issue for an exclusion to point at and nothing here will ever
+  # start working, which is what makes it a skip. Six of the thirty arrived from the block above
+  # once the harness started reading the dialect they ask for: what was stopping them was never
+  # the missing type, it was the nested function underneath it.
   "20000822-1.c",
   "20010209-1.c",
   "20010605-1.c",
@@ -176,9 +75,15 @@ skip = [
   "20040520-1.c",
   "20061220-1.c",
   "20090219-1.c",
+  "920415-1.c",
+  "920428-2.c",
+  "920501-7.c",
   "920612-2.c",
   "920721-4.c",
+  "921017-1.c",
+  "921215-1.c",
   "931002-1.c",
+  "comp-goto-2.c",
   "nest-align-1.c",
   "nest-stdar-1.c",
   "nestfunc-1.c",
@@ -195,7 +100,7 @@ skip = [
   "pr71494.c",
 ]
 
-# What is left is 207 cases out of 1772, so 1565 of them pass. The one thing that was holding
+# What is left is 155 cases out of 1870, so 1715 of them pass. The one thing that was holding
 # back more files than everything else together is gone: a call to a `__builtin_` this compiler
 # had never heard of used to stop 510 of them, and the library builtins are now declared and the
 # call goes to the library function of the same name, which took 422 files off this list at once.
@@ -216,6 +121,15 @@ skip = [
 # compiler emitted a static function nothing refers to, so a program that never mentioned a byte
 # swap ended up carrying three calls to one. That was the block worth the most of the ninety and
 # it came out in one piece.
+#
+# Ninety eight more programs are offered here than were before, because the skip array above went
+# from 135 entries to 37 once the harness started reading the `dg-additional-options` line each of
+# them writes. Ninety seven of the ninety eight pass. Sixty seven came off this list at the same
+# time and for the same reason read from the other side: they were listed for a gap that was never
+# there, and what was actually stopping them was the dialect they had asked for and not been
+# given. Fifteen went on, which is the price of reading that line. Fourteen of the fifteen name an
+# optimizer flag on it that rucc refuses, and they are in the option block below rather than
+# quietly compiled without the thing they asked for.
 
 [[exclude]]
 cases = [
@@ -301,6 +215,7 @@ why = "__builtin_va_arg_pack is not declared, E0500"
 
 [[exclude]]
 cases = [
+  "execute/20010605-2.c",
   "execute/20020227-1.c",
   "execute/20020411-1.c",
   "execute/20030910-1.c",
@@ -425,17 +340,24 @@ cases = [
 issue = "https://github.com/tamnd/rucc/issues/311"
 why = "an atomic builtin has no lowering, E0686"
 
-# The same seventeen programs the execution list names for the same reason, and they stop here
+# The same thirty one programs the execution list names for the same reason, and they stop here
 # first because the driver reads its command line before it reads anything else. The options are
 # listed in the comment above the block that names them down there.
 [[exclude]]
 cases = [
+  "execute/20031003-1.c",
+  "execute/20040409-1w.c",
+  "execute/20040409-2w.c",
+  "execute/20040409-3w.c",
   "execute/20101011-1.c",
   "execute/920612-1.c",
   "execute/920711-1.c",
   "execute/930529-1.c",
+  "execute/950704-1.c",
   "execute/eeprof-1.c",
+  "execute/lto-tbaa-1.c",
   "execute/pr111863-1.c",
+  "execute/pr114396.c",
   "execute/pr22493-1.c",
   "execute/pr23047.c",
   "execute/pr23135.c",
@@ -445,6 +367,13 @@ cases = [
   "execute/pr57124.c",
   "execute/pr68381.c",
   "execute/pr68532.c",
+  "execute/pr79388.c",
+  "execute/pr91632.c",
+  "execute/pr93213.c",
+  "execute/pr97404.c",
+  "execute/pr97421-1.c",
+  "execute/pr97421-2.c",
+  "execute/pr97421-3.c",
   "execute/stkalign.c",
   "execute/wchar_t-1.c",
 ]
@@ -456,9 +385,9 @@ why = "the program names an option in its own dg-options line that the driver do
 # was right, so this list is about what the compiler produced rather than about what it accepted.
 #
 # It is shorter than that issue expected. The guess there was nineteen hundred programs of red.
-# The unit is 1772 programs, which is the 1907 in the tarball less the 135 skipped above, and at
-# `-O0` 1470 of them pass, 148 are named below and 154 are refused by gcc 16 as well. At `-O3`
-# it is 1448, 162 and 162. The reason for the gap between the guess and the count is that the
+# The unit is 1870 programs, which is the 1907 in the tarball less the 37 skipped above, and at
+# `-O0` 1549 of them pass, 168 are named below and 153 are refused by gcc 16 as well. At `-O3`
+# it is 1532, 183 and 155. The reason for the gap between the guess and the count is that the
 # issue was written when a call to an unknown builtin stopped five hundred files at once, and it
 # said to wait until the lowering rule set stopped moving so fast. It has.
 #
@@ -466,15 +395,17 @@ why = "the program names an option in its own dg-options line that the driver do
 # decided by running the reference, so they cannot go stale and nobody has to notice when gcc
 # changes its mind, and there are a few more of them at `-Os` than at `-O0` because some of what
 # gcc refuses it only works out once it has folded something. There are fewer of them than there
-# used to be, thirteen fewer at `-O0` and three fewer at `-O3`, because a program that names its
-# own options in a `dg-options` line is now compiled with them and some of what gcc was refusing
-# it was refusing for want of the dialect the program asked for.
+# used to be, one fewer at `-O0` and seven fewer at `-O3`, because a program that names its own
+# options in a `dg-options` or `dg-additional-options` line is now compiled with them and some of
+# what gcc was refusing it was refusing for want of the dialect the program asked for.
 #
-# 164 cases are named here across the six levels, and 32 blocks name them, because the reasons
-# are far fewer than the programs. The blocks are roughly sorted by size, and the largest two are
-# complex arithmetic and `__int128`. Inline assembly used to be the first of them by a long way,
-# at seventy three cases, and it is three now that a template with no instructions in it lowers:
-# what is left of it is a template with instructions in it and an `asm goto`.
+# 183 cases are named here across the six levels, and 32 blocks name them, because the reasons
+# are far fewer than the programs. The blocks are roughly sorted by size. The largest is now the
+# option block, which is the one entry on this list that is about the driver rather than about the
+# rule set, and after it come complex arithmetic and `__int128`. Inline assembly used to be the
+# first of them by a long way, at seventy three cases, and it is three now that a template with no
+# instructions in it lowers: what is left of it is a template with instructions in it and an
+# `asm goto`.
 #
 # Two of the questions that issue left open have answers now. The timeout stays at ten seconds:
 # every program that passes finishes far inside it and nothing is on the list for being slow. The
@@ -508,6 +439,7 @@ issue = "https://github.com/tamnd/rucc/issues/201"
 why = "complex arithmetic is missing the piece this file starts with, E0506, E0509, E0519 or E0525"
 outcome = "did not build"
 cases = [
+  "execute/20010605-2.c",
   "execute/20020227-1.c",
   "execute/20020411-1.c",
   "execute/20030910-1.c",
@@ -551,7 +483,6 @@ cases = [
   "execute/pr84748.c",
   "execute/pr85582-2.c",
   "execute/pr85582-3.c",
-  "execute/pr93213.c",
   "execute/pr98474.c",
 ]
 
@@ -685,6 +616,7 @@ outcome = "did not build"
 cases = [
   "execute/20040811-1.c",
   "execute/20221006-1.c",
+  "execute/920721-2.c",
   "execute/920929-1.c",
   "execute/pr43220.c",
   "execute/vla-dealloc-1.c",
@@ -751,6 +683,7 @@ issue = "https://github.com/tamnd/rucc/issues/335"
 why = "a structure passed by value too large to unroll needs a call to the runtime, E0653"
 outcome = "did not build"
 cases = [
+  "execute/20000412-3.c",
   "execute/pr20621-1.c",
   "execute/pr28982b.c",
   "execute/va-arg-22.c",
@@ -833,34 +766,50 @@ why = "a one bit integer has no lowering, E0653"
 outcome = "did not build"
 case = "execute/p18298.c"
 
-# The options each of these asks for and rucc turns down, in the order they are listed:
-# `-fnon-call-exceptions`, `-fwrapv` five times, `-finstrument-functions`, the three
-# `-fno-tree-*` options on one line, `-ffast-math`, `-fno-ira-share-spill-slots`,
-# `-ftree-loop-distribution`, `-fno-strict-overflow`, `-fexpensive-optimizations` with
-# `-fno-tree-bit-ccp`, `-ftree-vectorize` with `-fno-vect-cost-model`, `-fno-inline`, and
-# `-finput-charset=utf-8`. Three of them, `execute/920612-1.c`, `execute/pr23135.c` and
+# The options these ask for and rucc turns down: `-fnon-call-exceptions`, `-fwrapv` nine times,
+# `-finstrument-functions`, `-ffast-math`, `-fno-ira-share-spill-slots`,
+# `-ftree-loop-distribution`, `-fno-strict-overflow`, `-fexpensive-optimizations`,
+# `-ftree-vectorize`, `-fno-vect-cost-model`, `-fno-inline`, `-finput-charset=utf-8`,
+# `-fno-trapping-math`, `-fno-early-inlining`, `-fno-ipa-cp`, `-fno-tree-coalesce-vars`,
+# `-foptimize-strlen`, `-fmodulo-sched` three times, `-fno-dce`, `-fno-strict-aliasing` and six
+# more `-fno-tree-*` options. Three of them, `execute/920612-1.c`, `execute/pr23135.c` and
 # `execute/pr40386.c`, name one option that is accepted alongside the one that is not.
+#
+# The issue below is what answers them. Section 4.1's rule is that a flag which is genuinely a
+# no-op or a hint about speed is taken and one that would change the output is a hard error naming
+# what it would have changed. Most of these are the first kind. `-fwrapv` and
+# `-fno-strict-aliasing` are the second, and they are why this is an exclusion rather than a line
+# in the argument parser: taking them silently would compile a program that asked for defined
+# overflow under rules that do not give it.
 #
 # `execute/pr23135.c` was on the tamnd/rucc#335 list at five of the six levels before this, for a
 # structure passed by value too large to unroll. That gap is still there and is still what stops
 # the program once the option is accepted. It is listed here rather than there because the option
 # is refused before anything looks at the program, so this is what the run reports today.
+# `execute/pr93213.c` moved off the tamnd/rucc#351 list the same way.
 #
-# None of the rest is a program this could not otherwise build. They arrived the day the harness
-# started reading the `dg-options` line, which is the right thing to do and is what turns a
-# missing flag from something invisible into something counted. Fourteen distinct options are
-# named here and tamnd/rucc#489 is where the flag surface is tracked.
+# None of the rest is a program this could not otherwise build. They arrived the two days the
+# harness started reading the `dg-options` line and then the `dg-additional-options` line, which
+# is the right thing to do and is what turns a missing flag from something invisible into
+# something counted.
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/489"
 why = "the program names an option in its own dg-options line that the driver does not accept"
 outcome = "did not build"
 cases = [
+  "execute/20031003-1.c",
+  "execute/20040409-1w.c",
+  "execute/20040409-2w.c",
+  "execute/20040409-3w.c",
   "execute/20101011-1.c",
   "execute/920612-1.c",
   "execute/920711-1.c",
   "execute/930529-1.c",
+  "execute/950704-1.c",
   "execute/eeprof-1.c",
+  "execute/lto-tbaa-1.c",
   "execute/pr111863-1.c",
+  "execute/pr114396.c",
   "execute/pr22493-1.c",
   "execute/pr23047.c",
   "execute/pr23135.c",
@@ -870,6 +819,13 @@ cases = [
   "execute/pr57124.c",
   "execute/pr68381.c",
   "execute/pr68532.c",
+  "execute/pr79388.c",
+  "execute/pr91632.c",
+  "execute/pr93213.c",
+  "execute/pr97404.c",
+  "execute/pr97421-1.c",
+  "execute/pr97421-2.c",
+  "execute/pr97421-3.c",
   "execute/stkalign.c",
   "execute/wchar_t-1.c",
 ]
@@ -887,12 +843,19 @@ outcome = "crashed"
 opt = ["1", "2", "3", "s", "z"]
 case = "execute/bcp-1.c"
 
-# gcc 16.2.0 aborts on its own build of this program at -O0 and returns zero once the option is
-# passed, and rucc and gcc give the same two answers on the two functions it checks, so there is
-# no difference between the compilers here at all. The option is written with the other spelling
-# of the directive, `dg-additional-options`, which nothing reads yet.
+# A call to `alloca`, which gcc expands as a builtin whether or not anything declared it and
+# which rucc writes down as a call to a name no library defines, so the program stops at the
+# linker rather than at the call. What it needs is the frame in the issue below: `alloca` and a
+# variable length array are the same request written two ways, and neither has anywhere to put
+# the bytes until a function can move its own stack pointer and still reach its fixed slots.
 [[exec-exclude]]
-issue = "https://github.com/tamnd/rucc-compat/issues/80"
-why = "the program asks for -fno-trapping-math and the harness does not read the directive it asks with"
-outcome = "crashed"
-case = "execute/20031003-1.c"
+issue = "https://github.com/tamnd/rucc/issues/291"
+why = "a call to alloca needs the frame that a variable length array needs"
+outcome = "did not build"
+cases = [
+  "execute/20020314-1.c",
+  "execute/20040223-1.c",
+  "execute/941202-1.c",
+  "execute/pr22061-1.c",
+]
+
