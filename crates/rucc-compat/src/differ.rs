@@ -732,6 +732,14 @@ fn dg_options(file: &Path) -> Vec<String> {
     head.lines().flat_map(directive).collect()
 }
 
+/// The two names a program can write the directive under.
+///
+/// They compose differently in DejaGnu: `dg-options` replaces the options the suite would
+/// otherwise have used and `dg-additional-options` is added to them. Here they are the same
+/// thing, because this harness has one fixed set of flags per unit and either way the program's
+/// own go on the end of it.
+const SPELLINGS: [&str; 2] = ["dg-additional-options", "dg-options"];
+
 /// The options on one line, and nothing when the line is not one or is not one this reads.
 ///
 /// Two spellings of the list are in the suite, `dg-options "-a -b"` and `dg-options { "-a" }`,
@@ -743,7 +751,9 @@ fn dg_options(file: &Path) -> Vec<String> {
 /// here name `-m` options for machines nothing sweeps, so reading them would buy nothing and
 /// getting them wrong would compile a program for a processor it is not running on.
 fn directive(line: &str) -> Vec<String> {
-    let Some(rest) = line.split_once("dg-options").map(|(_, rest)| rest.trim_start()) else {
+    let Some(rest) =
+        SPELLINGS.iter().find_map(|word| line.split_once(word)).map(|(_, rest)| rest.trim_start())
+    else {
         return Vec::new();
     };
     let (listed, after) = match rest.chars().next() {
@@ -1134,6 +1144,22 @@ mod tests {
         // A line that is not a directive, and a program that mentions the word in its own text.
         assert_eq!(directive("int main (void) { return 0; }"), Vec::<String>::new());
         assert_eq!(directive(r#"  puts ("dg-options");"#), Vec::<String>::new());
+    }
+
+    #[test]
+    fn the_second_spelling_of_the_directive_is_read_as_the_first_one_is() {
+        // A hundred and thirty nine programs in the torture suite write it this way, against
+        // forty three that write the other, and what they mostly ask for is the dialect they
+        // were written in.
+        assert_eq!(directive(r#"/* { dg-additional-options "-std=gnu89" } */"#), ["-std=gnu89"]);
+        assert_eq!(
+            directive(r#"/* { dg-additional-options "-std=gnu17 -fpermissive" } */"#),
+            ["-std=gnu17", "-fpermissive"]
+        );
+        // The same selector rule: a line naming machines is left alone rather than guessed at.
+        let selected =
+            r#"/* { dg-additional-options "-Wl,-u,_printf_float" { target newlib_nano_io } } */"#;
+        assert_eq!(directive(selected), Vec::<String>::new());
     }
 
     #[test]
