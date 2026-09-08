@@ -81,29 +81,18 @@ skip = [
 ]
 
 
-# The exclusions below are all new and all came from the eleven files `-fpermissive` opened up. The
-# list had been empty, which is worth saying plainly: it was empty because eleven of the twenty nine
-# cases were being skipped on an assertion about gcc, and five of those eleven pass now. The other
-# points at three gaps this compiler really has, which is what the eleven were hiding.
+# The exclusions below came from the eleven files `-fpermissive` opened up. The list had been
+# empty, which is worth saying plainly: it was empty because eleven of the twenty nine cases were
+# being skipped on an assertion about gcc, and five of those eleven pass now. The rest pointed at
+# three gaps this compiler really had, and two of them are closed. tamnd/rucc#661 was the obsolete
+# array designator `[3] 7`, which `test/initializer.c` wanted, and tamnd/rucc#662 was what a
+# `va_end` of something that is not a list is called, which `test/varargs.c` wanted. The one left
+# is a header nobody has written yet.
 [[exclude]]
 case = "test/atomic.c"
 issue = "https://github.com/tamnd/rucc/issues/389"
 why = "stdatomic.h is not shipped, so the header the file opens with is not found, E0341"
 
-[[exclude]]
-case = "test/initializer.c"
-issue = "https://github.com/tamnd/rucc/issues/661"
-why = "an array designator written without the `=` after it is refused, E0400"
-
-[[exclude]]
-case = "test/varargs.c"
-issue = "https://github.com/tamnd/rucc/issues/662"
-why = "va_end of something that is not a va_list is an error where gcc warns, E0582"
-
-# `test/initializer.c` is not on the execution list and does not need to be. gcc's own build of it
-# returns one, because the file asserts things chibicc decided rather than things the language
-# says, so the run reports it as skipped before rucc is asked anything. The pipeline check has no
-# reference to consult and therefore does need the entry above.
 [[exec-exclude]]
 case = "test/asm.c"
 issue = "https://github.com/tamnd/rucc/issues/349"
@@ -117,26 +106,19 @@ why = "stdatomic.h is not shipped, so the header the file opens with is not foun
 outcome = "did not build"
 
 [[exec-exclude]]
-case = "test/varargs.c"
-issue = "https://github.com/tamnd/rucc/issues/662"
-why = "va_end of something that is not a va_list is an error where gcc warns, E0582"
-outcome = "did not build"
-
-[[exec-exclude]]
 case = "test/vla.c"
 issue = "https://github.com/tamnd/rucc/issues/291"
 why = "nothing here grows the stack for a variable length array, E0653"
 outcome = "did not build"
 
-# Before those four there was nothing here, and the way that happened is worth keeping. Every file
+# Before those three there was nothing here, and the way that happened is worth keeping. Every file
 # is built with `test/common`, and `test/common` has seven functions that give back a structure by
 # value, so one gap in the back end used to block all seventeen cases before any of them got as far
-# as its own subject. That made the whole corpus one
-# entry rather than seventeen, and it pointed in turn at tamnd/rucc#281 for the address of a name
-# at file scope, then tamnd/rucc#289 for a variadic function reading its own arguments, then
-# tamnd/rucc#287 for a structure being copied, and last tamnd/rucc#325 for a structure coming back
-# in two registers. That one landed and the whole block came out at once, which is what a block
-# written as one gap rather than as seventeen is for.
+# as its own subject. That made the whole corpus one entry rather than seventeen, and it pointed in
+# turn at tamnd/rucc#281 for the address of a name at file scope, then tamnd/rucc#289 for a variadic
+# function reading its own arguments, then tamnd/rucc#287 for a structure being copied, and last
+# tamnd/rucc#325 for a structure coming back in two registers. That one landed and the whole block
+# came out at once, which is what a block written as one gap rather than as seventeen is for.
 #
 # What was behind it was two files. `test/float.c` wanted the conversions between a sixty four bit
 # unsigned integer and a floating point type, which landed in tamnd/rucc#539. `test/arith.c` wanted
