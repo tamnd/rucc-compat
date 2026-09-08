@@ -6,7 +6,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use crate::corpus::{Corpus, Question, Register, Unit, UnitKind};
+use crate::corpus::{Corpus, Question, Register, Settled, Unit, UnitKind};
 use crate::ledger;
 use crate::lexer;
 use crate::toml::Error;
@@ -633,6 +633,13 @@ pub struct Found {
     pub cases: Vec<Case>,
     /// Every file a unit's `skip` array took out, named the way a case would have been.
     pub never: Vec<String>,
+    /// Every `[[settled]]` entry that took a case out, in name order.
+    ///
+    /// Separate from `never` because the two say opposite things about the compiler. A skipped
+    /// file is one the reference cannot get through, so the run has no opinion to offer. A
+    /// settled case is one the reference compiles and rucc has decided not to, which is an
+    /// opinion, and adding the two together would bury it.
+    pub settled: Vec<Settled>,
 }
 
 /// Works out everything a corpus asks to be preprocessed.
@@ -666,6 +673,37 @@ pub fn cases(repo: &Path, corpus: &Corpus, scratch: &Path) -> Result<Found, Erro
     }
     found.cases.sort_by(|a, b| a.name.cmp(&b.name));
     found.never.sort();
+    take_settled(found, &corpus.name, &corpus.settled)
+}
+
+/// Moves the cases a `[[settled]]` entry names out of the run and into their own list.
+///
+/// After the walk rather than during it, because an entry names a case and the walk knows about
+/// files. Doing it here is also what lets an entry naming nothing be refused: the walk has
+/// finished, so the set of case names is complete, and an entry outside it is a file that has been
+/// renamed or removed rather than one this run has not reached. That check is the whole difference
+/// between this category and the skip array it replaces, which can name anything at all and never
+/// be wrong about it.
+fn take_settled(mut found: Found, corpus: &str, settled: &[Settled]) -> Result<Found, Error> {
+    for entry in settled {
+        if !found.cases.iter().any(|case| case.name == entry.case) {
+            return Err(Error {
+                message: format!(
+                    "{corpus}: `{}` is settled and is not a case of this corpus",
+                    entry.case
+                ),
+            });
+        }
+    }
+    let mut taken = Vec::new();
+    found.cases.retain(|case| match settled.iter().find(|e| e.case == case.name) {
+        Some(entry) => {
+            taken.push(entry.clone());
+            false
+        }
+        None => true,
+    });
+    found.settled = taken;
     Ok(found)
 }
 
@@ -1126,6 +1164,54 @@ mod tests {
         // the way it would in a real build of it.
         assert_eq!(cases[0].dir, root);
         assert_eq!(cases[0].file, root.join("tests/a.c"));
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    /// A settled case comes out of the walk into its own list rather than out of the count.
+    ///
+    /// The distinction the test is holding is between two things that both remove a case from the
+    /// run. A `skip` says the reference compiler cannot get through the file, and a settled entry
+    /// says rucc will not, so putting them in one list would leave a reader unable to tell how
+    /// much of a suite is not being measured because of us.
+    #[test]
+    fn a_case_the_manifest_has_settled_is_taken_out_of_the_walk_and_named_on_its_own() {
+        let root = std::env::temp_dir().join(format!("rucc-compat-settled-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir_all(root.join("tests")).unwrap();
+        for name in ["a.c", "b.c", "skipped.c"] {
+            fs::write(root.join("tests").join(name), "").unwrap();
+        }
+        let unit = Unit {
+            name: "suite".to_owned(),
+            kind: UnitKind::Source,
+            files: Vec::new(),
+            dir: Some("tests".to_owned()),
+            skip: vec!["skipped.c".to_owned()],
+            flags: Vec::new(),
+            link: Vec::new(),
+        };
+        let entry = Settled {
+            case: "suite/b.c".to_owned(),
+            spec: "spec/06-lexer-and-parser.md section 6.9".to_owned(),
+            why: "a nested function needs a trampoline on the stack".to_owned(),
+        };
+        let mut found = Found::default();
+        sources(&root, &unit, &mut found).unwrap();
+        found = take_settled(found, "t", std::slice::from_ref(&entry)).unwrap();
+        let names: Vec<&str> = found.cases.iter().map(|c| c.name.as_str()).collect();
+        assert_eq!(names, ["suite/a.c"]);
+        assert_eq!(found.settled, std::slice::from_ref(&entry));
+        assert_eq!(found.never, ["suite/skipped.c"]);
+
+        // An entry naming a case the corpus does not have is refused rather than ignored. The
+        // walk is always the whole tree, so there is no filtered run for it to be waiting on: an
+        // entry outside the set of case names is a file that has been renamed or removed, and
+        // leaving it there would be the one way this category could quietly outlive its reason.
+        let mut found = Found::default();
+        sources(&root, &unit, &mut found).unwrap();
+        let gone = Settled { case: "suite/z.c".to_owned(), ..entry };
+        let e = take_settled(found, "t", &[gone]).unwrap_err();
+        assert!(e.message.contains("is not a case of this corpus"), "{}", e.message);
         let _ = fs::remove_dir_all(&root);
     }
 

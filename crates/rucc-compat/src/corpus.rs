@@ -202,6 +202,33 @@ impl Exclusion {
     }
 }
 
+/// One case this compiler has decided not to compile, and is not going to change its mind about.
+///
+/// The third thing a case can be, and the two it is not are the point. A `skip` in a unit says
+/// the reference compiler cannot get through the file either, so nothing about rucc is visible in
+/// it. An [`Exclusion`] says rucc cannot get through it yet and names the issue that will change
+/// that. Neither of those is true of a program using a GNU extension that rucc has looked at and
+/// turned down: the reference compiles it, and no issue will ever remove the entry, because the
+/// decision is written in the specification rather than waiting in a queue.
+///
+/// Without a word for it those entries end up in the skip array, which is where they cannot be
+/// seen. A skip carries no issue and can never go stale, so a statement about rucc parked there
+/// is a statement nobody has to defend. That is the one way an exclusion list stops being a
+/// measurement, which is why this is a category and not a comment.
+///
+/// The rule that keeps it from becoming the same hiding place is `spec`. An entry points at the
+/// document where the decision was argued and settled, so the question a reader asks is not
+/// whether the entry is honest but whether that document still says what it said.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Settled {
+    /// The case name, the same string the report prints.
+    pub case: String,
+    /// Where the decision is written down, which is a path into `spec/` and a section in it.
+    pub spec: String,
+    /// What the difference is, in one line, so the list can be read without opening anything.
+    pub why: String,
+}
+
 /// One group of things to preprocess.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Unit {
@@ -251,6 +278,12 @@ pub struct Corpus {
     pub units: Vec<Unit>,
     /// The cases the pipeline check is not expected to get through, in file order.
     pub excluded: Vec<Exclusion>,
+    /// The cases rucc has decided not to compile at all, in file order.
+    ///
+    /// Neither command offers these to either compiler. They are counted and named on their own
+    /// line instead, because the number that matters about them is how much of a suite is not
+    /// being measured, and a category whose size is not reported is a category that grows.
+    pub settled: Vec<Settled>,
     /// Who decides whether a run of one of these programs was right.
     ///
     /// `None` means nobody can, and `exec` leaves the corpus alone rather than guessing. A
@@ -400,6 +433,7 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
     };
     let excluded = exclusions(&doc, "exclude", &whose, false)?;
     let exec_excluded = exclusions(&doc, "exec-exclude", &whose, true)?;
+    let settled = settled(&doc, &whose)?;
     if oracle.is_none() && !exec_excluded.is_empty() {
         return Err(Error {
             message: format!(
@@ -414,10 +448,50 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
         probe: root.list("probe"),
         units,
         excluded,
+        settled,
         oracle,
         timeout,
         exec_excluded,
     })
+}
+
+/// Every `[[settled]]` block of the manifest, as one entry per case named.
+///
+/// `spec` where an exclusion has `issue`, and the difference is the whole point of the category.
+/// An issue is a thing somebody is going to do, so an entry naming one is a promise and the list
+/// is meant to shrink. A specification section is a thing somebody has already decided, so an
+/// entry naming one is a citation and the list shrinks only when the decision is reopened.
+/// Requiring one or the other, and never neither, is what stops a case being set aside on nobody's
+/// authority.
+fn settled(doc: &toml::Doc, whose: &str) -> Result<Vec<Settled>, Error> {
+    let mut out = Vec::new();
+    for fields in doc.named("settled") {
+        let mut named = fields.list("cases");
+        if let Some(one) = fields.str("case") {
+            named.insert(0, one.to_owned());
+        }
+        if named.is_empty() {
+            return Err(Error {
+                message: format!("{whose}: a settled entry needs `case` or `cases`"),
+            });
+        }
+        let spec = fields.need("spec", whose)?.to_owned();
+        // A path into the specification rather than an issue number or a sentence, because the
+        // reader's next move has to be to go and read the argument. An entry whose `spec` names
+        // nothing checkable is an entry that says the decision was made somewhere.
+        if !spec.starts_with("spec/") {
+            return Err(Error {
+                message: format!(
+                    "{whose}: `spec` is `{spec}`, which does not name a document under `spec/`"
+                ),
+            });
+        }
+        let why = fields.need("why", whose)?.to_owned();
+        for case in named {
+            out.push(Settled { case, spec: spec.clone(), why: why.clone() });
+        }
+    }
+    Ok(out)
 }
 
 /// Every `[[header]]` block of the manifest, as one exclusion per case named.
@@ -932,6 +1006,58 @@ mod tests {
         let fake = Fake::new("exclude-no-case");
         let text =
             format!("{INSTALLED}\n[[exclude]]\nissue = \"#1\"\nwhy = \"it does not work\"\n");
+        fake.corpus("sys", &text);
+        let e = load(&fake.root, "sys").unwrap_err();
+        assert!(e.message.contains("`case` or `cases`"), "{}", e.message);
+    }
+
+    #[test]
+    fn a_settled_entry_names_a_list_of_cases_the_way_an_exclusion_does() {
+        let fake = Fake::new("settled-cases");
+        let text = format!(
+            "{INSTALLED}\n[[settled]]\ncases = [\n  \"standard/a.h\",\n  \"standard/b.h\",\n]\nspec = \"spec/06-lexer-and-parser.md section 6.9\"\nwhy = \"a nested function needs a trampoline on the stack\"\n"
+        );
+        fake.corpus("sys", &text);
+        let corpus = load(&fake.root, "sys").unwrap();
+        assert_eq!(corpus.settled.len(), 2);
+        assert_eq!(corpus.settled[1].case, "standard/b.h");
+        assert_eq!(corpus.settled[0].spec, corpus.settled[1].spec);
+    }
+
+    /// The rule that keeps this from being the skip array with a longer name.
+    ///
+    /// An exclusion has to name an issue, which is a promise that somebody will come back. A
+    /// settled entry cannot name one, because the point of the category is that nobody is coming
+    /// back, so what it has to name instead is where the argument was had and finished. An entry
+    /// with neither is a case set aside on nobody's authority, which is what both rules exist to
+    /// prevent.
+    #[test]
+    fn a_settled_entry_has_to_say_where_the_decision_was_written_down() {
+        let fake = Fake::new("settled-no-spec");
+        let text = format!(
+            "{INSTALLED}\n[[settled]]\ncase = \"standard/stdio.h\"\nwhy = \"we do not do that\"\n"
+        );
+        fake.corpus("sys", &text);
+        let e = load(&fake.root, "sys").unwrap_err();
+        assert!(e.message.contains("spec"), "{}", e.message);
+
+        // And a `spec` that is not a document is the same entry with a sentence in the field, so
+        // it is refused too rather than being read as a citation nobody can follow.
+        let fake = Fake::new("settled-bad-spec");
+        let text = format!(
+            "{INSTALLED}\n[[settled]]\ncase = \"standard/stdio.h\"\nspec = \"we decided\"\nwhy = \"we do not do that\"\n"
+        );
+        fake.corpus("sys", &text);
+        let e = load(&fake.root, "sys").unwrap_err();
+        assert!(e.message.contains("does not name a document"), "{}", e.message);
+    }
+
+    #[test]
+    fn a_settled_entry_naming_no_case_at_all_is_refused() {
+        let fake = Fake::new("settled-no-case");
+        let text = format!(
+            "{INSTALLED}\n[[settled]]\nspec = \"spec/06-lexer-and-parser.md\"\nwhy = \"no\"\n"
+        );
         fake.corpus("sys", &text);
         let e = load(&fake.root, "sys").unwrap_err();
         assert!(e.message.contains("`case` or `cases`"), "{}", e.message);

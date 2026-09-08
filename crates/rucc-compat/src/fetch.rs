@@ -165,6 +165,7 @@ mod tests {
                 link: Vec::new(),
             }],
             excluded: Vec::new(),
+            settled: Vec::new(),
             oracle: None,
             timeout: crate::corpus::TIMEOUT,
             exec_excluded: Vec::new(),

@@ -77,7 +77,18 @@ A missing `issue` fails the load. An exclusion whose case has started passing fa
 
 Something the reference compiler refuses as well is not an exclusion. It is a `skip` on the unit, with a comment saying so, because there is no rucc bug there for an issue to point at.
 
-Neither is a case that fails on an extension rucc has decided against. GNU's nested functions are the one there is a settled answer on, and the answer is no, so the twenty three torture cases that use them are a `skip` with the reason written above them. The test for which of the two a case belongs in is whether an issue could ever close it. An exclusion waits for work somebody will do. A skip is for a case where nobody will, either because the reference refuses it too or because the feature it needs is one this compiler is not going to have, and an exclusion pointing at an issue that will never close is an exclusion nobody will ever remove.
+Neither is a case that fails on an extension rucc has decided against. That is a `[[settled]]` block, which is the third shelf:
+
+```toml
+[[settled]]
+spec = "spec/13-gnu-compat.md section 13.3"
+why = "a call to a nested function needs an executable trampoline on the stack"
+cases = ["execute/nestfunc-1.c", "execute/nestfunc-2.c"]
+```
+
+`case` and `cases` work the way they do on an exclusion, and `why` is the same one line. What is different is `spec`, which is required and has to name a document under `spec/`, because the entry's whole claim is that the decision was argued somewhere a reader can go and read it. An entry naming a case the corpus does not have fails the load, the same as an exclusion does, so a settled entry cannot outlive the file it names.
+
+The three shelves say three different things and the difference is the point. A `skip` says the reference compiler cannot get through the file either, so the run has no opinion about rucc to offer. An exclusion says rucc cannot get through it yet and names the issue that will take the entry off. A settled entry says the reference gets through it and rucc has decided not to, which is the only one of the three that is a statement about this compiler that no issue will ever change. Put one of those in the skip array and it stops being visible, because a skip carries no issue and can never go stale, which makes it the one place in the manifest where a claim about rucc needs no defending. That is why the reports count settled cases on a line of their own and name every one of them.
 
 An `[[exec-exclude]]` block is the same thing for `exec`, and it carries three fields the pipeline list does not have. `outcome` is required and names which of `wrong answer`, `crashed`, `timed out` and `did not build` the entry admits to, so an entry that says a case does not build stops covering it the day it starts building and printing the wrong answer instead. `opt` is optional and names the optimization levels the entry speaks at:
 
