@@ -84,25 +84,16 @@ skip = [
 # The exclusions below came from the eleven files `-fpermissive` opened up. The list had been
 # empty, which is worth saying plainly: it was empty because eleven of the twenty nine cases were
 # being skipped on an assertion about gcc, and five of those eleven pass now. The rest pointed at
-# three gaps this compiler really had, and two of them are closed. tamnd/rucc#661 was the obsolete
-# array designator `[3] 7`, which `test/initializer.c` wanted, and tamnd/rucc#662 was what a
-# `va_end` of something that is not a list is called, which `test/varargs.c` wanted. The one left
-# is a header nobody has written yet.
-[[exclude]]
-case = "test/atomic.c"
-issue = "https://github.com/tamnd/rucc/issues/389"
-why = "stdatomic.h is not shipped, so the header the file opens with is not found, E0341"
+# three gaps this compiler really had, and all three are closed. tamnd/rucc#661 was the obsolete
+# array designator `[3] 7`, which `test/initializer.c` wanted, tamnd/rucc#662 was what a `va_end`
+# of something that is not a list is called, which `test/varargs.c` wanted, and tamnd/rucc#389 was
+# the header the compiler did not ship and the access to an atomic object underneath it, which
+# `test/atomic.c` wanted. The compile side of this list is empty again.
 
 [[exec-exclude]]
 case = "test/asm.c"
 issue = "https://github.com/tamnd/rucc/issues/349"
 why = "an asm with instructions in its template needs an assembler, E0653"
-outcome = "did not build"
-
-[[exec-exclude]]
-case = "test/atomic.c"
-issue = "https://github.com/tamnd/rucc/issues/389"
-why = "stdatomic.h is not shipped, so the header the file opens with is not found, E0341"
 outcome = "did not build"
 
 [[exec-exclude]]
