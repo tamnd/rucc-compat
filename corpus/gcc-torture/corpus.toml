@@ -390,20 +390,20 @@ why = "the program names an option in its own dg-options line that the driver do
 #
 # It is shorter than that issue expected. The guess there was nineteen hundred programs of red.
 # The unit is 1870 programs, which is the 1907 in the tarball less the 7 skipped and the 30
-# settled above, and at `-O0` 1549 of them pass, 168 are named below and 153 are refused by gcc 16
-# as well. At `-O3` it is 1532, 183 and 155. The reason for the gap between the guess and the
+# settled above, and at `-O0` 1566 of them pass, 151 are named below and 153 are refused by gcc 16
+# as well. At `-O3` it is 1554, 166 and 150. The reason for the gap between the guess and the
 # count is that the issue was written when a call to an unknown builtin stopped five hundred files
 # at once, and it said to wait until the lowering rule set stopped moving so fast. It has.
 #
 # The programs gcc refuses are not on this list and are not in the skip list either. They are
 # decided by running the reference, so they cannot go stale and nobody has to notice when gcc
-# changes its mind, and there are a few more of them at `-Os` than at `-O0` because some of what
-# gcc refuses it only works out once it has folded something. There are fewer of them than there
-# used to be, one fewer at `-O0` and seven fewer at `-O3`, because a program that names its own
+# changes its mind. The count moves a little with the level, because what gcc will accept is partly
+# a question about the level: 153 at `-O0`, 151 at `-O1`, 150 at `-O2` and `-O3`, and 152 at `-Os`
+# and `-Oz`. There are fewer of them than there used to be, because a program that names its own
 # options in a `dg-options` or `dg-additional-options` line is now compiled with them and some of
 # what gcc was refusing it was refusing for want of the dialect the program asked for.
 #
-# 183 cases are named here across the six levels, and 32 blocks name them, because the reasons
+# 166 cases are named here across the six levels, and 29 blocks name them, because the reasons
 # are far fewer than the programs. The blocks are roughly sorted by size. The largest is now the
 # option block, which is the one entry on this list that is about the driver rather than about the
 # rule set, and after it come complex arithmetic and `__int128`. Inline assembly used to be the
@@ -426,6 +426,9 @@ why = "the program names an option in its own dg-options line that the driver do
 # sweep is run alone. And thirteen entries were written against a build of the compiler that was
 # older than main, so they named a gap that had already been closed. Both were caught by the
 # staleness rule rather than by anybody rereading the list, which is the argument for the rule.
+# The list is clean on that count as this is written: a sweep at all six levels reports nothing
+# stale, so every case named below is a case that still fails at the level it is named for, and
+# nothing below is describing a gap the compiler has already closed.
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/326"
@@ -435,7 +438,6 @@ cases = [
   "execute/20080502-1.c",
   "execute/ieee/copysign1.c",
   "execute/ieee/copysign2.c",
-  "execute/stdarg-2.c",
 ]
 
 [[exec-exclude]]
@@ -471,11 +473,6 @@ issue = "https://github.com/tamnd/rucc/issues/351"
 why = "an __int128 has no place in the rule set, E0653"
 outcome = "did not build"
 cases = [
-  "execute/20010604-1.c",
-  "execute/20031010-1.c",
-  "execute/20050502-1.c",
-  "execute/20141107-1.c",
-  "execute/20230510-1.c",
   "execute/pr105613.c",
   "execute/pr117095.c",
   "execute/pr122943.c",
@@ -636,14 +633,9 @@ cases = [
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/340"
-why = "va_arg of a long double or an __int128 is refused, E0653"
+why = "va_arg of an __int128 is refused, E0653"
 outcome = "did not build"
-cases = [
-  "execute/pr92904.c",
-  "execute/stdarg-1.c",
-  "execute/va-arg-5.c",
-  "execute/va-arg-6.c",
-]
+case = "execute/pr92904.c"
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/361"
