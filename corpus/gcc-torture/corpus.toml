@@ -344,13 +344,6 @@ cases = [
 issue = "https://github.com/tamnd/rucc/issues/312"
 why = "a builtin that asks about the frame has no lowering, E0686"
 
-[[exclude]]
-cases = [
-  "execute/pr122000.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/311"
-why = "an atomic builtin has no lowering, E0686"
-
 # The same thirty one programs the execution list names for the same reason, and they stop here
 # first because the driver reads its command line before it reads anything else. The options are
 # listed in the comment above the block that names them down there.
@@ -753,12 +746,6 @@ issue = "https://github.com/tamnd/rucc/issues/207"
 why = "decimal floating constants are not supported"
 outcome = "did not build"
 case = "execute/pr80692.c"
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/311"
-why = "an atomic builtin has no lowering, E0686"
-outcome = "did not build"
-case = "execute/pr122000.c"
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/542"
