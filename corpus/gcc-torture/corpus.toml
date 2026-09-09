@@ -601,19 +601,6 @@ cases = [
 ]
 
 [[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/352"
-why = "a one bit integer has no lowering, E0653"
-outcome = "did not build"
-cases = [
-  "execute/20030714-1.c",
-  "execute/20210505-1.c",
-  "execute/minmaxcmp-1.c",
-  "execute/pr107881-1.c",
-  "execute/pr111431-1.c",
-  "execute/pr81555.c",
-]
-
-[[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/291"
 why = "nothing here grows the stack for a variable length array, E0653"
 outcome = "did not build"
@@ -752,17 +739,6 @@ issue = "https://github.com/tamnd/rucc/issues/542"
 why = "always_inline is not honoured, so an inline definition marked with it is an undefined reference"
 outcome = "did not build"
 case = "execute/stdarg-4.c"
-
-# This used to name the three levels an optimizer runs at, because those were the levels that
-# inlined `foo` into `main` and put the `_Bool` it returns somewhere the backend had to lower it.
-# Now that the file's own `-fgnu89-inline` is read it fails everywhere, since that option makes
-# the definition one this file emits rather than one it merely declares, and a function that
-# returns a `_Bool` has to be lowered whether or not anything inlined it.
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/352"
-why = "a one bit integer has no lowering, E0653"
-outcome = "did not build"
-case = "execute/p18298.c"
 
 # The options these ask for and rucc turns down: `-fnon-call-exceptions`, `-fwrapv` nine times,
 # `-finstrument-functions`, `-ffast-math`, `-fno-ira-share-spill-slots`,
