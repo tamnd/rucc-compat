@@ -111,10 +111,11 @@ cases = [
   "execute/pr71494.c",
 ]
 
-# What is left is 155 cases out of 1870, so 1715 of them pass. The one thing that was holding
-# back more files than everything else together is gone: a call to a `__builtin_` this compiler
-# had never heard of used to stop 510 of them, and the library builtins are now declared and the
-# call goes to the library function of the same name, which took 422 files off this list at once.
+# What is left is 154 cases out of 1870, so 1716 of them pass, and none of the 154 is stale. The
+# one thing that was holding back more files than everything else together is gone: a call to a
+# `__builtin_` this compiler had never heard of used to stop 510 of them, and the library builtins
+# are now declared and the call goes to the library function of the same name, which took 422 files
+# off this list at once.
 # The 88 that were in that block and are still here are in the blocks below, sorted by what each
 # one is actually waiting on now, which is what the old block was hiding. Every entry names the
 # issue that will take it off the list, and the list is meant to shrink. Thirty have gone since
