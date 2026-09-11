@@ -46,11 +46,10 @@ flags = ["-std=gnu17"]
 # the front end and getting the right answer out of the program are different claims, which is
 # why the two lists are separate.
 
-# There are two entries left in it. Two hundred and eighteen of the two hundred and twenty programs
-# here build, run and give the recorded answer, one of the other two is a gap in the compiler and
-# one is a gap in the harness, and each block says which and names the issue that closes it. As a
-# gap closes its block goes stale in one piece and comes out in one commit, which is what the rest
-# of this file is the record of.
+# There is one entry left in it. Two hundred and nineteen of the two hundred and twenty programs
+# here build, run and give the recorded answer, and the one that does not is a gap in the harness
+# rather than in the compiler. As a gap closes its block goes stale in one piece and comes out in
+# one commit, which is what the rest of this file is the record of.
 
 # `single-exec/00204.c` was here and is not any more. It passes structures of `long double` through
 # a variadic function and a plain one, and the eighty bit float is on the x87 stack rather than in
@@ -59,15 +58,9 @@ flags = ["-std=gnu17"]
 # tamnd/rucc#287 until a structure could be copied, and last at tamnd/rucc#326 for the float
 # itself, which has landed.
 
-# A variable length array, which is a frame that grows during the body rather than a missing
-# rule, and is the only one of these blocks whose work is not in the rule set.
-[[exec-exclude]]
-issue = "tamnd/rucc#291"
-why = "nothing here grows the stack for a variable length array"
-outcome = "did not build"
-cases = [
-  "single-exec/00207.c",
-]
+# `single-exec/00207.c` was here too, for a variable length array, which is a frame that grows
+# during the body rather than a missing rule and was the only one of these blocks whose work was
+# not in the rule set. That is tamnd/rucc#291 and the frame grows now.
 
 # The one program in the suite that calls a math function, and the argument is a constant. GCC
 # folds `sin(2)` where it stands and never names the library, so it links with no `-lm` and nothing

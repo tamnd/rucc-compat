@@ -96,13 +96,13 @@ issue = "https://github.com/tamnd/rucc/issues/349"
 why = "an asm with instructions in its template needs an assembler, E0653"
 outcome = "did not build"
 
-[[exec-exclude]]
-case = "test/vla.c"
-issue = "https://github.com/tamnd/rucc/issues/291"
-why = "nothing here grows the stack for a variable length array, E0653"
-outcome = "did not build"
+# `test/vla.c` was here and is not any more, and it took two separate things to get it out.
+# The entry said the frame does not grow during the body, which is tamnd/rucc#291, and once that
+# landed the file built and then gave a wrong answer instead. Underneath was `sizeof` of an array
+# whose variable dimension is not the outermost one, which answered zero, and that is
+# tamnd/rucc#1031. The file passes on all three routes now.
 
-# Before those three there was nothing here, and the way that happened is worth keeping. Every file
+# Before that one there was nothing here, and the way that happened is worth keeping. Every file
 # is built with `test/common`, and `test/common` has seven functions that give back a structure by
 # value, so one gap in the back end used to block all seventeen cases before any of them got as far
 # as its own subject. That made the whole corpus one entry rather than seventeen, and it pointed in
