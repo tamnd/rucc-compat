@@ -38,24 +38,30 @@ skip = [
   "sqlite3rc.h",
 ]
 
-# One case rucc does not get through yet, naming the issue that will take it off this list. An
-# entry whose case has started passing fails the run, so the list shrinks as the work lands
-# rather than sitting here.
+# Both source cases are excluded, naming the issue that will take them off this list. An entry
+# whose case has started passing fails the run, so the list shrinks as the work lands rather
+# than sitting here.
 #
-# It used to reach three byte swap builtins first, through a glibc header that defines static
-# inline functions over them which the file never calls and which this compiler emitted anyway.
-# That was tamnd/rucc#308 and closing it was never going to be enough on its own, which is why
-# the entry does not name it: the shell writes its own `ceil` and `floor`, and that is what it
-# is really waiting on.
+# The shell used to be here for a different reason and is worth a note. It reached three byte
+# swap builtins first, through a glibc header that defines static inline functions over them
+# which the file never calls and which the compiler emitted anyway, and that was
+# tamnd/rucc#308. Underneath it was the shell's own `ceil` and `floor`, which is
+# tamnd/rucc#226, and the whole of that family is implemented now: the call is a call to the
+# library function, which is what gcc emits for it too, and it is answered where the arguments
+# are constants. `rucc -c -I . shell.c` exits 0 with no output.
 #
-# The amalgamation used to be on this list too, blaming an atomic builtin and tamnd/rucc#311.
-# That was written from what a check said rather than from what a build does, and it was wrong.
-# The amalgamation reaches no atomic builtin, and it goes through this harness clean. What it
-# does hit is further down than anything here runs: a real build on x86-64 Linux stops at a
-# `zext` producing an `i128` in `sqlite3Multiply128`, which is tamnd/rucc#351, and that is a
-# backend refusal rather than a front end one. The record of that build is tamnd/rucc#590.
+# What both files stop on now is further in, and it is the same thing for both: four
+# instructions across the two of them use a value that has no definition, which the printer
+# writes as `%?` and which the reader then cannot read back. That is tamnd/rucc#1016.
+#
+# The amalgamation used to be here blaming an atomic builtin and tamnd/rucc#311. That was
+# written from what a check said rather than from what a build does, and it was wrong: the
+# amalgamation reaches no atomic builtin. A real build on x86-64 Linux stops further down than
+# anything here runs, at a `zext` producing an `i128` in `sqlite3Multiply128`, which is
+# tamnd/rucc#351 and is a backend refusal rather than a front end one. The record of that
+# build is tamnd/rucc#590.
 
 [[exclude]]
-case = "shell/shell.c"
-issue = "https://github.com/tamnd/rucc/issues/226"
-why = "__builtin_ceil and __builtin_floor have no lowering, E0686"
+cases = ["amalgamation/sqlite3.c", "shell/shell.c"]
+issue = "https://github.com/tamnd/rucc/issues/1016"
+why = "an instruction uses a value with no definition, so the IR does not read back"

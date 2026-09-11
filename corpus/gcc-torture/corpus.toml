@@ -111,37 +111,23 @@ cases = [
   "execute/pr71494.c",
 ]
 
-# What is left is 154 cases out of 1870, so 1716 of them pass, and none of the 154 is stale. The
-# one thing that was holding back more files than everything else together is gone: a call to a
-# `__builtin_` this compiler had never heard of used to stop 510 of them, and the library builtins
-# are now declared and the call goes to the library function of the same name, which took 422 files
-# off this list at once.
-# The 88 that were in that block and are still here are in the blocks below, sorted by what each
-# one is actually waiting on now, which is what the old block was hiding. Every entry names the
-# issue that will take it off the list, and the list is meant to shrink. Thirty have gone since
-# that sorting was done, which is what sorting it was for, and two of the nine blocks are gone
-# with them.
+# What is left is 148 cases out of 1870, so 1722 of them pass, and none of the 148 is stale. Every
+# entry names the issue that will take it off the list, and the list is meant to shrink: `check`
+# and `exec` both fail on an entry that no longer excludes anything, so a gap the compiler closes
+# is a red run here until somebody deletes the line.
 #
-# Ninety came back at once, which was the last eight blocks. None of them was a new gap: each was
-# a call this compiler wrote down to a builtin nothing lowers, which the linker was left to ask
-# about, and rucc refuses the call where it is written instead. So those ninety used to reach the
-# end of `check` and stop later, and they stop here now, which is the same missing feature read
-# off an earlier step. They are sorted by which builtin each one reaches first.
-#
-# Forty one of the ninety asked for no builtin at all and are gone again. They include a glibc
-# header, which defines three static inline functions over the byte swap builtins, and this
-# compiler emitted a static function nothing refers to, so a program that never mentioned a byte
-# swap ended up carrying three calls to one. That was the block worth the most of the ninety and
-# it came out in one piece.
+# The one thing that was holding back more files than everything else together is gone. A call to
+# a `__builtin_` this compiler had never heard of used to stop 510 of them, and the library
+# builtins are declared now and the call goes to the library function of the same name, which took
+# 422 files off this list at once. What was left of that block is sorted below by what each file is
+# actually waiting on, which is what the one big block was hiding.
 #
 # Ninety eight more programs are offered here than were before, because the skip array above went
 # from 135 entries to 7 once the harness started reading the `dg-additional-options` line each of
-# them writes and the thirty nested function files moved to the block that fits them. Ninety seven of the ninety eight pass. Sixty seven came off this list at the same
-# time and for the same reason read from the other side: they were listed for a gap that was never
-# there, and what was actually stopping them was the dialect they had asked for and not been
-# given. Fifteen went on, which is the price of reading that line. Fourteen of the fifteen name an
-# optimizer flag on it that rucc refuses, and they are in the option block below rather than
-# quietly compiled without the thing they asked for.
+# them writes, and the thirty nested function files moved to the block that fits them. Ninety seven
+# of the ninety eight pass. Sixty seven came off this list at the same time and for the same reason
+# read from the other side: they were listed for a gap that was never there, and what was actually
+# stopping them was the dialect they had asked for and not been given.
 
 [[exclude]]
 cases = [
@@ -215,8 +201,8 @@ cases = [
   "execute/ieee/cdivchkf.c",
   "execute/ieee/cdivchkld.c",
 ]
-issue = "https://github.com/tamnd/rucc/issues/226"
-why = "__builtin_fmax is not declared, E0500"
+issue = "https://github.com/tamnd/rucc/issues/201"
+why = "__real__ and __imag__ are not lvalues, E0506"
 
 [[exclude]]
 cases = [
@@ -304,15 +290,6 @@ why = "decimal floating constants are not supported"
 
 [[exclude]]
 cases = [
-  "execute/pr84169.c",
-  "execute/pr91450-1.c",
-  "execute/pr91450-2.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/309"
-why = "an overflow checked arithmetic builtin has no lowering, E0686"
-
-[[exclude]]
-cases = [
   "execute/20020418-1.c",
   "execute/20040709-1.c",
   "execute/20040709-2.c",
@@ -345,35 +322,24 @@ cases = [
 issue = "https://github.com/tamnd/rucc/issues/312"
 why = "a builtin that asks about the frame has no lowering, E0686"
 
-# The same thirty one programs the execution list names for the same reason, and they stop here
-# first because the driver reads its command line before it reads anything else. The options are
-# listed in the comment above the block that names them down there.
+# Thirty one programs used to be here, under tamnd/rucc#489, for naming an option the driver did
+# not take. That issue is closed and thirteen of them came off this list with it. The eighteen
+# left name an option that only turns one of gcc's own passes on or off, which is a different
+# question and is tamnd/rucc#1019. The execution list below names the same eighteen, because an
+# option the driver refuses stops the program before either command looks at it.
 [[exclude]]
 cases = [
-  "execute/20031003-1.c",
-  "execute/20040409-1w.c",
-  "execute/20040409-2w.c",
-  "execute/20040409-3w.c",
   "execute/20101011-1.c",
-  "execute/920612-1.c",
-  "execute/920711-1.c",
-  "execute/930529-1.c",
-  "execute/950704-1.c",
   "execute/eeprof-1.c",
   "execute/lto-tbaa-1.c",
   "execute/pr111863-1.c",
   "execute/pr114396.c",
-  "execute/pr22493-1.c",
-  "execute/pr23047.c",
-  "execute/pr23135.c",
   "execute/pr39501.c",
   "execute/pr40386.c",
   "execute/pr43236.c",
-  "execute/pr57124.c",
   "execute/pr68381.c",
   "execute/pr68532.c",
   "execute/pr79388.c",
-  "execute/pr91632.c",
   "execute/pr93213.c",
   "execute/pr97404.c",
   "execute/pr97421-1.c",
@@ -382,8 +348,30 @@ cases = [
   "execute/stkalign.c",
   "execute/wchar_t-1.c",
 ]
-issue = "https://github.com/tamnd/rucc/issues/489"
-why = "the program names an option in its own dg-options line that the driver does not accept"
+issue = "https://github.com/tamnd/rucc/issues/1019"
+why = "the program names a pass of its own in dg-options and the driver does not take it"
+
+# These ten get all the way through and stop on the last step of `check`, which prints the IR and
+# reads it back. Each of them builds one instruction over a value that nothing defines, which the
+# printer writes as `%?` and the reader cannot read. Three are a loop counter nothing reads and
+# seven are the result of a short circuit the program throws away, and both reduce to four lines.
+# Nothing miscompiles, because the instruction is dead and the code generator never sees it, so
+# these are excluded here and are passes on the execution list below.
+[[exclude]]
+cases = [
+  "execute/20021015-1.c",
+  "execute/20190820-1.c",
+  "execute/pr44575.c",
+  "execute/pr58385.c",
+  "execute/pr64756.c",
+  "execute/pr68185.c",
+  "execute/pr68321.c",
+  "execute/pr80421.c",
+  "execute/pr82387.c",
+  "execute/pr85529-1.c",
+]
+issue = "https://github.com/tamnd/rucc/issues/1016"
+why = "an instruction uses a value with no definition, so the IR does not read back"
 
 # The execution list, which is what tamnd/rucc-compat#30 asked for. `exec` builds each of these
 # programs three ways and runs it, and the self check inside the program decides whether the run
@@ -391,8 +379,8 @@ why = "the program names an option in its own dg-options line that the driver do
 #
 # It is shorter than that issue expected. The guess there was nineteen hundred programs of red.
 # The unit is 1870 programs, which is the 1907 in the tarball less the 7 skipped and the 30
-# settled above, and at `-O0` 1566 of them pass, 151 are named below and 153 are refused by gcc 16
-# as well. At `-O3` it is 1554, 166 and 150. The reason for the gap between the guess and the
+# settled above, and at `-O0` 1597 of them pass, 120 are named below and 153 are refused by gcc 16
+# as well. At `-O3` it is 1584, 136 and 150. The reason for the gap between the guess and the
 # count is that the issue was written when a call to an unknown builtin stopped five hundred files
 # at once, and it said to wait until the lowering rule set stopped moving so fast. It has.
 #
@@ -404,12 +392,13 @@ why = "the program names an option in its own dg-options line that the driver do
 # options in a `dg-options` or `dg-additional-options` line is now compiled with them and some of
 # what gcc was refusing it was refusing for want of the dialect the program asked for.
 #
-# 166 cases are named here across the six levels, and 29 blocks name them, because the reasons
-# are far fewer than the programs. The blocks are roughly sorted by size. The largest is now the
-# option block, which is the one entry on this list that is about the driver rather than about the
-# rule set, and after it come complex arithmetic and `__int128`. Inline assembly used to be the
-# first of them by a long way, at seventy three cases, and it is three now that a template with no
-# instructions in it lowers: what is left of it is a template with instructions in it and an
+# 136 cases are named here across the six levels, and 27 blocks name them, because the reasons
+# are far fewer than the programs. The blocks are roughly sorted by size. The largest is complex
+# arithmetic at twenty one, and after it comes the option block at eighteen, which is the one entry
+# on this list that is about the driver rather than about the rule set, and then the two blocks of
+# builtins that have no lowering. `__int128` used to be third and is two cases now. Inline assembly
+# used to be first by a long way, at seventy three cases, and it is three now that a template with
+# no instructions in it lowers: what is left of it is a template with instructions in it and an
 # `asm goto`.
 #
 # Two of the questions that issue left open have answers now. The timeout stays at ten seconds:
@@ -474,29 +463,15 @@ issue = "https://github.com/tamnd/rucc/issues/351"
 why = "an __int128 has no place in the rule set, E0653"
 outcome = "did not build"
 cases = [
-  "execute/pr105613.c",
-  "execute/pr117095.c",
-  "execute/pr122943.c",
   "execute/pr49218.c",
-  "execute/pr54471.c",
-  "execute/pr61375.c",
-  "execute/pr63302.c",
-  "execute/pr65170.c",
   "execute/pr84748.c",
-  "execute/pr85582-2.c",
-  "execute/pr85582-3.c",
-  "execute/pr98474.c",
 ]
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/309"
 why = "an overflow checked arithmetic builtin has no lowering, E0686"
 outcome = "did not build"
-cases = [
-  "execute/pr84169.c",
-  "execute/pr91450-1.c",
-  "execute/pr91450-2.c",
-]
+case = "execute/pr84169.c"
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/313"
@@ -538,12 +513,18 @@ cases = [
 # `var <= 0 || (unsigned long) (unsigned) (var - 1) < UINT_MAX` to fold to one, which the optimizer
 # now does, so the call it guards is gone and the definition the program deliberately leaves out no
 # longer has to exist.
+#
+# `execute/20020720-1.c` arrived here from the libm block, where it was filed on the name of the
+# function it calls rather than on what it does with it. It asks for `fabs (x) < 0.0` to fold to
+# false, which is the same shape as everything else here: the call it guards is to a function the
+# program deliberately never defines, so the link is the assertion.
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/361"
 why = "the program asks for an optimizer as soon as __OPTIMIZE__ is defined"
 outcome = "did not build"
 opt = ["1", "2", "3", "s", "z"]
 cases = [
+  "execute/20020720-1.c",
   "execute/20030216-1.c",
   "execute/compare-3.c",
   "execute/ieee/compare-fp-3.c",
@@ -596,19 +577,6 @@ cases = [
   "execute/pr47237.c",
   "execute/pr85331.c",
   "execute/pr94591.c",
-]
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/291"
-why = "nothing here grows the stack for a variable length array, E0653"
-outcome = "did not build"
-cases = [
-  "execute/20040811-1.c",
-  "execute/20221006-1.c",
-  "execute/920721-2.c",
-  "execute/920929-1.c",
-  "execute/pr43220.c",
-  "execute/vla-dealloc-1.c",
 ]
 
 [[exec-exclude]]
@@ -669,6 +637,7 @@ outcome = "did not build"
 cases = [
   "execute/20000412-3.c",
   "execute/pr20621-1.c",
+  "execute/pr23135.c",
   "execute/pr28982b.c",
   "execute/va-arg-22.c",
 ]
@@ -682,18 +651,6 @@ cases = [
   "execute/920501-5.c",
   "execute/990208-1.c",
 ]
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc-compat/issues/39"
-why = "the link step passes no libraries, so a call to libm has nowhere to resolve"
-outcome = "did not build"
-case = "execute/20020720-1.c"
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc-compat/issues/39"
-why = "the link step passes no libraries, so a call to libm has nowhere to resolve"
-outcome = "did not build"
-case = "execute/990826-0.c"
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc-compat/issues/39"
@@ -733,61 +690,33 @@ why = "always_inline is not honoured, so an inline definition marked with it is 
 outcome = "did not build"
 case = "execute/stdarg-4.c"
 
-# The options these ask for and rucc turns down: `-fnon-call-exceptions`, `-fwrapv` nine times,
-# `-finstrument-functions`, `-ffast-math`, `-fno-ira-share-spill-slots`,
-# `-ftree-loop-distribution`, `-fno-strict-overflow`, `-fexpensive-optimizations`,
-# `-ftree-vectorize`, `-fno-vect-cost-model`, `-fno-inline`, `-finput-charset=utf-8`,
-# `-fno-trapping-math`, `-fno-early-inlining`, `-fno-ipa-cp`, `-fno-tree-coalesce-vars`,
-# `-foptimize-strlen`, `-fmodulo-sched` three times, `-fno-dce`, `-fno-strict-aliasing` and six
-# more `-fno-tree-*` options. Three of them, `execute/920612-1.c`, `execute/pr23135.c` and
-# `execute/pr40386.c`, name one option that is accepted alongside the one that is not.
+# Thirty one programs were here under tamnd/rucc#489, for naming an option the driver did not
+# take. That issue is closed. Eleven of them build and run and are gone, and the two below are
+# what is left of the block.
 #
-# The issue below is what answers them. Section 4.1's rule is that a flag which is genuinely a
-# no-op or a hint about speed is taken and one that would change the output is a hard error naming
-# what it would have changed. Most of these are the first kind. `-fwrapv` and
-# `-fno-strict-aliasing` are the second, and they are why this is an exclusion rather than a line
-# in the argument parser: taking them silently would compile a program that asked for defined
-# overflow under rules that do not give it.
+# The eighteen name an option that only turns one of gcc's own passes on or off, which is
+# tamnd/rucc#1019. They never reach a run, because the driver reads its command line before it
+# reads anything else, so the check list above names them too.
 #
-# `execute/pr23135.c` was on the tamnd/rucc#335 list at five of the six levels before this, for a
-# structure passed by value too large to unroll. That gap is still there and is still what stops
-# the program once the option is accepted. It is listed here rather than there because the option
-# is refused before anything looks at the program, so this is what the run reports today.
-# `execute/pr93213.c` moved off the tamnd/rucc#351 list the same way.
-#
-# None of the rest is a program this could not otherwise build. They arrived the two days the
-# harness started reading the `dg-options` line and then the `dg-additional-options` line, which
-# is the right thing to do and is what turns a missing flag from something invisible into
-# something counted.
+# `execute/pr23135.c` has moved to the tamnd/rucc#335 block, where the old comment here said it
+# would go: the option is taken now and what stops the program is a structure passed by value
+# too large to unroll, which was always underneath.
 [[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/489"
-why = "the program names an option in its own dg-options line that the driver does not accept"
+issue = "https://github.com/tamnd/rucc/issues/1019"
+why = "the program names a pass of its own in dg-options and the driver does not take it"
 outcome = "did not build"
 cases = [
-  "execute/20031003-1.c",
-  "execute/20040409-1w.c",
-  "execute/20040409-2w.c",
-  "execute/20040409-3w.c",
   "execute/20101011-1.c",
-  "execute/920612-1.c",
-  "execute/920711-1.c",
-  "execute/930529-1.c",
-  "execute/950704-1.c",
   "execute/eeprof-1.c",
   "execute/lto-tbaa-1.c",
   "execute/pr111863-1.c",
   "execute/pr114396.c",
-  "execute/pr22493-1.c",
-  "execute/pr23047.c",
-  "execute/pr23135.c",
   "execute/pr39501.c",
   "execute/pr40386.c",
   "execute/pr43236.c",
-  "execute/pr57124.c",
   "execute/pr68381.c",
   "execute/pr68532.c",
   "execute/pr79388.c",
-  "execute/pr91632.c",
   "execute/pr93213.c",
   "execute/pr97404.c",
   "execute/pr97421-1.c",
@@ -796,6 +725,17 @@ cases = [
   "execute/stkalign.c",
   "execute/wchar_t-1.c",
 ]
+
+# The one program of the thirty one that the option was hiding a wrong answer behind. It asks for
+# `-fno-trapping-math`, which is taken now, and then converts a float that is out of range for an
+# `int` and checks the answer. gcc folds that conversion to the saturated value under the flag and
+# leaves it to the hardware without it. rucc leaves it to the hardware either way, so the program
+# gets the integer indefinite value and aborts.
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/1020"
+why = "-fno-trapping-math does not change how an out of range float to int conversion folds"
+outcome = "crashed"
+case = "execute/20031003-1.c"
 
 # Thirteen of the sixteen calls in this program are right and the three behind its own
 # `#ifdef __OPTIMIZE__` are not, which is why it passes at -O0 and is listed at the five levels
