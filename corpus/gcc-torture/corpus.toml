@@ -111,7 +111,7 @@ cases = [
   "execute/pr71494.c",
 ]
 
-# What is left is 148 cases out of 1870, so 1722 of them pass, and none of the 148 is stale. Every
+# What is left is 138 cases out of 1870, so 1732 of them pass, and none of the 138 is stale. Every
 # entry names the issue that will take it off the list, and the list is meant to shrink: `check`
 # and `exec` both fail on an entry that no longer excludes anything, so a gap the compiler closes
 # is a red run here until somebody deletes the line.
@@ -351,27 +351,15 @@ cases = [
 issue = "https://github.com/tamnd/rucc/issues/1019"
 why = "the program names a pass of its own in dg-options and the driver does not take it"
 
-# These ten get all the way through and stop on the last step of `check`, which prints the IR and
-# reads it back. Each of them builds one instruction over a value that nothing defines, which the
-# printer writes as `%?` and the reader cannot read. Three are a loop counter nothing reads and
-# seven are the result of a short circuit the program throws away, and both reduce to four lines.
-# Nothing miscompiles, because the instruction is dead and the code generator never sees it, so
-# these are excluded here and are passes on the execution list below.
-[[exclude]]
-cases = [
-  "execute/20021015-1.c",
-  "execute/20190820-1.c",
-  "execute/pr44575.c",
-  "execute/pr58385.c",
-  "execute/pr64756.c",
-  "execute/pr68185.c",
-  "execute/pr68321.c",
-  "execute/pr80421.c",
-  "execute/pr82387.c",
-  "execute/pr85529-1.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/1016"
-why = "an instruction uses a value with no definition, so the IR does not read back"
+# Ten of these were here and are not any more. They got all the way through and stopped on the last
+# step of `check`, which prints the IR and reads it back, each of them on one instruction built over
+# a value that nothing defines. Three were a loop counter nothing reads and seven were the result of
+# a short circuit the program throws away, and both reduced to four lines. Nothing was miscompiled,
+# because the instruction was dead and the code generator never saw it, which is why all ten were
+# passes on the execution list below the whole time they were here. That is tamnd/rucc#1016 and it
+# was control flow simplification dropping a block parameter nothing reads and leaving the
+# instruction that was reading it, which only shows at `-O0` because `-O0` runs that pass and no
+# other.
 
 # The execution list, which is what tamnd/rucc-compat#30 asked for. `exec` builds each of these
 # programs three ways and runs it, and the self check inside the program decides whether the run

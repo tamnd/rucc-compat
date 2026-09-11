@@ -38,9 +38,10 @@ skip = [
   "sqlite3rc.h",
 ]
 
-# Both source cases are excluded, naming the issue that will take them off this list. An entry
-# whose case has started passing fails the run, so the list shrinks as the work lands rather
-# than sitting here.
+# Nothing is excluded. Both source cases pass, which means the amalgamation and the shell each get
+# through the front end, through the rule set and through the printer, and the IR each of them
+# prints reads back as the same function. An entry whose case has started passing fails the run, so
+# a list here shrinks as the work lands rather than sitting around.
 #
 # The shell used to be here for a different reason and is worth a note. It reached three byte
 # swap builtins first, through a glibc header that defines static inline functions over them
@@ -50,9 +51,12 @@ skip = [
 # library function, which is what gcc emits for it too, and it is answered where the arguments
 # are constants. `rucc -c -I . shell.c` exits 0 with no output.
 #
-# What both files stop on now is further in, and it is the same thing for both: four
-# instructions across the two of them use a value that has no definition, which the printer
-# writes as `%?` and which the reader then cannot read back. That is tamnd/rucc#1016.
+# Both files were here after that for a third reason, and it is the one that took them off. Four
+# instructions across the two of them used a value that had no definition, which the printer writes
+# as `%?` and which the reader then cannot read back. That is tamnd/rucc#1016, and it was control
+# flow simplification dropping a block parameter nothing reads and leaving the instruction that was
+# reading it. It only ever showed at `-O0`, because `-O0` runs that pass and no other, so nothing
+# came along behind it to take the stranded instruction away.
 #
 # The amalgamation used to be here blaming an atomic builtin and tamnd/rucc#311. That was
 # written from what a check said rather than from what a build does, and it was wrong: the
@@ -60,8 +64,3 @@ skip = [
 # anything here runs, at a `zext` producing an `i128` in `sqlite3Multiply128`, which is
 # tamnd/rucc#351 and is a backend refusal rather than a front end one. The record of that
 # build is tamnd/rucc#590.
-
-[[exclude]]
-cases = ["amalgamation/sqlite3.c", "shell/shell.c"]
-issue = "https://github.com/tamnd/rucc/issues/1016"
-why = "an instruction uses a value with no definition, so the IR does not read back"
