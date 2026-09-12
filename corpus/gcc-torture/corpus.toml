@@ -111,7 +111,7 @@ cases = [
   "execute/pr71494.c",
 ]
 
-# What is left is 116 cases out of 1870, so 1754 of them pass, and none of the 116 is stale. Every
+# What is left is 113 cases out of 1870, so 1757 of them pass, and none of the 113 is stale. Every
 # entry names the issue that will take it off the list, and the list is meant to shrink: `check`
 # and `exec` both fail on an entry that no longer excludes anything, so a gap the compiler closes
 # is a red run here until somebody deletes the line.
@@ -135,6 +135,11 @@ cases = [
 # complex in it. What is left under that issue is waiting on the multiply, the divide, the
 # conjugate, imaginary constants or `_Complex` on an integer type, and each of those is a piece of
 # the language rather than a file.
+#
+# Three more came off in tamnd/rucc#1089, which added the imaginary constant. All three start with a
+# complex object at file scope given a value like `1.0 + 2.0i`, so what they were waiting on was the
+# folding rather than the arithmetic. What is left under the issue now is the multiply, the divide,
+# the conjugate, `_Complex` on an integer type and bare `_Complex` meaning `_Complex double`.
 
 [[exclude]]
 cases = [
@@ -227,11 +232,8 @@ cases = [
   "execute/20070614-1.c",
   "execute/builtins/complex-1-lib.c",
   "execute/builtins/complex-1.c",
-  "execute/complex-1.c",
-  "execute/complex-2.c",
   "execute/complex-5.c",
   "execute/complex-6.c",
-  "execute/complex-7.c",
   "execute/pr104604.c",
   "execute/pr38151.c",
   "execute/pr49644.c",
@@ -424,11 +426,8 @@ cases = [
   "execute/20041201-1.c",
   "execute/20050121-1.c",
   "execute/20070614-1.c",
-  "execute/complex-1.c",
-  "execute/complex-2.c",
   "execute/complex-5.c",
   "execute/complex-6.c",
-  "execute/complex-7.c",
   "execute/pr104604.c",
   "execute/pr38151.c",
   "execute/pr49644.c",
