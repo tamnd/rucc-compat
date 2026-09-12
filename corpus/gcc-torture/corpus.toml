@@ -577,6 +577,7 @@ outcome = "crashed"
 opt = ["1", "2", "3", "s", "z"]
 cases = [
   "execute/20030125-1.c",
+  "execute/990208-1.c",
   "execute/builtin-constant.c",
   "execute/fprintf-chk-1.c",
   "execute/printf-chk-1.c",
@@ -604,16 +605,6 @@ cases = [
   "execute/pr23135.c",
   "execute/pr28982b.c",
   "execute/va-arg-22.c",
-]
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/353"
-why = "the address of a label has no lowering, E0653"
-outcome = "did not build"
-cases = [
-  "execute/920501-3.c",
-  "execute/920501-5.c",
-  "execute/990208-1.c",
 ]
 
 [[exec-exclude]]
