@@ -111,7 +111,7 @@ cases = [
   "execute/pr71494.c",
 ]
 
-# What is left is 107 cases out of 1870, so 1763 of them pass, and none of the 107 is stale. Every
+# What is left is 98 cases out of 1870, so 1772 of them pass, and none of the 98 is stale. Every
 # entry names the issue that will take it off the list, and the list is meant to shrink: `check`
 # and `exec` both fail on an entry that no longer excludes anything, so a gap the compiler closes
 # is a red run here until somebody deletes the line.
@@ -158,6 +158,22 @@ cases = [
 # rest of what it writes is `_Complex` on an integer type, which is the piece of tamnd/rucc#201
 # that has not landed. What is left under that issue is the conjugate, the complex integer types
 # and the imaginary suffix on an integer constant.
+#
+# Three more come off in tamnd/rucc#1141, which reads `~` on a complex operand as the conjugate the
+# way gcc does and gives the `conj`, `creal` and `cimag` families their answers rather than a call.
+# `20020411-1.c` passes at all six levels and is off both lists. The two `builtins/complex-1` files
+# compile now and are off the check list, and they were never on the execution one, because what is
+# left of them is the `link_error` calls their own harness writes: the comparison that decides each
+# one folds at file scope and does not fold inside a function body, where a complex value lives in
+# memory and it is the optimizer rather than the walk that would have to see through it. That is a
+# piece of work of its own. `complex-6.c` stays for `_Complex int` and `_Complex long int`, and the
+# conjugate half of it works at every width including `long double`. What is left under the issue
+# is the complex integer types and the imaginary suffix on an integer constant.
+#
+# Six more come off in tamnd/rucc#1139, which lowers `__builtin_prefetch`. They are the whole of the
+# `builtin-prefetch` set and they pass at all six levels. What is left under tamnd/rucc#313 is the
+# other builtins in that block, which are the ones that read a special register or ask the machine
+# a question rather than hint at an address.
 
 [[exclude]]
 cases = [
@@ -234,12 +250,9 @@ why = "__builtin_va_arg_pack is not declared, E0500"
 
 [[exclude]]
 cases = [
-  "execute/20020411-1.c",
   "execute/20041124-1.c",
   "execute/20041201-1.c",
   "execute/20050121-1.c",
-  "execute/builtins/complex-1-lib.c",
-  "execute/builtins/complex-1.c",
   "execute/complex-6.c",
   "execute/pr104604.c",
   "execute/pr38151.c",
@@ -302,12 +315,6 @@ cases = [
   "execute/20040709-1.c",
   "execute/20040709-2.c",
   "execute/20040709-3.c",
-  "execute/builtin-prefetch-1.c",
-  "execute/builtin-prefetch-2.c",
-  "execute/builtin-prefetch-3.c",
-  "execute/builtin-prefetch-4.c",
-  "execute/builtin-prefetch-5.c",
-  "execute/builtin-prefetch-6.c",
   "execute/pr115033.c",
   "execute/pr125291.c",
 ]
@@ -428,7 +435,6 @@ issue = "https://github.com/tamnd/rucc/issues/201"
 why = "complex arithmetic is missing the piece this file starts with, E0509, E0519 or E0525"
 outcome = "did not build"
 cases = [
-  "execute/20020411-1.c",
   "execute/20041124-1.c",
   "execute/20041201-1.c",
   "execute/20050121-1.c",
@@ -453,12 +459,6 @@ cases = [
   "execute/20040709-1.c",
   "execute/20040709-2.c",
   "execute/20040709-3.c",
-  "execute/builtin-prefetch-1.c",
-  "execute/builtin-prefetch-2.c",
-  "execute/builtin-prefetch-3.c",
-  "execute/builtin-prefetch-4.c",
-  "execute/builtin-prefetch-5.c",
-  "execute/builtin-prefetch-6.c",
   "execute/pr115033.c",
   "execute/pr125291.c",
 ]
