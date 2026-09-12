@@ -111,7 +111,7 @@ cases = [
   "execute/pr71494.c",
 ]
 
-# What is left is 113 cases out of 1870, so 1757 of them pass, and none of the 113 is stale. Every
+# What is left is 108 cases out of 1870, so 1762 of them pass, and none of the 108 is stale. Every
 # entry names the issue that will take it off the list, and the list is meant to shrink: `check`
 # and `exec` both fail on an entry that no longer excludes anything, so a gap the compiler closes
 # is a red run here until somebody deletes the line.
@@ -140,6 +140,18 @@ cases = [
 # complex object at file scope given a value like `1.0 + 2.0i`, so what they were waiting on was the
 # folding rather than the arithmetic. What is left under the issue now is the multiply, the divide,
 # the conjugate, `_Complex` on an integer type and bare `_Complex` meaning `_Complex double`.
+#
+# Four more came off in tamnd/rucc#1101, which compiles the complex multiply and the complex divide
+# as the calls into libgcc that gcc compiles them into. One of the three `cdivchk` files is not
+# among them and has moved to the eighty bit float instead: its whole subject is a `long double`
+# divide, and what stops it is that the back end has no rule for a value that wide rather than
+# anything about complex arithmetic. It still builds, since nothing that wide reaches the back end
+# until something is run, so it is named on the execution side alone now.
+#
+# `pr49218.c` and `pr84748.c` come off with them and belong to none of this. Both were waiting on a
+# cast between a 128-bit integer and a floating type, which tamnd/rucc#1099 and tamnd/rucc#1100
+# landed, and the staleness rule is what noticed. That was the whole of what tamnd/rucc#351 was
+# holding back here, so the entry for it is gone rather than shorter.
 
 [[exclude]]
 cases = [
@@ -209,15 +221,6 @@ why = "a builtin that belongs to no family is not declared, E0500"
 
 [[exclude]]
 cases = [
-  "execute/ieee/cdivchkd.c",
-  "execute/ieee/cdivchkf.c",
-  "execute/ieee/cdivchkld.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/201"
-why = "the complex divide is not written out yet, E0519"
-
-[[exclude]]
-cases = [
   "execute/va-arg-pack-1.c",
 ]
 issue = "https://github.com/tamnd/rucc/issues/157"
@@ -232,11 +235,9 @@ cases = [
   "execute/20070614-1.c",
   "execute/builtins/complex-1-lib.c",
   "execute/builtins/complex-1.c",
-  "execute/complex-5.c",
   "execute/complex-6.c",
   "execute/pr104604.c",
   "execute/pr38151.c",
-  "execute/pr49644.c",
   "execute/pr56837.c",
 ]
 issue = "https://github.com/tamnd/rucc/issues/201"
@@ -412,6 +413,7 @@ why = "an eighty bit float has no type in the rule set, E0653"
 outcome = "did not build"
 cases = [
   "execute/20080502-1.c",
+  "execute/ieee/cdivchkld.c",
   "execute/ieee/copysign1.c",
   "execute/ieee/copysign2.c",
 ]
@@ -426,21 +428,10 @@ cases = [
   "execute/20041201-1.c",
   "execute/20050121-1.c",
   "execute/20070614-1.c",
-  "execute/complex-5.c",
   "execute/complex-6.c",
   "execute/pr104604.c",
   "execute/pr38151.c",
-  "execute/pr49644.c",
   "execute/pr56837.c",
-]
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/351"
-why = "an __int128 has no place in the rule set, E0653"
-outcome = "did not build"
-cases = [
-  "execute/pr49218.c",
-  "execute/pr84748.c",
 ]
 
 [[exec-exclude]]
