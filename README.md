@@ -112,6 +112,13 @@ Green there means what green means for the run as a whole, which is neither a fa
 
 A run narrowed by any of `--unit`, `--only`, `--failed` or `--limit` is not a whole corpus, so it does not check for exclusions that name a case nobody ran. That check needs the whole corpus and stays where it belongs, in the sweep.
 
+`--excluded` is the exception, and it is the run to make after closing a gap. It keeps the cases the manifest excludes here and nothing else, so it is narrow the way the others are, but it is narrow along the one axis the staleness rule cares about: an exclusion goes stale when its own case starts passing, and every case an exclusion names is in the run. So `--excluded` says exactly what a sweep says about which entries come off the list, over a small fraction of the work. On gcc-torture that is around a hundred cases on `check` and three hundred runs on `exec` instead of 1870 and 5610, which is seconds rather than the better part of ten minutes a level. What it cannot tell you is whether anything that was passing has stopped, because those cases are not in it, so it is the loop to develop against and the sweep is still what a release goes out on.
+
+```
+./target/release/rucc-compat check gcc-torture --excluded
+./target/release/rucc-compat exec gcc-torture --excluded --opt 2
+```
+
 ## The corpora
 
 Each directory under `corpus/` describes one body of code, in a `corpus.toml` that says where it comes from, what license it carries and what to do with it. There are two kinds and the difference is where the code lives.

@@ -122,6 +122,8 @@ pub struct Settings {
     pub only: Vec<String>,
     /// Run only cases the last run here did not call green.
     pub failed: bool,
+    /// Run only the cases the manifest excludes here, which is the staleness gate on its own.
+    pub excluded: bool,
     /// What to call the machine in the report, or `None` for the platform it runs on.
     pub machine: Option<String>,
     /// Seconds per run, over what the corpus asks for.
@@ -156,6 +158,7 @@ impl Default for Settings {
             unit: None,
             only: Vec::new(),
             failed: false,
+            excluded: false,
             machine: None,
             timeout: None,
             memory: Some(MEMORY),
@@ -168,11 +171,27 @@ impl Default for Settings {
 impl Settings {
     /// Whether this run is looking at every case the corpus has.
     ///
-    /// A part of a corpus cannot say anything about an exclusion it never reached, so the
-    /// staleness check only runs when this is true.
+    /// A part of a corpus cannot say anything about the cases outside it, so a count that is
+    /// about the corpus rather than about the run is only filled in when this is true.
     #[must_use]
     pub fn is_whole(&self) -> bool {
-        self.limit.is_none() && self.unit.is_none() && self.only.is_empty() && !self.failed
+        !self.is_narrowed() && !self.excluded
+    }
+
+    /// Whether every exclusion the manifest makes here at this level is in this run.
+    ///
+    /// The staleness rule fires on an exclusion whose case has started passing, so what it needs
+    /// is every excluded case and nothing besides. A sweep over the corpus reaches them, and so
+    /// does `--excluded`, which is the same gate over a twentieth of the work.
+    #[must_use]
+    pub fn reaches_every_exclusion(&self) -> bool {
+        !self.is_narrowed()
+    }
+
+    /// Whether the run has been cut down to cases picked by something other than the exclusion
+    /// list.
+    fn is_narrowed(&self) -> bool {
+        self.limit.is_some() || self.unit.is_some() || !self.only.is_empty() || self.failed
     }
 
     /// The `-O` flag both compilers get, if there is one.
@@ -502,6 +521,20 @@ pub fn run(
     if cases.is_empty() && !keep.is_all() {
         return Err(Error { message: format!("{}: {}", corpus.name, keep.emptiness()) });
     }
+    // Last, so that it is the exclusion list alone deciding and `--excluded` is the gate rather
+    // than a quicker look at part of one. A case is in when any of the paths being built is
+    // excused on it, since an entry may name the paths it speaks on.
+    let cases: Vec<Case> = match settings.excluded {
+        true => cases
+            .into_iter()
+            .filter(|c| {
+                settings.routes.iter().any(|route| {
+                    corpus.exec_excuse(&c.name, settings.opt.as_deref(), route.word()).is_some()
+                })
+            })
+            .collect(),
+        false => cases,
+    };
     let cases = match settings.limit {
         Some(limit) => &cases[..limit.min(cases.len())],
         None => &cases[..],
@@ -582,7 +615,9 @@ pub fn run(
         eprintln!("{}: could not write {}: {e}", corpus.name, record.display());
     }
 
-    let unmatched = match settings.is_whole() {
+    // Read from the corpus listing rather than from the run, so a run holding every exclusion
+    // answers it as well as a sweep does.
+    let unmatched = match settings.reaches_every_exclusion() {
         true => corpus
             .exec_excluded
             .iter()
@@ -591,13 +626,13 @@ pub fn run(
             .collect(),
         false => Vec::new(),
     };
-    // Only on a whole run, for the same reason `unmatched` is. A run narrowed to twenty cases
-    // has no business saying how much of the corpus the manifest takes out.
+    // Which cases the harness never offered is about the cases outside the exclusion list as
+    // much as inside it, so this one wants the sweep and not `--excluded`.
     let never = match settings.is_whole() {
         true => found.never,
         false => Vec::new(),
     };
-    let settled = match settings.is_whole() {
+    let settled = match settings.reaches_every_exclusion() {
         true => found.settled,
         false => Vec::new(),
     };
@@ -1486,6 +1521,16 @@ mod tests {
         assert!(!Settings { unit: Some("test".to_owned()), ..Settings::default() }.is_whole());
         assert!(!Settings { only: vec!["a".to_owned()], ..Settings::default() }.is_whole());
         assert!(!Settings { failed: true, ..Settings::default() }.is_whole());
+        // `--excluded` is not the whole corpus and is still every exclusion, which is the
+        // difference the staleness gate rests on.
+        let only_excluded = Settings { excluded: true, ..Settings::default() };
+        assert!(!only_excluded.is_whole());
+        assert!(only_excluded.reaches_every_exclusion());
+        assert!(Settings::default().reaches_every_exclusion());
+        assert!(
+            !Settings { limit: Some(4), excluded: true, ..Settings::default() }
+                .reaches_every_exclusion()
+        );
     }
 
     #[test]

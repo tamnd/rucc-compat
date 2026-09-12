@@ -45,6 +45,7 @@ options:
   --jobs N         how many cases to have in the air at once, default half the machine
   --only PATTERN   run only cases whose name contains PATTERN, may be given more than once
   --failed         run only cases the last run here did not call green
+  --excluded       check and exec: run only the cases the manifest excludes here
   --report         write results/<corpus>.md as well as printing the summary
   --record         fetch only: print the sha256 of the download and unpack nothing
   --floor PERCENT  coverage only: fail when less than that much of the rule set fired
@@ -58,6 +59,11 @@ asks about what the first one did not fix.
 
 `check` and `exec` fail on an exclusion that no longer excludes anything, so that the list in
 a manifest tracks work rather than hiding it.
+
+`--excluded` is that rule on its own. It runs the cases the exclusions name and nothing else,
+which is every case the rule could fire on, so it says the same thing about staleness as a
+sweep does over a small fraction of the work. It is the run to make after closing a gap, when
+the question is which entries come off the list rather than whether anything broke.
 
 `exec` runs a corpus only when its manifest names an oracle, since without one there is
 nothing to decide a run by. A corpus with no oracle is reported as such and passed over.
@@ -255,6 +261,7 @@ fn check_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, 
             "--rucc" => settings.rucc = PathBuf::from(value(args, &mut at, arg)?),
             "--unit" => settings.unit = Some(value(args, &mut at, arg)?),
             "--failed" => settings.failed = true,
+            "--excluded" => settings.excluded = true,
             "--only" => settings.only.push(value(args, &mut at, arg)?),
             "--jobs" => {
                 let text = value(args, &mut at, arg)?;
@@ -347,6 +354,7 @@ fn exec_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, S
                 settings.timeout = Some(seconds);
             }
             "--failed" => settings.failed = true,
+            "--excluded" => settings.excluded = true,
             "--only" => settings.only.push(value(args, &mut at, arg)?),
             "--jobs" => {
                 let text = value(args, &mut at, arg)?;
