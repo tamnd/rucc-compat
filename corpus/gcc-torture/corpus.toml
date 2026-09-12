@@ -111,7 +111,7 @@ cases = [
   "execute/pr71494.c",
 ]
 
-# What is left is 98 cases out of 1870, so 1772 of them pass, and none of the 98 is stale. Every
+# What is left is 91 cases out of 1870, so 1779 of them pass, and none of the 91 is stale. Every
 # entry names the issue that will take it off the list, and the list is meant to shrink: `check`
 # and `exec` both fail on an entry that no longer excludes anything, so a gap the compiler closes
 # is a red run here until somebody deletes the line.
@@ -169,6 +169,17 @@ cases = [
 # piece of work of its own. `complex-6.c` stays for `_Complex int` and `_Complex long int`, and the
 # conjugate half of it works at every width including `long double`. What is left under the issue
 # is the complex integer types and the imaginary suffix on an integer constant.
+#
+# Five more come off in tamnd/rucc#1161, which reads `_Complex` on an integer type and the
+# imaginary suffix on an integer constant. That is the last of what tamnd/rucc#201 named, so the
+# issue is closed and nothing is excluded under it any more. `20041124-1.c`, `20041201-1.c`,
+# `pr104604.c`, `pr38151.c` and `pr56837.c` pass at all six levels and are off both lists.
+# `20050121-1.c` and `complex-6.c` are off the check list and stay on the execution one, and what
+# stops them now has nothing to do with complex integers: both return a `_Complex long double`,
+# which the psABI puts in `st(0)` and `st(1)` and which the back end has no rule for, so both are
+# named under tamnd/rucc#1162 instead. A plain `long double` return works and it is the pair that
+# does not. They come off the check side because `check` stops at the IR and the gap is below it,
+# which is the same place the `cdivchk` file above ended up for the same kind of reason.
 #
 # Six more come off in tamnd/rucc#1139, which lowers `__builtin_prefetch`. They are the whole of the
 # `builtin-prefetch` set and they pass at all six levels. What is left under tamnd/rucc#313 is the
@@ -247,19 +258,6 @@ cases = [
 ]
 issue = "https://github.com/tamnd/rucc/issues/157"
 why = "__builtin_va_arg_pack is not declared, E0500"
-
-[[exclude]]
-cases = [
-  "execute/20041124-1.c",
-  "execute/20041201-1.c",
-  "execute/20050121-1.c",
-  "execute/complex-6.c",
-  "execute/pr104604.c",
-  "execute/pr38151.c",
-  "execute/pr56837.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/201"
-why = "complex arithmetic is missing the piece this file starts with, E0509, E0519 or E0525"
 
 # These five have an execution entry already and had no build entry, so `check` was failing on
 # them while `exec` was not. The attribute is refused in the walk, which is before either command
@@ -431,17 +429,12 @@ cases = [
 ]
 
 [[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/201"
-why = "complex arithmetic is missing the piece this file starts with, E0509, E0519 or E0525"
+issue = "https://github.com/tamnd/rucc/issues/1162"
+why = "returning a `_Complex long double` is the x87 pair and has no rule, E0653"
 outcome = "did not build"
 cases = [
-  "execute/20041124-1.c",
-  "execute/20041201-1.c",
   "execute/20050121-1.c",
   "execute/complex-6.c",
-  "execute/pr104604.c",
-  "execute/pr38151.c",
-  "execute/pr56837.c",
 ]
 
 [[exec-exclude]]
