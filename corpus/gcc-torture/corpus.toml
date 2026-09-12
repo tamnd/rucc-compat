@@ -111,7 +111,7 @@ cases = [
   "execute/pr71494.c",
 ]
 
-# What is left is 138 cases out of 1870, so 1732 of them pass, and none of the 138 is stale. Every
+# What is left is 123 cases out of 1870, so 1747 of them pass, and none of the 123 is stale. Every
 # entry names the issue that will take it off the list, and the list is meant to shrink: `check`
 # and `exec` both fail on an entry that no longer excludes anything, so a gap the compiler closes
 # is a red run here until somebody deletes the line.
@@ -323,33 +323,29 @@ issue = "https://github.com/tamnd/rucc/issues/312"
 why = "a builtin that asks about the frame has no lowering, E0686"
 
 # Thirty one programs used to be here, under tamnd/rucc#489, for naming an option the driver did
-# not take. That issue is closed and thirteen of them came off this list with it. The eighteen
-# left name an option that only turns one of gcc's own passes on or off, which is a different
-# question and is tamnd/rucc#1019. The execution list below names the same eighteen, because an
-# option the driver refuses stops the program before either command looks at it.
+# not take. That issue is closed and thirteen of them came off this list with it. Eighteen were
+# left naming an option that turns one of gcc's own passes on or off, which is tamnd/rucc#1019,
+# and that is closed as well: a flag asking for a pass this compiler does not have is a hint about
+# speed, so fifteen of the eighteen are taken and dropped and pass now.
+#
+# The three below are what is left of the block, and each of them names an option that changes
+# what the program does rather than how fast it does it, which is why each is refused with a
+# reason and has an issue of its own. The execution list further down names the same three,
+# because an option the driver refuses stops the program before either command looks at it.
 [[exclude]]
-cases = [
-  "execute/20101011-1.c",
-  "execute/eeprof-1.c",
-  "execute/lto-tbaa-1.c",
-  "execute/pr111863-1.c",
-  "execute/pr114396.c",
-  "execute/pr39501.c",
-  "execute/pr40386.c",
-  "execute/pr43236.c",
-  "execute/pr68381.c",
-  "execute/pr68532.c",
-  "execute/pr79388.c",
-  "execute/pr93213.c",
-  "execute/pr97404.c",
-  "execute/pr97421-1.c",
-  "execute/pr97421-2.c",
-  "execute/pr97421-3.c",
-  "execute/stkalign.c",
-  "execute/wchar_t-1.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/1019"
-why = "the program names a pass of its own in dg-options and the driver does not take it"
+case = "execute/pr39501.c"
+issue = "https://github.com/tamnd/rucc/issues/1051"
+why = "-ffast-math defines a macro a header reads and changes the mode the whole process runs in"
+
+[[exclude]]
+case = "execute/20101011-1.c"
+issue = "https://github.com/tamnd/rucc/issues/1052"
+why = "-fnon-call-exceptions needs a landing pad for a trapping instruction and there is none"
+
+[[exclude]]
+case = "execute/eeprof-1.c"
+issue = "https://github.com/tamnd/rucc/issues/1053"
+why = "-finstrument-functions asks for entry and exit hooks that the program then counts"
 
 # Ten of these were here and are not any more. They got all the way through and stopped on the last
 # step of `check`, which prints the IR and reads it back, each of them on one instruction built over
@@ -367,8 +363,8 @@ why = "the program names a pass of its own in dg-options and the driver does not
 #
 # It is shorter than that issue expected. The guess there was nineteen hundred programs of red.
 # The unit is 1870 programs, which is the 1907 in the tarball less the 7 skipped and the 30
-# settled above, and at `-O0` 1597 of them pass, 120 are named below and 153 are refused by gcc 16
-# as well. At `-O3` it is 1584, 136 and 150. The reason for the gap between the guess and the
+# settled above, and at `-O0` 1612 of them pass, 105 are named below and 153 are refused by gcc 16
+# as well. At `-O3` it is 1599, 121 and 150. The reason for the gap between the guess and the
 # count is that the issue was written when a call to an unknown builtin stopped five hundred files
 # at once, and it said to wait until the lowering rule set stopped moving so fast. It has.
 #
@@ -380,11 +376,11 @@ why = "the program names a pass of its own in dg-options and the driver does not
 # options in a `dg-options` or `dg-additional-options` line is now compiled with them and some of
 # what gcc was refusing it was refusing for want of the dialect the program asked for.
 #
-# 136 cases are named here across the six levels, and 27 blocks name them, because the reasons
+# 121 cases are named here across the six levels, and 29 blocks name them, because the reasons
 # are far fewer than the programs. The blocks are roughly sorted by size. The largest is complex
-# arithmetic at twenty one, and after it comes the option block at eighteen, which is the one entry
-# on this list that is about the driver rather than about the rule set, and then the two blocks of
-# builtins that have no lowering. `__int128` used to be third and is two cases now. Inline assembly
+# arithmetic at twenty one, and after it come the two blocks of builtins that have no lowering. The
+# option block was second at eighteen and is three entries of one case each now, which are the only
+# entries on this list that are about the driver rather than about the rule set. `__int128` used to be third and is two cases now. Inline assembly
 # used to be first by a long way, at seventy three cases, and it is three now that a template with
 # no instructions in it lowers: what is left of it is a template with instructions in it and an
 # `asm goto`.
@@ -679,40 +675,35 @@ outcome = "did not build"
 case = "execute/stdarg-4.c"
 
 # Thirty one programs were here under tamnd/rucc#489, for naming an option the driver did not
-# take. That issue is closed. Eleven of them build and run and are gone, and the two below are
+# take. That issue is closed. Eleven of them build and run and are gone, and the three below are
 # what is left of the block.
 #
-# The eighteen name an option that only turns one of gcc's own passes on or off, which is
-# tamnd/rucc#1019. They never reach a run, because the driver reads its command line before it
-# reads anything else, so the check list above names them too.
+# Eighteen of the thirty one named an option that turns one of gcc's own passes on or off, which
+# is tamnd/rucc#1019, and fifteen of those build and run at all six levels now that such an option
+# is taken and dropped. The three left name an option that changes what the program does, so the
+# driver refuses it, and it refuses it before anything is read, which is why the check list above
+# names the same three.
 #
 # `execute/pr23135.c` has moved to the tamnd/rucc#335 block, where the old comment here said it
 # would go: the option is taken now and what stops the program is a structure passed by value
 # too large to unroll, which was always underneath.
 [[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/1019"
-why = "the program names a pass of its own in dg-options and the driver does not take it"
+issue = "https://github.com/tamnd/rucc/issues/1051"
+why = "-ffast-math defines a macro a header reads and changes the mode the whole process runs in"
 outcome = "did not build"
-cases = [
-  "execute/20101011-1.c",
-  "execute/eeprof-1.c",
-  "execute/lto-tbaa-1.c",
-  "execute/pr111863-1.c",
-  "execute/pr114396.c",
-  "execute/pr39501.c",
-  "execute/pr40386.c",
-  "execute/pr43236.c",
-  "execute/pr68381.c",
-  "execute/pr68532.c",
-  "execute/pr79388.c",
-  "execute/pr93213.c",
-  "execute/pr97404.c",
-  "execute/pr97421-1.c",
-  "execute/pr97421-2.c",
-  "execute/pr97421-3.c",
-  "execute/stkalign.c",
-  "execute/wchar_t-1.c",
-]
+case = "execute/pr39501.c"
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/1052"
+why = "-fnon-call-exceptions needs a landing pad for a trapping instruction and there is none"
+outcome = "did not build"
+case = "execute/20101011-1.c"
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/1053"
+why = "-finstrument-functions asks for entry and exit hooks that the program then counts"
+outcome = "did not build"
+case = "execute/eeprof-1.c"
 
 # The one program of the thirty one that the option was hiding a wrong answer behind. It asks for
 # `-fno-trapping-math`, which is taken now, and then converts a float that is out of range for an
