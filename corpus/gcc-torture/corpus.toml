@@ -111,7 +111,7 @@ cases = [
   "execute/pr71494.c",
 ]
 
-# What is left is 108 cases out of 1870, so 1762 of them pass, and none of the 108 is stale. Every
+# What is left is 107 cases out of 1870, so 1763 of them pass, and none of the 107 is stale. Every
 # entry names the issue that will take it off the list, and the list is meant to shrink: `check`
 # and `exec` both fail on an entry that no longer excludes anything, so a gap the compiler closes
 # is a red run here until somebody deletes the line.
@@ -152,6 +152,12 @@ cases = [
 # cast between a 128-bit integer and a floating type, which tamnd/rucc#1099 and tamnd/rucc#1100
 # landed, and the staleness rule is what noticed. That was the whole of what tamnd/rucc#351 was
 # holding back here, so the entry for it is gone rather than shorter.
+#
+# One more comes off in tamnd/rucc#1111, which reads `_Complex` written with no type beside it as
+# `_Complex double` the way gcc does. `20050121-1.c` writes the same thing and stays, because the
+# rest of what it writes is `_Complex` on an integer type, which is the piece of tamnd/rucc#201
+# that has not landed. What is left under that issue is the conjugate, the complex integer types
+# and the imaginary suffix on an integer constant.
 
 [[exclude]]
 cases = [
@@ -232,7 +238,6 @@ cases = [
   "execute/20041124-1.c",
   "execute/20041201-1.c",
   "execute/20050121-1.c",
-  "execute/20070614-1.c",
   "execute/builtins/complex-1-lib.c",
   "execute/builtins/complex-1.c",
   "execute/complex-6.c",
@@ -427,7 +432,6 @@ cases = [
   "execute/20041124-1.c",
   "execute/20041201-1.c",
   "execute/20050121-1.c",
-  "execute/20070614-1.c",
   "execute/complex-6.c",
   "execute/pr104604.c",
   "execute/pr38151.c",
