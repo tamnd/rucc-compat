@@ -111,7 +111,7 @@ cases = [
   "execute/pr71494.c",
 ]
 
-# What is left is 123 cases out of 1870, so 1747 of them pass, and none of the 123 is stale. Every
+# What is left is 116 cases out of 1870, so 1754 of them pass, and none of the 116 is stale. Every
 # entry names the issue that will take it off the list, and the list is meant to shrink: `check`
 # and `exec` both fail on an entry that no longer excludes anything, so a gap the compiler closes
 # is a red run here until somebody deletes the line.
@@ -128,6 +128,13 @@ cases = [
 # of the ninety eight pass. Sixty seven came off this list at the same time and for the same reason
 # read from the other side: they were listed for a gap that was never there, and what was actually
 # stopping them was the dialect they had asked for and not been given.
+#
+# Seven came off in tamnd/rucc#1082, which taught the walk to hold, pass, return, copy, convert,
+# add, subtract, negate and compare a `_Complex` value. Six of them are the complex block and one
+# was the flag reader again: `20010605-2.c` was listed under complex arithmetic and had nothing
+# complex in it. What is left under that issue is waiting on the multiply, the divide, the
+# conjugate, imaginary constants or `_Complex` on an integer type, and each of those is a piece of
+# the language rather than a file.
 
 [[exclude]]
 cases = [
@@ -202,7 +209,7 @@ cases = [
   "execute/ieee/cdivchkld.c",
 ]
 issue = "https://github.com/tamnd/rucc/issues/201"
-why = "__real__ and __imag__ are not lvalues, E0506"
+why = "the complex divide is not written out yet, E0519"
 
 [[exclude]]
 cases = [
@@ -213,32 +220,25 @@ why = "__builtin_va_arg_pack is not declared, E0500"
 
 [[exclude]]
 cases = [
-  "execute/20010605-2.c",
-  "execute/20020227-1.c",
   "execute/20020411-1.c",
-  "execute/20030910-1.c",
   "execute/20041124-1.c",
   "execute/20041201-1.c",
   "execute/20050121-1.c",
   "execute/20070614-1.c",
-  "execute/960512-1.c",
   "execute/builtins/complex-1-lib.c",
   "execute/builtins/complex-1.c",
   "execute/complex-1.c",
   "execute/complex-2.c",
-  "execute/complex-4.c",
   "execute/complex-5.c",
   "execute/complex-6.c",
   "execute/complex-7.c",
   "execute/pr104604.c",
   "execute/pr38151.c",
-  "execute/pr38969.c",
   "execute/pr49644.c",
   "execute/pr56837.c",
-  "execute/pr42248.c",
 ]
 issue = "https://github.com/tamnd/rucc/issues/201"
-why = "complex arithmetic is missing the piece this file starts with, E0506, E0509 or E0519"
+why = "complex arithmetic is missing the piece this file starts with, E0509, E0519 or E0525"
 
 # These five have an execution entry already and had no build entry, so `check` was failing on
 # them while `exec` was not. The attribute is refused in the walk, which is before either command
@@ -416,28 +416,21 @@ cases = [
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/201"
-why = "complex arithmetic is missing the piece this file starts with, E0506, E0509, E0519 or E0525"
+why = "complex arithmetic is missing the piece this file starts with, E0509, E0519 or E0525"
 outcome = "did not build"
 cases = [
-  "execute/20010605-2.c",
-  "execute/20020227-1.c",
   "execute/20020411-1.c",
-  "execute/20030910-1.c",
   "execute/20041124-1.c",
   "execute/20041201-1.c",
   "execute/20050121-1.c",
   "execute/20070614-1.c",
-  "execute/960512-1.c",
   "execute/complex-1.c",
   "execute/complex-2.c",
-  "execute/complex-4.c",
   "execute/complex-5.c",
   "execute/complex-6.c",
   "execute/complex-7.c",
   "execute/pr104604.c",
   "execute/pr38151.c",
-  "execute/pr38969.c",
-  "execute/pr42248.c",
   "execute/pr49644.c",
   "execute/pr56837.c",
 ]
