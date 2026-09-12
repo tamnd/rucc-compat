@@ -363,8 +363,8 @@ why = "-finstrument-functions asks for entry and exit hooks that the program the
 #
 # It is shorter than that issue expected. The guess there was nineteen hundred programs of red.
 # The unit is 1870 programs, which is the 1907 in the tarball less the 7 skipped and the 30
-# settled above, and at `-O0` 1612 of them pass, 105 are named below and 153 are refused by gcc 16
-# as well. At `-O3` it is 1599, 121 and 150. The reason for the gap between the guess and the
+# settled above, and at `-O0` 1613 of them pass, 104 are named below and 153 are refused by gcc 16
+# as well. At `-O3` it is 1600, 120 and 150. The reason for the gap between the guess and the
 # count is that the issue was written when a call to an unknown builtin stopped five hundred files
 # at once, and it said to wait until the lowering rule set stopped moving so fast. It has.
 #
@@ -376,7 +376,7 @@ why = "-finstrument-functions asks for entry and exit hooks that the program the
 # options in a `dg-options` or `dg-additional-options` line is now compiled with them and some of
 # what gcc was refusing it was refusing for want of the dialect the program asked for.
 #
-# 121 cases are named here across the six levels, and 29 blocks name them, because the reasons
+# 120 cases are named here across the six levels, and 28 blocks name them, because the reasons
 # are far fewer than the programs. The blocks are roughly sorted by size. The largest is complex
 # arithmetic at twenty one, and after it come the two blocks of builtins that have no lowering. The
 # option block was second at eighteen and is three entries of one case each now, which are the only
@@ -704,17 +704,6 @@ issue = "https://github.com/tamnd/rucc/issues/1053"
 why = "-finstrument-functions asks for entry and exit hooks that the program then counts"
 outcome = "did not build"
 case = "execute/eeprof-1.c"
-
-# The one program of the thirty one that the option was hiding a wrong answer behind. It asks for
-# `-fno-trapping-math`, which is taken now, and then converts a float that is out of range for an
-# `int` and checks the answer. gcc folds that conversion to the saturated value under the flag and
-# leaves it to the hardware without it. rucc leaves it to the hardware either way, so the program
-# gets the integer indefinite value and aborts.
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/1020"
-why = "-fno-trapping-math does not change how an out of range float to int conversion folds"
-outcome = "crashed"
-case = "execute/20031003-1.c"
 
 # Thirteen of the sixteen calls in this program are right and the three behind its own
 # `#ifdef __OPTIMIZE__` are not, which is why it passes at -O0 and is listed at the five levels
