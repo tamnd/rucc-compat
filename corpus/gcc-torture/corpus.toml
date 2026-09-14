@@ -182,9 +182,13 @@ cases = [
 # which is the same place the `cdivchk` file above ended up for the same kind of reason.
 #
 # Six more come off in tamnd/rucc#1139, which lowers `__builtin_prefetch`. They are the whole of the
-# `builtin-prefetch` set and they pass at all six levels. What is left under tamnd/rucc#313 is the
-# other builtins in that block, which are the ones that read a special register or ask the machine
-# a question rather than hint at an address.
+# `builtin-prefetch` set and they pass at all six levels.
+#
+# Six more come off in tamnd/rucc#1204, which implements the three builtins that were left in that
+# block: `__builtin_trap`, `__builtin_assume_aligned` and `__builtin_classify_type`. That is the
+# last of what tamnd/rucc#313 named, so the issue is closed and nothing is excluded under it any
+# more. `20020418-1.c`, `20040709-1.c`, `20040709-2.c`, `20040709-3.c`, `pr115033.c` and
+# `pr125291.c` build and run correctly at all six levels and are off both lists.
 
 [[exclude]]
 cases = [
@@ -296,18 +300,6 @@ why = "the difference of two label addresses is refused in a static initializer,
 case = "execute/pr80692.c"
 issue = "https://github.com/tamnd/rucc/issues/207"
 why = "decimal floating constants are not supported"
-
-[[exclude]]
-cases = [
-  "execute/20020418-1.c",
-  "execute/20040709-1.c",
-  "execute/20040709-2.c",
-  "execute/20040709-3.c",
-  "execute/pr115033.c",
-  "execute/pr125291.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/313"
-why = "a builtin that is one instruction or none has no lowering, E0686"
 
 [[exclude]]
 cases = [
@@ -432,19 +424,6 @@ issue = "https://github.com/tamnd/rucc/issues/309"
 why = "an overflow checked arithmetic builtin has no lowering, E0686"
 outcome = "did not build"
 case = "execute/pr84169.c"
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/313"
-why = "a builtin that is one instruction or none has no lowering, E0686"
-outcome = "did not build"
-cases = [
-  "execute/20020418-1.c",
-  "execute/20040709-1.c",
-  "execute/20040709-2.c",
-  "execute/20040709-3.c",
-  "execute/pr115033.c",
-  "execute/pr125291.c",
-]
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/312"
