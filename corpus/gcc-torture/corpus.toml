@@ -301,21 +301,22 @@ case = "execute/pr80692.c"
 issue = "https://github.com/tamnd/rucc/issues/207"
 why = "decimal floating constants are not supported"
 
+# Four programs came off this block with tamnd/rucc#1218, which built `__builtin_frame_address`
+# and `__builtin_return_address` as the walk up the saved frame pointers. Three of them asked for
+# nothing else and pass on both sides now. The fourth is `execute/20010122-1.c`, which asks for
+# `__builtin_alloca` as well: it gets as far as the IR, which is where the check side stops, so it
+# is off this list and still on the one below.
 [[exclude]]
 cases = [
-  "execute/20010122-1.c",
   "execute/20021113-1.c",
-  "execute/20030323-1.c",
-  "execute/20030811-1.c",
   "execute/20070824-1.c",
   "execute/alloca-1.c",
   "execute/frame-address.c",
-  "execute/pr17377.c",
   "execute/pr36321.c",
   "execute/pr86528.c",
 ]
 issue = "https://github.com/tamnd/rucc/issues/312"
-why = "a builtin that asks about the frame has no lowering, E0686"
+why = "`__builtin_alloca` has no lowering, E0686"
 
 # Thirty one programs used to be here, under tamnd/rucc#489, for naming an option the driver did
 # not take. That issue is closed and thirteen of them came off this list with it. Eighteen were
@@ -425,19 +426,20 @@ why = "an overflow checked arithmetic builtin has no lowering, E0686"
 outcome = "did not build"
 case = "execute/pr84169.c"
 
+# `execute/20030323-1.c`, `execute/20030811-1.c` and `execute/pr17377.c` were in this block and are
+# not any more. They ask where a frame is and where control goes back to from it, which
+# tamnd/rucc#1218 built, and all three give gcc 16.2.0's answer at every one of the six levels. What
+# is left here all wants `__builtin_alloca`, including `execute/20010122-1.c`, which wanted both.
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/312"
-why = "a builtin that asks about the frame has no lowering, E0686"
+why = "`__builtin_alloca` has no lowering, E0686"
 outcome = "did not build"
 cases = [
   "execute/20010122-1.c",
   "execute/20021113-1.c",
-  "execute/20030323-1.c",
-  "execute/20030811-1.c",
   "execute/20070824-1.c",
   "execute/alloca-1.c",
   "execute/frame-address.c",
-  "execute/pr17377.c",
   "execute/pr36321.c",
   "execute/pr86528.c",
 ]
