@@ -241,14 +241,9 @@ why = "a _chk builtin is not declared, E0500"
 
 [[exclude]]
 cases = [
-  "execute/builtin-bitops-1.c",
-  "execute/builtins/abs-3.c",
   "execute/builtins/fprintf.c",
   "execute/builtins/fputs.c",
   "execute/builtins/printf.c",
-  "execute/builtins/uabs-3.c",
-  "execute/pr105984.c",
-  "execute/pr123864.c",
   "execute/pr47237.c",
   "execute/pr85331.c",
   "execute/pr94591.c",
@@ -461,9 +456,6 @@ issue = "https://github.com/tamnd/rucc/issues/227"
 why = "a builtin that belongs to no family is not declared, E0500"
 outcome = "did not build"
 cases = [
-  "execute/builtin-bitops-1.c",
-  "execute/pr105984.c",
-  "execute/pr123864.c",
   "execute/pr47237.c",
   "execute/pr85331.c",
   "execute/pr94591.c",
