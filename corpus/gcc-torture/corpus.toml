@@ -189,26 +189,51 @@ cases = [
 # last of what tamnd/rucc#313 named, so the issue is closed and nothing is excluded under it any
 # more. `20020418-1.c`, `20040709-1.c`, `20040709-2.c`, `20040709-3.c`, `pr115033.c` and
 # `pr125291.c` build and run correctly at all six levels and are off both lists.
+#
+# Sixteen move rather than come off in tamnd/rucc#225, which declares the `_chk` builtins and calls
+# the checking function in the library for each of them. One comes off: `pr23484-chk.c` compiles now
+# and is off the check list, and it was never on the execution one for the reason every file in this
+# directory is not, which is tamnd/rucc-compat#110. The other fifteen compile as far as the first
+# `__builtin_setjmp` their own harness writes, so what stops them is the same thing that stops the
+# `-lib` half of each pair, and they are named under tamnd/rucc#223 with it instead. Nothing is
+# excluded under tamnd/rucc#225 any more, and what is left of that issue is folding a checking call
+# into the plain library function where the size argument says nothing is known, which is an
+# optimization on top of a call that is already correct and which no file here notices.
 
 [[exclude]]
 cases = [
   "execute/built-in-setjmp.c",
   "execute/builtins/lib/chk.c",
+  "execute/builtins/memcpy-chk.c",
   "execute/builtins/memcpy-chk-lib.c",
+  "execute/builtins/memmove-chk.c",
   "execute/builtins/memmove-chk-lib.c",
+  "execute/builtins/mempcpy-chk.c",
   "execute/builtins/mempcpy-chk-lib.c",
+  "execute/builtins/memset-chk.c",
   "execute/builtins/memset-chk-lib.c",
   "execute/builtins/pr23484-chk-lib.c",
+  "execute/builtins/pr93262-chk.c",
   "execute/builtins/pr93262-chk-lib.c",
+  "execute/builtins/snprintf-chk.c",
   "execute/builtins/snprintf-chk-lib.c",
+  "execute/builtins/sprintf-chk.c",
   "execute/builtins/sprintf-chk-lib.c",
+  "execute/builtins/stpcpy-chk.c",
   "execute/builtins/stpcpy-chk-lib.c",
+  "execute/builtins/stpncpy-chk.c",
   "execute/builtins/stpncpy-chk-lib.c",
+  "execute/builtins/strcat-chk.c",
   "execute/builtins/strcat-chk-lib.c",
+  "execute/builtins/strcpy-chk.c",
   "execute/builtins/strcpy-chk-lib.c",
+  "execute/builtins/strncat-chk.c",
   "execute/builtins/strncat-chk-lib.c",
+  "execute/builtins/strncpy-chk.c",
   "execute/builtins/strncpy-chk-lib.c",
+  "execute/builtins/vsnprintf-chk.c",
   "execute/builtins/vsnprintf-chk-lib.c",
+  "execute/builtins/vsprintf-chk.c",
   "execute/builtins/vsprintf-chk-lib.c",
   "execute/pr60003.c",
   "execute/pr64242.c",
@@ -216,28 +241,6 @@ cases = [
 ]
 issue = "https://github.com/tamnd/rucc/issues/223"
 why = "__builtin_setjmp and __builtin_longjmp are not declared, E0500"
-
-[[exclude]]
-cases = [
-  "execute/builtins/memcpy-chk.c",
-  "execute/builtins/memmove-chk.c",
-  "execute/builtins/mempcpy-chk.c",
-  "execute/builtins/memset-chk.c",
-  "execute/builtins/pr23484-chk.c",
-  "execute/builtins/pr93262-chk.c",
-  "execute/builtins/snprintf-chk.c",
-  "execute/builtins/sprintf-chk.c",
-  "execute/builtins/stpcpy-chk.c",
-  "execute/builtins/stpncpy-chk.c",
-  "execute/builtins/strcat-chk.c",
-  "execute/builtins/strcpy-chk.c",
-  "execute/builtins/strncat-chk.c",
-  "execute/builtins/strncpy-chk.c",
-  "execute/builtins/vsnprintf-chk.c",
-  "execute/builtins/vsprintf-chk.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/225"
-why = "a _chk builtin is not declared, E0500"
 
 [[exclude]]
 cases = [
