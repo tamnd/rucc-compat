@@ -383,6 +383,12 @@ case = "execute/pr84169.c"
 # function it calls rather than on what it does with it. It asks for `fabs (x) < 0.0` to fold to
 # false, which is the same shape as everything else here: the call it guards is to a function the
 # program deliberately never defines, so the link is the assertion.
+#
+# `execute/20030216-1.c` was in this block and is not any more. It reads a `const double`, converts
+# it to `int` and calls the missing function when the answer is not one, which wanted two folds
+# rucc did not have: a conversion from a floating point constant to an integer, and a load from an
+# object nothing can write to. Both are in now, tamnd/rucc#1357 and tamnd/rucc#1358, so the
+# comparison is a constant and the call is gone at all five levels.
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/361"
 why = "the program asks for an optimizer as soon as __OPTIMIZE__ is defined"
@@ -390,7 +396,6 @@ outcome = "did not build"
 opt = ["1", "2", "3", "s", "z"]
 cases = [
   "execute/20020720-1.c",
-  "execute/20030216-1.c",
   "execute/compare-3.c",
   "execute/ieee/compare-fp-3.c",
   "execute/ieee/fp-cmp-6.c",
