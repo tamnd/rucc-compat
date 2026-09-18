@@ -404,6 +404,16 @@ case = "execute/pr84169.c"
 # sign bit coming in, none of which has to know what the count is, tamnd/rucc#1441. Ten calls to
 # the missing function before either, six after the first and none after the second, at all five
 # levels.
+#
+# `execute/pure-1.c` was in this block and is not any more. It writes a local array, calls a
+# function, reads the array back and branches on what it read, eight times over, and the branch
+# guards a call to a function nobody defines. The address of the array is not a thing any of the
+# eight calls was given, so no call can have written it, and the optimizer had the answer and no
+# way to ask for it: the alias analysis wanted the module a function is in and a function pass is
+# handed the function alone, tamnd/rucc#1467. gcc gets four of the eight a second way as well, by
+# working out for itself that a static function it can see is `pure` or `const`, which is not
+# needed here and is not done. Eight calls to the missing functions before, none after, at all five
+# levels.
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/361"
 why = "the program asks for an optimizer as soon as __OPTIMIZE__ is defined"
@@ -413,7 +423,6 @@ cases = [
   "execute/ieee/fp-cmp-6.c",
   "execute/ieee/fp-cmp-7.c",
   "execute/ieee/fp-cmp-9.c",
-  "execute/pure-1.c",
 ]
 
 [[exec-exclude]]
