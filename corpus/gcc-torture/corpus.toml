@@ -396,6 +396,14 @@ case = "execute/pr84169.c"
 # with it is ask for `fabs (x) < 0.0` to fold to false. The optimizer narrows a comparison by the
 # buckets the pair can be in now, and a magnitude is never below a constant that is not positive,
 # tamnd/rucc#1425, so the call is gone at all five levels.
+#
+# `execute/shiftopt-1.c` was in this block and is not any more. It asks for two folds. The first is
+# a shift by a count of zero, which the optimizer already had, but what that leaves behind is a
+# comparison of a value with itself and the optimizer did not decide those, tamnd/rucc#1440. The
+# second is a shift of a constant zero in either direction, and of all ones to the right with the
+# sign bit coming in, none of which has to know what the count is, tamnd/rucc#1441. Ten calls to
+# the missing function before either, six after the first and none after the second, at all five
+# levels.
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/361"
 why = "the program asks for an optimizer as soon as __OPTIMIZE__ is defined"
@@ -406,7 +414,6 @@ cases = [
   "execute/ieee/fp-cmp-7.c",
   "execute/ieee/fp-cmp-9.c",
   "execute/pure-1.c",
-  "execute/shiftopt-1.c",
 ]
 
 [[exec-exclude]]
