@@ -389,6 +389,12 @@ case = "execute/pr84169.c"
 # rucc did not have: a conversion from a floating point constant to an integer, and a load from an
 # object nothing can write to. Both are in now, tamnd/rucc#1357 and tamnd/rucc#1358, so the
 # comparison is a constant and the call is gone at all five levels.
+#
+# `execute/compare-3.c` and `execute/ieee/compare-fp-3.c` were in this block and are not any more.
+# Both write two comparisons of the same two values either side of an `&&` or an `||` and ask for
+# the pair to come out as one comparison or as a constant, which the optimizer now does by reading
+# a predicate as the set of answers it accepts and intersecting or uniting the two sets,
+# tamnd/rucc#1416. The calls they guard are gone at all five levels.
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/361"
 why = "the program asks for an optimizer as soon as __OPTIMIZE__ is defined"
@@ -396,8 +402,6 @@ outcome = "did not build"
 opt = ["1", "2", "3", "s", "z"]
 cases = [
   "execute/20020720-1.c",
-  "execute/compare-3.c",
-  "execute/ieee/compare-fp-3.c",
   "execute/ieee/fp-cmp-6.c",
   "execute/ieee/fp-cmp-7.c",
   "execute/ieee/fp-cmp-9.c",
