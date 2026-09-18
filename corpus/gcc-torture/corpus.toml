@@ -199,48 +199,15 @@ cases = [
 # excluded under tamnd/rucc#225 any more, and what is left of that issue is folding a checking call
 # into the plain library function where the size argument says nothing is known, which is an
 # optimization on top of a call that is already correct and which no file here notices.
-
-[[exclude]]
-cases = [
-  "execute/built-in-setjmp.c",
-  "execute/builtins/lib/chk.c",
-  "execute/builtins/memcpy-chk.c",
-  "execute/builtins/memcpy-chk-lib.c",
-  "execute/builtins/memmove-chk.c",
-  "execute/builtins/memmove-chk-lib.c",
-  "execute/builtins/mempcpy-chk.c",
-  "execute/builtins/mempcpy-chk-lib.c",
-  "execute/builtins/memset-chk.c",
-  "execute/builtins/memset-chk-lib.c",
-  "execute/builtins/pr23484-chk-lib.c",
-  "execute/builtins/pr93262-chk.c",
-  "execute/builtins/pr93262-chk-lib.c",
-  "execute/builtins/snprintf-chk.c",
-  "execute/builtins/snprintf-chk-lib.c",
-  "execute/builtins/sprintf-chk.c",
-  "execute/builtins/sprintf-chk-lib.c",
-  "execute/builtins/stpcpy-chk.c",
-  "execute/builtins/stpcpy-chk-lib.c",
-  "execute/builtins/stpncpy-chk.c",
-  "execute/builtins/stpncpy-chk-lib.c",
-  "execute/builtins/strcat-chk.c",
-  "execute/builtins/strcat-chk-lib.c",
-  "execute/builtins/strcpy-chk.c",
-  "execute/builtins/strcpy-chk-lib.c",
-  "execute/builtins/strncat-chk.c",
-  "execute/builtins/strncat-chk-lib.c",
-  "execute/builtins/strncpy-chk.c",
-  "execute/builtins/strncpy-chk-lib.c",
-  "execute/builtins/vsnprintf-chk.c",
-  "execute/builtins/vsnprintf-chk-lib.c",
-  "execute/builtins/vsprintf-chk.c",
-  "execute/builtins/vsprintf-chk-lib.c",
-  "execute/pr60003.c",
-  "execute/pr64242.c",
-  "execute/pr84521.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/223"
-why = "__builtin_setjmp and __builtin_longjmp are not declared, E0500"
+#
+# The whole of the tamnd/rucc#223 block comes off the check list in the first half of that issue,
+# which builds `__builtin_setjmp` and `__builtin_longjmp` down to the IR. That is thirty six cases,
+# the fifteen `_chk` ones that moved here a moment ago among them, and it is the largest block ever
+# to come off this list at once. The four that were on the execution list stay on it under the same
+# issue and for a different reason: the pair is two instructions in the IR now and no back end rule
+# writes either of them, so what was `E0500` on a name nothing declared is `E0653` on an instruction
+# nothing lowers. The other thirty two are in `execute/builtins` and are not on the execution list
+# at all, for the reason every file in that directory is not, which is tamnd/rucc-compat#110.
 
 [[exclude]]
 cases = [
@@ -476,7 +443,7 @@ cases = [
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/223"
-why = "__builtin_setjmp and __builtin_longjmp are not declared, E0500"
+why = "no rule lowers a setjmp_marker or a longjmp_marker, E0653"
 outcome = "did not build"
 cases = [
   "execute/built-in-setjmp.c",
