@@ -442,17 +442,6 @@ cases = [
 ]
 
 [[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/223"
-why = "no rule lowers a setjmp_marker or a longjmp_marker, E0653"
-outcome = "did not build"
-cases = [
-  "execute/built-in-setjmp.c",
-  "execute/pr60003.c",
-  "execute/pr64242.c",
-  "execute/pr84521.c",
-]
-
-[[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/340"
 why = "va_arg of an __int128 is refused, E0653"
 outcome = "did not build"
