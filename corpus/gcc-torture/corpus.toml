@@ -379,11 +379,6 @@ case = "execute/pr84169.c"
 # now does, so the call it guards is gone and the definition the program deliberately leaves out no
 # longer has to exist.
 #
-# `execute/20020720-1.c` arrived here from the libm block, where it was filed on the name of the
-# function it calls rather than on what it does with it. It asks for `fabs (x) < 0.0` to fold to
-# false, which is the same shape as everything else here: the call it guards is to a function the
-# program deliberately never defines, so the link is the assertion.
-#
 # `execute/20030216-1.c` was in this block and is not any more. It reads a `const double`, converts
 # it to `int` and calls the missing function when the answer is not one, which wanted two folds
 # rucc did not have: a conversion from a floating point constant to an integer, and a load from an
@@ -395,13 +390,18 @@ case = "execute/pr84169.c"
 # the pair to come out as one comparison or as a constant, which the optimizer now does by reading
 # a predicate as the set of answers it accepts and intersecting or uniting the two sets,
 # tamnd/rucc#1416. The calls they guard are gone at all five levels.
+#
+# `execute/20020720-1.c` was in this block and is not any more. It arrived from the libm block,
+# filed on the name of the function it calls rather than on what it does with it, and what it does
+# with it is ask for `fabs (x) < 0.0` to fold to false. The optimizer narrows a comparison by the
+# buckets the pair can be in now, and a magnitude is never below a constant that is not positive,
+# tamnd/rucc#1425, so the call is gone at all five levels.
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/361"
 why = "the program asks for an optimizer as soon as __OPTIMIZE__ is defined"
 outcome = "did not build"
 opt = ["1", "2", "3", "s", "z"]
 cases = [
-  "execute/20020720-1.c",
   "execute/ieee/fp-cmp-6.c",
   "execute/ieee/fp-cmp-7.c",
   "execute/ieee/fp-cmp-9.c",
