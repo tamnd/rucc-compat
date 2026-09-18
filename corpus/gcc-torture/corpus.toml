@@ -473,18 +473,6 @@ cases = [
 ]
 
 [[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/335"
-why = "a structure passed by value too large to unroll needs a call to the runtime, E0653"
-outcome = "did not build"
-cases = [
-  "execute/20000412-3.c",
-  "execute/pr20621-1.c",
-  "execute/pr23135.c",
-  "execute/pr28982b.c",
-  "execute/va-arg-22.c",
-]
-
-[[exec-exclude]]
 issue = "https://github.com/tamnd/rucc-compat/issues/39"
 why = "the link step passes no libraries, so a call to libm has nowhere to resolve"
 outcome = "did not build"
@@ -532,9 +520,9 @@ case = "execute/stdarg-4.c"
 # driver refuses it, and it refuses it before anything is read, which is why the check list above
 # names the same three.
 #
-# `execute/pr23135.c` has moved to the tamnd/rucc#335 block, where the old comment here said it
-# would go: the option is taken now and what stops the program is a structure passed by value
-# too large to unroll, which was always underneath.
+# `execute/pr23135.c` was the fourth of them and is gone too. It moved to the tamnd/rucc#335 block
+# once the option was taken, because what stopped it underneath was a structure passed by value
+# too large to unroll, and that block is gone now that such a structure is copied by the runtime.
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/1051"
 why = "-ffast-math defines a macro a header reads and changes the mode the whole process runs in"
