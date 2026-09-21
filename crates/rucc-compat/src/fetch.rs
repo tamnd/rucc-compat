@@ -164,6 +164,7 @@ mod tests {
                 flags: Vec::new(),
                 link: Vec::new(),
             }],
+            alongside: Vec::new(),
             excluded: Vec::new(),
             settled: Vec::new(),
             oracle: None,

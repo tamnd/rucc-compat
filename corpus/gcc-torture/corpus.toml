@@ -64,6 +64,25 @@ skip = [
   "pr117432.c",
 ]
 
+# The `builtins` directory is a suite inside this one, and it is not built the way the rest of it
+# is. Every case there defines `main_test` rather than `main`, `main` lives once in `lib/main.c`
+# and sets the `inside_main` flag the helpers read, and each case has a file of its own beside it
+# holding the library functions that case is about, which abort when they are called from a place
+# the optimizer should have folded them away at. A case compiled on its own gets an undefined
+# reference to `main`, which is a fact about how it was built rather than about either compiler.
+#
+# The rule names the directory rather than the fifty nine cases, which is how `builtins.exp` in
+# the suite itself decides it, so a case added upstream is covered the day it arrives.
+[[alongside]]
+unit = "execute"
+dir = "builtins"
+link = ["builtins/lib/main.c"]
+companion = "-lib.c"
+# The bodies the helpers include rather than programs. `abs-2-lib.c` is three lines and an
+# `#include "lib/abs.c"`, so these twenty eight files go through both compilers as part of the
+# cases that include them and none of them is a case.
+helpers = ["builtins/lib"]
+
 # A function defined inside another one, which is GNU's nested functions. A call to one goes
 # through a trampoline written on the stack, and this compiler will not have them. gcc takes these
 # thirty files and rucc reports an error on each, so nothing about the reference is visible here
@@ -221,12 +240,11 @@ cases = [
 issue = "https://github.com/tamnd/rucc/issues/227"
 why = "a builtin that belongs to no family is not declared, E0500"
 
-[[exclude]]
-cases = [
-  "execute/va-arg-pack-1.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/157"
-why = "__builtin_va_arg_pack is not declared, E0500"
+# `execute/va-arg-pack-1.c` was in a block of its own here under tamnd/rucc#157 and is not any
+# more. The reason on it had stopped being the reason: `__builtin_va_arg_pack` gets through the
+# front end now, so `check` takes the file all the way through the tast, the IR and the round trip
+# and the entry was reporting a diagnostic nobody sees. What is left of the issue is on the
+# execution side, where the program still does not link.
 
 # These five have an execution entry already and had no build entry, so `check` was failing on
 # them while `exec` was not. The attribute is refused in the walk, which is before either command
@@ -455,6 +473,34 @@ cases = [
   "execute/pr94591.c",
 ]
 
+# These three are the `FILE` group of the same issue, kept apart from the block above because the
+# diagnostic is the other one: the program writes `__builtin_fprintf` itself rather than calling a
+# library function the compiler is expected to know, so it reads as a call to a function nobody
+# declared rather than as a builtin with no rule.
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/227"
+why = "a builtin that reads or writes a FILE is not declared, E0521"
+outcome = "did not build"
+cases = [
+  "execute/builtins/fprintf.c",
+  "execute/builtins/fputs.c",
+  "execute/builtins/printf.c",
+]
+
+# Both of these declare `memcpy` and friends with an `__asm` label and then check that the calls
+# went to the renamed symbol, and both abort because the one call written in the `__builtin_` form
+# goes to the library function under its own name. They are a wrong answer rather than a refusal,
+# which is what the `crashed` outcome means here: the suite's oracle is a self check that calls
+# `abort`, so a call that went to the wrong place arrives as a signal.
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/1615"
+why = "a builtin that falls back to a library call ignores the asm name the program gave it"
+outcome = "crashed"
+cases = [
+  "execute/builtins/memops-asm.c",
+  "execute/builtins/strstr-asm.c",
+]
+
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/349"
 why = "a template with instructions in it needs an assembler and an asm goto needs an edge, E0653"
@@ -516,9 +562,14 @@ why = "the link step passes no libraries, so a call to libm has nowhere to resol
 outcome = "did not build"
 case = "execute/ieee/mzero4.c"
 
+# The reason here is not the one that was on it either. `bar` is `extern inline` with
+# `always_inline` and `gnu_inline` on it, which means the unit has no out of line copy of it and
+# every call has to be inlined, and `__builtin_va_arg_pack` is the thing that makes that possible
+# by forwarding the variadic arguments of the caller. rucc reads all of it and inlines none of it,
+# so the object calls a function nothing defines.
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/157"
-why = "__builtin_va_arg_pack is not declared, E0500"
+why = "a call to an always_inline gnu_inline function is emitted rather than inlined, so it does not link"
 outcome = "did not build"
 case = "execute/va-arg-pack-1.c"
 
