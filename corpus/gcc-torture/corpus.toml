@@ -251,12 +251,9 @@ issue = "https://github.com/tamnd/rucc/issues/202"
 why = "a bit-field after a member of no fixed size is refused, E0519"
 
 [[exclude]]
-cases = [
-  "execute/20020412-1.c",
-  "execute/20070919-1.c",
-]
+case = "execute/20020412-1.c"
 issue = "https://github.com/tamnd/rucc/issues/202"
-why = "a whole object of no fixed size passed, returned or copied is refused, E0519"
+why = "a whole object of no fixed size passed by value is refused, E0519"
 
 [[exclude]]
 case = "execute/pr70460.c"
@@ -444,12 +441,9 @@ cases = [
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/202"
-why = "a whole object of no fixed size passed, returned or copied is refused, E0519"
+why = "a whole object of no fixed size passed by value is refused, E0519"
 outcome = "did not build"
-cases = [
-  "execute/20020412-1.c",
-  "execute/20070919-1.c",
-]
+case = "execute/20020412-1.c"
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/227"
