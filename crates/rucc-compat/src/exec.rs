@@ -366,6 +366,12 @@ pub struct Report {
     /// report that leaves them out is one whose totals cannot be reconciled against the suite.
     /// Empty unless the whole corpus ran.
     pub never: Vec<String>,
+    /// The files an `[[alongside]]` rule says are part of another case, named as cases would be.
+    ///
+    /// Counted apart from `never` because they are not missing from the run. Every one of them
+    /// went through both compilers on the command line of the case it belongs to, and what would
+    /// be wrong is calling it a program of its own. Empty unless the whole corpus ran.
+    pub helpers: Vec<String>,
     /// The cases a `[[settled]]` entry took out, which the reference compiles and rucc will not.
     ///
     /// Counted apart from `never` because the two are opposite claims. A skipped file says the
@@ -468,13 +474,14 @@ impl Report {
         let counts: Vec<String> =
             self.split().into_iter().map(|(word, n)| format!("{n} {word}")).collect();
         format!(
-            "{}: {} runs, {}, {} stale, {} never offered, {} settled",
+            "{}: {} runs, {}, {} stale, {} never offered, {} settled, {} helpers",
             self.corpus,
             self.outcomes.len(),
             counts.join(", "),
             self.stale(),
             self.never.len(),
-            self.settled.len()
+            self.settled.len(),
+            self.helpers.len()
         )
     }
 }
@@ -499,7 +506,10 @@ pub fn run(
             ),
         });
     };
-    let found = differ::cases(repo, corpus, scratch)?;
+    // The helpers come out here and not in the walk, because `run` and `check` take them and
+    // only this command cannot: a helper has no `main_test` in it and reaches the compiler on
+    // the command line of the case it belongs to.
+    let found = differ::without_helpers(differ::cases(repo, corpus, scratch)?, corpus);
     let all = found.cases;
     let cases: Vec<Case> = match &settings.unit {
         Some(unit) => all.iter().filter(|c| c.unit == *unit).cloned().collect(),
@@ -636,12 +646,17 @@ pub fn run(
         true => found.settled,
         false => Vec::new(),
     };
+    let helpers = match settings.is_whole() {
+        true => found.helpers,
+        false => Vec::new(),
+    };
     Ok(Report {
         corpus: corpus.name.clone(),
         oracle,
         outcomes,
         unmatched,
         never,
+        helpers,
         settled,
         rucc: version(&settings.rucc),
         cc: version(&settings.cc),
@@ -736,6 +751,14 @@ fn inputs(case: &Case, corpus: &Corpus) -> Vec<PathBuf> {
     let mut inputs = vec![case.file.clone()];
     if let Some(unit) = corpus.units.iter().find(|u| u.name == case.unit) {
         inputs.extend(unit.link.iter().map(|name| case.dir.join(name)));
+    }
+    // Then whatever the directory this case is in asks for, which is the files every case there
+    // links against and the one helper that belongs to this case alone. The helper is looked for
+    // rather than required, so a directory where most cases have one and a few do not is a rule
+    // somebody can still write.
+    if let Some(rule) = corpus.alongside(&case.unit, &case.name) {
+        inputs.extend(rule.link.iter().map(|name| case.dir.join(name)));
+        inputs.extend(rule.companion_of(&case.file));
     }
     inputs
 }
@@ -1056,9 +1079,14 @@ pub fn markdown(report: &Report, settings: &Settings) -> String {
     let _ = writeln!(
         out,
         "| in the corpus | {} |",
-        rows.len() + report.never.len() + report.settled.len()
+        rows.len() + report.never.len() + report.settled.len() + report.helpers.len()
     );
     let _ = writeln!(out, "| never offered, a `skip` in the manifest | {} |", report.never.len());
+    let _ = writeln!(
+        out,
+        "| part of another case, an `alongside` rule in the manifest | {} |",
+        report.helpers.len()
+    );
     let _ = writeln!(
         out,
         "| settled, rucc has decided not to compile them | {} |",
@@ -1249,6 +1277,7 @@ mod tests {
             unmatched: Vec::new(),
             never: Vec::new(),
             settled: Vec::new(),
+            helpers: Vec::new(),
             rucc: "rucc 0.3.7".to_owned(),
             cc: "gcc (GCC) 16.2.0".to_owned(),
             machine: "linux x86_64".to_owned(),
@@ -1512,6 +1541,24 @@ mod tests {
         assert!(text.contains("`spec/06-lexer-and-parser.md section 6.9`"), "{text}");
         assert!(text.contains("a nested function needs a trampoline"), "{text}");
         assert!(done.summary().contains("1 settled"), "{}", done.summary());
+    }
+
+    /// A third subtraction, for a third reason, and the census has to keep adding up across all
+    /// of them. A file an `[[alongside]]` rule calls a helper is in the suite and is not a
+    /// program, so leaving it out of the total makes the suite look smaller than it is and
+    /// counting it as a case makes it look bigger.
+    #[test]
+    fn the_report_counts_the_files_that_are_part_of_another_case() {
+        let mut done = report(vec![outcome(Status::Passed, None)]);
+        done.helpers = vec!["execute/builtins/memcpy-lib.c".to_owned()];
+        let text = markdown(&done, &Settings::default());
+        assert!(text.contains("| in the corpus | 2 |"), "{text}");
+        assert!(
+            text.contains("| part of another case, an `alongside` rule in the manifest | 1 |"),
+            "{text}"
+        );
+        assert!(text.contains("| offered | 1 |"), "{text}");
+        assert!(done.summary().contains("1 helpers"), "{}", done.summary());
     }
 
     #[test]

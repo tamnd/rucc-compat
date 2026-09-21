@@ -640,6 +640,14 @@ pub struct Found {
     /// settled case is one the reference compiles and rucc has decided not to, which is an
     /// opinion, and adding the two together would bury it.
     pub settled: Vec<Settled>,
+    /// Every file an `[[alongside]]` rule says is part of another case, named the way a case
+    /// would have been.
+    ///
+    /// A third list for the same reason there is a second one. These files are in the suite and
+    /// are not programs, so counting them as cases makes a suite look bigger than it is and
+    /// dropping them without a word makes the census stop adding up. Empty until
+    /// [`without_helpers`] has been over the list, which is `exec` and nothing else.
+    pub helpers: Vec<String>,
 }
 
 /// Works out everything a corpus asks to be preprocessed.
@@ -674,6 +682,37 @@ pub fn cases(repo: &Path, corpus: &Corpus, scratch: &Path) -> Result<Found, Erro
     found.cases.sort_by(|a, b| a.name.cmp(&b.name));
     found.never.sort();
     take_settled(found, &corpus.name, &corpus.settled)
+}
+
+/// Moves the files an `[[alongside]]` rule calls a helper out of the run and into their own list.
+///
+/// Called by `exec` and by nothing else, which is the whole of the rule. A helper is not a
+/// program: it has no `main_test` in it and it goes on the command line of the case it belongs
+/// to, so offering it to `exec` on its own measures the link rather than the compiler. It is
+/// still a file, and `run` and `check` are about files, so both of them keep it. Dropping eighty
+/// seven files from the preprocessor differential to make one census tidier would be the trade
+/// this repository exists to refuse.
+///
+/// After the walk rather than during it, for the reason [`take_settled`] is: a rule is written
+/// about the names the report uses and the walk is about files on a disk.
+#[must_use]
+pub fn without_helpers(mut found: Found, corpus: &Corpus) -> Found {
+    let mut taken = Vec::new();
+    found.cases.retain(|case| match corpus.alongside(&case.unit, &case.name) {
+        Some(rule) => {
+            let name = case.name.strip_prefix(&format!("{}/", case.unit)).unwrap_or(&case.name);
+            match rule.is_helper(name) {
+                true => {
+                    taken.push(case.name.clone());
+                    false
+                }
+                false => true,
+            }
+        }
+        None => true,
+    });
+    found.helpers = taken;
+    found
 }
 
 /// Moves the cases a `[[settled]]` entry names out of the run and into their own list.
@@ -984,6 +1023,86 @@ pub fn markdown(report: &Report, settings: &Settings, register: &Register) -> St
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::corpus::{Alongside, TIMEOUT};
+
+    /// A corpus with one unit and one `[[alongside]]` rule over a directory in it.
+    fn with_rule(rule: Alongside) -> Corpus {
+        Corpus {
+            name: "t".to_owned(),
+            summary: "s".to_owned(),
+            source: crate::corpus::Source::Installed,
+            probe: Vec::new(),
+            units: vec![Unit {
+                name: "execute".to_owned(),
+                kind: UnitKind::Source,
+                files: Vec::new(),
+                dir: None,
+                skip: Vec::new(),
+                flags: Vec::new(),
+                link: Vec::new(),
+            }],
+            alongside: vec![rule],
+            excluded: Vec::new(),
+            settled: Vec::new(),
+            oracle: None,
+            timeout: TIMEOUT,
+            exec_excluded: Vec::new(),
+        }
+    }
+
+    fn case(name: &str) -> Case {
+        Case {
+            unit: "execute".to_owned(),
+            name: format!("execute/{name}"),
+            file: PathBuf::from(name),
+            dir: PathBuf::from("."),
+            flags: Vec::new(),
+        }
+    }
+
+    /// The census in the report has to add up, so a file taken out of the run has to be counted
+    /// somewhere rather than dropped.
+    #[test]
+    fn the_files_a_rule_calls_helpers_leave_the_execution_run_and_are_counted_on_their_own() {
+        let corpus = with_rule(Alongside {
+            unit: "execute".to_owned(),
+            dir: "builtins".to_owned(),
+            link: vec!["builtins/lib/main.c".to_owned()],
+            companion: Some("-lib.c".to_owned()),
+            helpers: vec!["builtins/lib".to_owned()],
+        });
+        let found = Found {
+            cases: vec![
+                case("20010124-1.c"),
+                case("builtins/memcpy.c"),
+                case("builtins/memcpy-lib.c"),
+                case("builtins/lib/main.c"),
+            ],
+            ..Found::default()
+        };
+
+        let left = without_helpers(found, &corpus);
+        let names: Vec<&str> = left.cases.iter().map(|case| case.name.as_str()).collect();
+        assert_eq!(names, ["execute/20010124-1.c", "execute/builtins/memcpy.c"]);
+        assert_eq!(left.helpers, ["execute/builtins/memcpy-lib.c", "execute/builtins/lib/main.c"]);
+    }
+
+    /// A corpus with no rule in it is every corpus but one, and it should pay nothing.
+    #[test]
+    fn a_corpus_with_no_rule_keeps_every_case_it_found() {
+        let mut corpus = with_rule(Alongside {
+            unit: "execute".to_owned(),
+            dir: "builtins".to_owned(),
+            link: vec!["builtins/lib/main.c".to_owned()],
+            companion: None,
+            helpers: Vec::new(),
+        });
+        corpus.alongside.clear();
+        let found = Found { cases: vec![case("builtins/memcpy-lib.c")], ..Found::default() };
+        let left = without_helpers(found, &corpus);
+        assert_eq!(left.cases.len(), 1);
+        assert!(left.helpers.is_empty());
+    }
 
     #[test]
     fn the_version_the_reference_claims_is_read_out_of_its_own_dump() {

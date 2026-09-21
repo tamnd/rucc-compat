@@ -255,6 +255,79 @@ pub struct Unit {
     pub link: Vec<String>,
 }
 
+/// What goes on the command line of every case in one directory of a unit.
+///
+/// [`Unit::link`] says the same thing about a whole unit, and a whole unit is the wrong size for
+/// this. `gcc.c-torture/execute` is nineteen hundred programs that each build on their own and one
+/// directory inside it that does not: every case under `builtins` defines `main_test` rather than
+/// `main`, keeps `main` in `lib/main.c`, and has a helper of its own beside it holding the library
+/// functions the case is about. A harness that compiles one file at a time gets an undefined
+/// reference to `main` for all of them, which is not a fact about either compiler.
+///
+/// So a rule names a directory instead. That is how the suite's own runner decides it as well,
+/// `builtins.exp` rather than a list of fifty nine entries, and a rule that is read from the shape
+/// of the suite does not go stale when the suite grows a case.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Alongside {
+    /// The unit whose cases this is about.
+    pub unit: String,
+    /// The directory inside it, named the way a case of that unit is named, so relative to the
+    /// directory the unit walks rather than to the tree.
+    pub dir: String,
+    /// Files compiled and linked with every case under the directory, relative to the tree.
+    ///
+    /// Relative to the tree because [`Unit::link`] is, and one manifest that measures two paths
+    /// from two different places is a manifest nobody can write from memory.
+    pub link: Vec<String>,
+    /// The ending that marks a file as one case's own helper.
+    ///
+    /// A file whose name is a case's with `.c` replaced by this is that case's, and goes on its
+    /// command line. It is not a case of its own, which is the other half of what this says: a
+    /// helper defines a library function and has no `main_test` in it, so offering it to a
+    /// compiler on its own measures nothing.
+    pub companion: Option<String>,
+    /// Files under the directory that are part of the cases rather than cases, named the way a
+    /// case is named.
+    ///
+    /// A directory names everything under it. `builtins/lib` is twenty eight files holding the
+    /// bodies the helpers include, and not one of them is a program.
+    pub helpers: Vec<String>,
+}
+
+impl Alongside {
+    /// Whether this rule is about a case with that name, which is the name without the unit on
+    /// the front of it.
+    #[must_use]
+    pub fn holds(&self, name: &str) -> bool {
+        under(name, &self.dir)
+    }
+
+    /// Whether that file is part of another case rather than a case of its own.
+    #[must_use]
+    pub fn is_helper(&self, name: &str) -> bool {
+        let by_ending = match &self.companion {
+            Some(ending) => name.ends_with(ending.as_str()),
+            None => false,
+        };
+        by_ending || self.helpers.iter().any(|helper| under(name, helper))
+    }
+
+    /// The helper belonging to one case, which is its name with `.c` replaced by the ending.
+    #[must_use]
+    pub fn companion_of(&self, file: &Path) -> Option<PathBuf> {
+        let ending = self.companion.as_ref()?;
+        let name = file.file_name()?.to_str()?;
+        let stem = name.strip_suffix(".c")?;
+        let beside = file.with_file_name(format!("{stem}{ending}"));
+        beside.is_file().then_some(beside)
+    }
+}
+
+/// Whether a name is that path or is inside it.
+fn under(name: &str, path: &str) -> bool {
+    name == path || name.starts_with(&format!("{path}/"))
+}
+
 /// One body of code and what to do with it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Corpus {
@@ -276,6 +349,8 @@ pub struct Corpus {
     pub probe: Vec<String>,
     /// What to preprocess.
     pub units: Vec<Unit>,
+    /// The directories inside a unit whose cases need more than their own file.
+    pub alongside: Vec<Alongside>,
     /// The cases the pipeline check is not expected to get through, in file order.
     pub excluded: Vec<Exclusion>,
     /// The cases rucc has decided not to compile at all, in file order.
@@ -319,6 +394,17 @@ impl Corpus {
         self.exec_excluded
             .iter()
             .find(|e| e.case == case && e.here() && e.at(opt) && e.along(route))
+    }
+
+    /// The rule about the directory this case is in, if it is in one.
+    ///
+    /// The case is named the way the report names it, which is the unit and then the path under
+    /// it, and the unit is taken off here so that a rule is written against the shape of the
+    /// suite rather than against the name of the unit twice.
+    #[must_use]
+    pub fn alongside(&self, unit: &str, case: &str) -> Option<&Alongside> {
+        let name = case.strip_prefix(&format!("{unit}/"))?;
+        self.alongside.iter().find(|rule| rule.unit == unit && rule.holds(name))
     }
 
     /// The directory the code is in, given the repository root.
@@ -431,6 +517,7 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
             });
         }
     };
+    let alongside = alongside(&doc, &whose, &units)?;
     let excluded = exclusions(&doc, "exclude", &whose, false)?;
     let exec_excluded = exclusions(&doc, "exec-exclude", &whose, true)?;
     let settled = settled(&doc, &whose)?;
@@ -447,12 +534,50 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
         source,
         probe: root.list("probe"),
         units,
+        alongside,
         excluded,
         settled,
         oracle,
         timeout,
         exec_excluded,
     })
+}
+
+/// Every `[[alongside]]` block of the manifest.
+///
+/// The unit has to be one the corpus has, because a rule naming a unit that is not there is a
+/// rule that does nothing and says nothing about the fact that it does nothing. That is the same
+/// check a `[[settled]]` entry gets against the case list, one level up, and it is here for the
+/// same reason: a manifest whose entries can be wrong without anybody hearing about it is a
+/// manifest that drifts away from the suite it describes.
+fn alongside(doc: &toml::Doc, whose: &str, units: &[Unit]) -> Result<Vec<Alongside>, Error> {
+    let mut out = Vec::new();
+    for fields in doc.named("alongside") {
+        let unit = fields.need("unit", whose)?.to_owned();
+        if !units.iter().any(|u| u.name == unit) {
+            return Err(Error {
+                message: format!("{whose}: `alongside` names unit `{unit}`, which is not here"),
+            });
+        }
+        let dir = fields.need("dir", whose)?.to_owned();
+        let entry = Alongside {
+            unit,
+            dir,
+            link: fields.list("link"),
+            companion: fields.str("companion").map(str::to_owned),
+            helpers: fields.list("helpers"),
+        };
+        if entry.link.is_empty() && entry.companion.is_none() && entry.helpers.is_empty() {
+            return Err(Error {
+                message: format!(
+                    "{whose}: the `alongside` rule for `{}` says nothing, so it needs `link`, `companion` or `helpers`",
+                    entry.dir
+                ),
+            });
+        }
+        out.push(entry);
+    }
+    Ok(out)
 }
 
 /// Every `[[settled]]` block of the manifest, as one entry per case named.
@@ -1061,6 +1186,76 @@ mod tests {
         fake.corpus("sys", &text);
         let e = load(&fake.root, "sys").unwrap_err();
         assert!(e.message.contains("`case` or `cases`"), "{}", e.message);
+    }
+
+    const ALONGSIDE: &str = "[[alongside]]\nunit = \"standard\"\ndir = \"builtins\"\nlink = [\"builtins/lib/main.c\"]\ncompanion = \"-lib.c\"\nhelpers = [\"builtins/lib\"]\n";
+
+    #[test]
+    fn an_alongside_rule_is_found_by_any_case_under_the_directory_it_names() {
+        let fake = Fake::new("alongside");
+        fake.corpus("sys", &format!("{INSTALLED}\n{ALONGSIDE}"));
+        let corpus = load(&fake.root, "sys").unwrap();
+        assert_eq!(corpus.alongside.len(), 1);
+        let rule = corpus.alongside("standard", "standard/builtins/memcpy.c").unwrap();
+        assert_eq!(rule.link, ["builtins/lib/main.c"]);
+        assert!(corpus.alongside("standard", "standard/builtins/lib/memcpy.c").is_some());
+        assert!(corpus.alongside("standard", "standard/20010124-1.c").is_none());
+        assert!(corpus.alongside("other", "other/builtins/memcpy.c").is_none());
+    }
+
+    /// The directory is a path rather than a prefix, which is the difference between `builtins`
+    /// and a sibling of it called `builtins-2`.
+    #[test]
+    fn an_alongside_rule_stops_at_the_end_of_the_directory_it_names() {
+        let fake = Fake::new("alongside-prefix");
+        fake.corpus("sys", &format!("{INSTALLED}\n{ALONGSIDE}"));
+        let corpus = load(&fake.root, "sys").unwrap();
+        assert!(corpus.alongside("standard", "standard/builtins-2/memcpy.c").is_none());
+        assert!(corpus.alongside("standard", "standard/builtins").is_some());
+    }
+
+    #[test]
+    fn a_helper_is_a_file_with_the_companion_ending_or_one_under_a_helper_directory() {
+        let fake = Fake::new("alongside-helpers");
+        fake.corpus("sys", &format!("{INSTALLED}\n{ALONGSIDE}"));
+        let corpus = load(&fake.root, "sys").unwrap();
+        let rule = &corpus.alongside[0];
+        assert!(rule.is_helper("builtins/memcpy-lib.c"));
+        assert!(rule.is_helper("builtins/lib/memcpy.c"));
+        assert!(rule.is_helper("builtins/lib/main.c"));
+        assert!(!rule.is_helper("builtins/memcpy.c"));
+    }
+
+    /// The helper is looked for rather than required, because a directory where most cases have
+    /// one and a few do not is a rule somebody can still write.
+    #[test]
+    fn the_companion_of_a_case_is_the_file_beside_it_and_nothing_when_there_is_none() {
+        let fake = Fake::new("alongside-companion");
+        fake.corpus("sys", &format!("{INSTALLED}\n{ALONGSIDE}"));
+        let corpus = load(&fake.root, "sys").unwrap();
+        let rule = &corpus.alongside[0];
+        let dir = fake.root.join("corpus").join("sys");
+        fs::write(dir.join("memcpy-lib.c"), "int lib;\n").unwrap();
+        assert_eq!(rule.companion_of(&dir.join("memcpy.c")), Some(dir.join("memcpy-lib.c")));
+        assert_eq!(rule.companion_of(&dir.join("memset.c")), None);
+    }
+
+    #[test]
+    fn an_alongside_rule_naming_a_unit_the_corpus_does_not_have_is_refused() {
+        let fake = Fake::new("alongside-unit");
+        let text = format!("{INSTALLED}\n{}", ALONGSIDE.replace("standard", "extras"));
+        fake.corpus("sys", &text);
+        let e = load(&fake.root, "sys").unwrap_err();
+        assert!(e.message.contains("`extras`"), "{}", e.message);
+    }
+
+    #[test]
+    fn an_alongside_rule_that_asks_for_nothing_is_refused() {
+        let fake = Fake::new("alongside-empty");
+        let text = format!("{INSTALLED}\n[[alongside]]\nunit = \"standard\"\ndir = \"builtins\"\n");
+        fake.corpus("sys", &text);
+        let e = load(&fake.root, "sys").unwrap_err();
+        assert!(e.message.contains("says nothing"), "{}", e.message);
     }
 
     #[test]
