@@ -487,17 +487,18 @@ cases = [
   "execute/builtins/printf.c",
 ]
 
-# Both of these declare `memcpy` and friends with an `__asm` label and then check that the calls
-# went to the renamed symbol, and both abort because the one call written in the `__builtin_` form
-# goes to the library function under its own name. They are a wrong answer rather than a refusal,
-# which is what the `crashed` outcome means here: the suite's oracle is a self check that calls
-# `abort`, so a call that went to the wrong place arrives as a signal.
+# This declares `strstr` with an `__asm` label, defines the renamed function to abort when anything
+# reaches it under optimization, and then writes nine calls gcc folds away. Every one of them is a
+# call here, so the first one arrives at the abort. A wrong answer rather than a refusal, which is
+# what the `crashed` outcome means: the suite's oracle is a self check that calls `abort`, so a
+# program that was supposed to fold arrives as a signal. It passes at `-O0`, where the definition is
+# guarded on `__OPTIMIZE__` and gcc folds nothing either.
 [[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/1615"
-why = "a builtin that falls back to a library call ignores the asm name the program gave it"
+issue = "https://github.com/tamnd/rucc/issues/1625"
+why = "a call to strstr whose arguments are known at compile time is not folded"
 outcome = "crashed"
+opt = ["1", "2", "3", "s", "z"]
 cases = [
-  "execute/builtins/memops-asm.c",
   "execute/builtins/strstr-asm.c",
 ]
 
