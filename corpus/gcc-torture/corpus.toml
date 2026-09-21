@@ -244,17 +244,19 @@ why = "scalar_storage_order is refused where it is written rather than ignored, 
 
 [[exclude]]
 cases = [
-  "execute/20020412-1.c",
   "execute/20040308-1.c",
-  "execute/20040423-1.c",
-  "execute/20041218-2.c",
-  "execute/20070919-1.c",
   "execute/align-nest.c",
-  "execute/pr41935.c",
-  "execute/pr82210.c",
 ]
 issue = "https://github.com/tamnd/rucc/issues/202"
-why = "a variable length array as a member of a local structure is refused, E0549"
+why = "a bit-field after a member of no fixed size is refused, E0519"
+
+[[exclude]]
+cases = [
+  "execute/20020412-1.c",
+  "execute/20070919-1.c",
+]
+issue = "https://github.com/tamnd/rucc/issues/202"
+why = "a whole object of no fixed size passed, returned or copied is refused, E0519"
 
 [[exclude]]
 case = "execute/pr70460.c"
@@ -433,17 +435,20 @@ case = "execute/pr70460.c"
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/202"
-why = "a variable length array as a member of a local structure is refused, E0549"
+why = "a bit-field after a member of no fixed size is refused, E0519"
+outcome = "did not build"
+cases = [
+  "execute/20040308-1.c",
+  "execute/align-nest.c",
+]
+
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/202"
+why = "a whole object of no fixed size passed, returned or copied is refused, E0519"
 outcome = "did not build"
 cases = [
   "execute/20020412-1.c",
-  "execute/20040308-1.c",
-  "execute/20040423-1.c",
-  "execute/20041218-2.c",
   "execute/20070919-1.c",
-  "execute/align-nest.c",
-  "execute/pr41935.c",
-  "execute/pr82210.c",
 ]
 
 [[exec-exclude]]
