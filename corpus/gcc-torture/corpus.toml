@@ -311,8 +311,8 @@ why = "-finstrument-functions asks for entry and exit hooks that the program the
 #
 # It is shorter than that issue expected. The guess there was nineteen hundred programs of red.
 # The unit is 1783 programs, which is the 1907 in the tarball less the 7 skipped, the 30 settled
-# above and the 87 that exist to be included by another file, and at `-O0` 1746 of them pass, 28
-# are named below and 9 are refused by gcc 16 as well. At `-O3` it is 1686, 43 and 18, and the
+# above and the 87 that exist to be included by another file, and at `-O0` 1750 of them pass, 24
+# are named below and 9 are refused by gcc 16 as well. At `-O3` it is 1690, 39 and 18, and the
 # other 36 are what the levels above `-O0` still get wrong. The reason for the gap between the
 # guess and the count is that the issue was written when a call to an unknown builtin stopped five
 # hundred files at once, and it said to wait until the lowering rule set stopped moving so fast.
@@ -326,9 +326,9 @@ why = "-finstrument-functions asks for entry and exit hooks that the program the
 # `dg-additional-options` line is now compiled with them and nearly all of what gcc was refusing
 # it was refusing for want of the dialect the program asked for.
 #
-# 44 cases are named here across the six levels, and 24 blocks name them, because the reasons
+# 40 cases are named here across the six levels, and 23 blocks name them, because the reasons
 # are far fewer than the programs. The blocks are roughly sorted by size and none of them is large
-# any more: the biggest names five cases and half of them name one. Inline assembly used to be
+# any more: the biggest names five cases and two thirds of them name one. Inline assembly used to be
 # first by a long way, at seventy three cases, and it is three now that a template with no
 # instructions in it lowers, so what is left of it is a template with instructions in it and an
 # `asm goto`. Complex arithmetic was twenty one and is gone. The option block was eighteen and is
@@ -610,20 +610,3 @@ why = "__builtin_constant_p is answered before inlining, so a constant that only
 outcome = "crashed"
 opt = ["1", "2", "3", "s", "z"]
 case = "execute/bcp-1.c"
-
-# A call to `alloca`, which gcc expands as a builtin whether or not anything declared it and
-# which rucc writes down as a call to a name no library defines, so the program stops at the
-# linker rather than at the call. What it needs is the frame in the issue below: `alloca` and a
-# variable length array are the same request written two ways, and neither has anywhere to put
-# the bytes until a function can move its own stack pointer and still reach its fixed slots.
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/291"
-why = "a call to alloca needs the frame that a variable length array needs"
-outcome = "did not build"
-cases = [
-  "execute/20020314-1.c",
-  "execute/20040223-1.c",
-  "execute/941202-1.c",
-  "execute/pr22061-1.c",
-]
-
