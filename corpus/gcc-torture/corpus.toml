@@ -230,8 +230,10 @@ cases = [
 
 # `execute/builtins/fprintf.c`, `fputs.c` and `printf.c` were in the block below and are not any
 # more. They wrote the stdio builtins that take a stream, which the compiler's table had no way to
-# name, and the table can say it now. They stay on the execution list under a different issue,
-# because what they check beyond the declaration is a fold that has not been written.
+# name, and the table can say it now. They came off the execution list as well, in tamnd/rucc#1636,
+# which is the fold each of them checks for beyond the declaration: a call in the printf family
+# that writes a string nothing has to be formatted into becomes the smaller call that writes it.
+# All three run correctly at all six levels.
 [[exclude]]
 cases = [
   "execute/pr47237.c",
@@ -312,7 +314,7 @@ why = "-finstrument-functions asks for entry and exit hooks that the program the
 # It is shorter than that issue expected. The guess there was nineteen hundred programs of red.
 # The unit is 1783 programs, which is the 1907 in the tarball less the 7 skipped, the 30 settled
 # above and the 87 that exist to be included by another file, and at `-O0` 1750 of them pass, 24
-# are named below and 9 are refused by gcc 16 as well. At `-O3` it is 1690, 39 and 18, and the
+# are named below and 9 are refused by gcc 16 as well. At `-O3` it is 1698, 36 and 13, and the
 # other 36 are what the levels above `-O0` still get wrong. The reason for the gap between the
 # guess and the count is that the issue was written when a call to an unknown builtin stopped five
 # hundred files at once, and it said to wait until the lowering rule set stopped moving so fast.
@@ -321,12 +323,12 @@ why = "-finstrument-functions asks for entry and exit hooks that the program the
 # The programs gcc refuses are not on this list and are not in the skip list either. They are
 # decided by running the reference, so they cannot go stale and nobody has to notice when gcc
 # changes its mind. The count moves with the level, because what gcc will accept is partly a
-# question about the level: 9 at `-O0` and 18 at `-O3`. There are far fewer of them than there
+# question about the level: 9 at `-O0` and 13 at `-O3`. There are far fewer of them than there
 # used to be, because a program that names its own options in a `dg-options` or
 # `dg-additional-options` line is now compiled with them and nearly all of what gcc was refusing
 # it was refusing for want of the dialect the program asked for.
 #
-# 40 cases are named here across the six levels, and 23 blocks name them, because the reasons
+# 37 cases are named here across the six levels, and 22 blocks name them, because the reasons
 # are far fewer than the programs. The blocks are roughly sorted by size and none of them is large
 # any more: the biggest names five cases and two thirds of them name one. Inline assembly used to be
 # first by a long way, at seventy three cases, and it is three now that a template with no
@@ -460,24 +462,6 @@ cases = [
   "execute/pr47237.c",
   "execute/pr85331.c",
   "execute/pr94591.c",
-]
-
-# These three were the `FILE` group of tamnd/rucc#227 and built nothing at all, because the
-# signatures in the compiler's table had no way to name a stream. They build now and the reason
-# they are still here is the other half of what they test: each defines the library function to
-# abort when `__OPTIMIZE__` is set and then writes the calls gcc folds into a simpler function, so
-# a compiler that folds none of them arrives at the abort. A wrong answer rather than a refusal,
-# which is what `crashed` means here, since the suite's oracle is the abort itself. They pass at
-# `-O0`, where the definition is not guarded and gcc folds nothing either.
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/1636"
-why = "printf and fprintf with a format the compiler can read are not folded"
-outcome = "crashed"
-opt = ["1", "2", "3", "s", "z"]
-cases = [
-  "execute/builtins/fprintf.c",
-  "execute/builtins/fputs.c",
-  "execute/builtins/printf.c",
 ]
 
 # This declares `strstr` with an `__asm` label, defines the renamed function to abort when anything
