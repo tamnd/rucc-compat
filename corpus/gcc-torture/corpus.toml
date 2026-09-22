@@ -130,7 +130,7 @@ cases = [
   "execute/pr71494.c",
 ]
 
-# What is left is 91 cases out of 1870, so 1779 of them pass, and none of the 91 is stale. Every
+# What is left is 11 cases out of 1870, so 1859 of them pass, and none of the 11 is stale. Every
 # entry names the issue that will take it off the list, and the list is meant to shrink: `check`
 # and `exec` both fail on an entry that no longer excludes anything, so a gap the compiler closes
 # is a red run here until somebody deletes the line.
@@ -247,20 +247,6 @@ why = "a builtin that belongs to no family is not declared, E0500"
 # and the entry was reporting a diagnostic nobody sees. What is left of the issue is on the
 # execution side, where the program still does not link.
 
-# These five have an execution entry already and had no build entry, so `check` was failing on
-# them while `exec` was not. The attribute is refused in the walk, which is before either command
-# reaches the back end, so both lists want it and this is the missing half.
-[[exclude]]
-cases = [
-  "execute/20230630-2.c",
-  "execute/20230630-4.c",
-  "execute/pr86659-1.c",
-  "execute/pr86659-2.c",
-  "execute/pr87623.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/415"
-why = "scalar_storage_order is refused where it is written rather than ignored, E0688"
-
 [[exclude]]
 cases = [
   "execute/20040308-1.c",
@@ -324,28 +310,30 @@ why = "-finstrument-functions asks for entry and exit hooks that the program the
 # was right, so this list is about what the compiler produced rather than about what it accepted.
 #
 # It is shorter than that issue expected. The guess there was nineteen hundred programs of red.
-# The unit is 1870 programs, which is the 1907 in the tarball less the 7 skipped and the 30
-# settled above, and at `-O0` 1613 of them pass, 104 are named below and 153 are refused by gcc 16
-# as well. At `-O3` it is 1600, 120 and 150. The reason for the gap between the guess and the
-# count is that the issue was written when a call to an unknown builtin stopped five hundred files
-# at once, and it said to wait until the lowering rule set stopped moving so fast. It has.
+# The unit is 1783 programs, which is the 1907 in the tarball less the 7 skipped, the 30 settled
+# above and the 87 that exist to be included by another file, and at `-O0` 1746 of them pass, 28
+# are named below and 9 are refused by gcc 16 as well. At `-O3` it is 1686, 43 and 18, and the
+# other 36 are what the levels above `-O0` still get wrong. The reason for the gap between the
+# guess and the count is that the issue was written when a call to an unknown builtin stopped five
+# hundred files at once, and it said to wait until the lowering rule set stopped moving so fast.
+# It has.
 #
 # The programs gcc refuses are not on this list and are not in the skip list either. They are
 # decided by running the reference, so they cannot go stale and nobody has to notice when gcc
-# changes its mind. The count moves a little with the level, because what gcc will accept is partly
-# a question about the level: 153 at `-O0`, 151 at `-O1`, 150 at `-O2` and `-O3`, and 152 at `-Os`
-# and `-Oz`. There are fewer of them than there used to be, because a program that names its own
-# options in a `dg-options` or `dg-additional-options` line is now compiled with them and some of
-# what gcc was refusing it was refusing for want of the dialect the program asked for.
+# changes its mind. The count moves with the level, because what gcc will accept is partly a
+# question about the level: 9 at `-O0` and 18 at `-O3`. There are far fewer of them than there
+# used to be, because a program that names its own options in a `dg-options` or
+# `dg-additional-options` line is now compiled with them and nearly all of what gcc was refusing
+# it was refusing for want of the dialect the program asked for.
 #
-# 120 cases are named here across the six levels, and 28 blocks name them, because the reasons
-# are far fewer than the programs. The blocks are roughly sorted by size. The largest is complex
-# arithmetic at twenty one, and after it come the two blocks of builtins that have no lowering. The
-# option block was second at eighteen and is three entries of one case each now, which are the only
-# entries on this list that are about the driver rather than about the rule set. `__int128` used to be third and is two cases now. Inline assembly
-# used to be first by a long way, at seventy three cases, and it is three now that a template with
-# no instructions in it lowers: what is left of it is a template with instructions in it and an
-# `asm goto`.
+# 44 cases are named here across the six levels, and 24 blocks name them, because the reasons
+# are far fewer than the programs. The blocks are roughly sorted by size and none of them is large
+# any more: the biggest names five cases and half of them name one. Inline assembly used to be
+# first by a long way, at seventy three cases, and it is three now that a template with no
+# instructions in it lowers, so what is left of it is a template with instructions in it and an
+# `asm goto`. Complex arithmetic was twenty one and is gone. The option block was eighteen and is
+# three entries of one case each, which are the only entries on this list that are about the
+# driver rather than about the rule set. `__int128` was third and is one case now.
 #
 # Two of the questions that issue left open have answers now. The timeout stays at ten seconds:
 # every program that passes finishes far inside it and nothing is on the list for being slow. The
@@ -534,18 +522,6 @@ cases = [
   "execute/builtin-constant.c",
   "execute/fprintf-chk-1.c",
   "execute/printf-chk-1.c",
-]
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/415"
-why = "scalar_storage_order is refused where it is written rather than ignored, so it does not build"
-outcome = "did not build"
-cases = [
-  "execute/20230630-2.c",
-  "execute/20230630-4.c",
-  "execute/pr86659-1.c",
-  "execute/pr86659-2.c",
-  "execute/pr87623.c",
 ]
 
 [[exec-exclude]]
