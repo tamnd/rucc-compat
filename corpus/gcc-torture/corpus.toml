@@ -314,21 +314,22 @@ why = "-finstrument-functions asks for entry and exit hooks that the program the
 # It is shorter than that issue expected. The guess there was nineteen hundred programs of red.
 # The unit is 1783 programs, which is the 1907 in the tarball less the 7 skipped, the 30 settled
 # above and the 87 that exist to be included by another file, and at `-O0` 1750 of them pass, 24
-# are named below and 9 are refused by gcc 16 as well. At `-O3` it is 1698, 36 and 13, and the
-# other 36 are what the levels above `-O0` still get wrong. The reason for the gap between the
-# guess and the count is that the issue was written when a call to an unknown builtin stopped five
-# hundred files at once, and it said to wait until the lowering rule set stopped moving so fast.
-# It has.
+# are named below and 9 are refused by gcc 16 as well. At `-O3` it is 1695, 35 and 18, and the
+# other 35 are what the levels above `-O0` still get wrong, every one of them under `builtins` and
+# every one of them a library call this compiler does not fold yet. The reason for the gap between
+# the guess and the count is that the issue was written when a call to an unknown builtin stopped
+# five hundred files at once, and it said to wait until the lowering rule set stopped moving so
+# fast. It has.
 #
 # The programs gcc refuses are not on this list and are not in the skip list either. They are
 # decided by running the reference, so they cannot go stale and nobody has to notice when gcc
 # changes its mind. The count moves with the level, because what gcc will accept is partly a
-# question about the level: 9 at `-O0` and 13 at `-O3`. There are far fewer of them than there
+# question about the level: 9 at `-O0` and 18 at `-O3`. There are far fewer of them than there
 # used to be, because a program that names its own options in a `dg-options` or
 # `dg-additional-options` line is now compiled with them and nearly all of what gcc was refusing
 # it was refusing for want of the dialect the program asked for.
 #
-# 37 cases are named here across the six levels, and 22 blocks name them, because the reasons
+# 36 cases are named here across the six levels, and 21 blocks name them, because the reasons
 # are far fewer than the programs. The blocks are roughly sorted by size and none of them is large
 # any more: the biggest names five cases and two thirds of them name one. Inline assembly used to be
 # first by a long way, at seventy three cases, and it is three now that a template with no
@@ -462,21 +463,6 @@ cases = [
   "execute/pr47237.c",
   "execute/pr85331.c",
   "execute/pr94591.c",
-]
-
-# This declares `strstr` with an `__asm` label, defines the renamed function to abort when anything
-# reaches it under optimization, and then writes nine calls gcc folds away. Every one of them is a
-# call here, so the first one arrives at the abort. A wrong answer rather than a refusal, which is
-# what the `crashed` outcome means: the suite's oracle is a self check that calls `abort`, so a
-# program that was supposed to fold arrives as a signal. It passes at `-O0`, where the definition is
-# guarded on `__OPTIMIZE__` and gcc folds nothing either.
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/1625"
-why = "a call to strstr whose arguments are known at compile time is not folded"
-outcome = "crashed"
-opt = ["1", "2", "3", "s", "z"]
-cases = [
-  "execute/builtins/strstr-asm.c",
 ]
 
 [[exec-exclude]]
