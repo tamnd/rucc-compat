@@ -228,11 +228,12 @@ cases = [
 # nothing lowers. The other thirty two are in `execute/builtins` and are not on the execution list
 # at all, for the reason every file in that directory is not, which is tamnd/rucc-compat#110.
 
+# `execute/builtins/fprintf.c`, `fputs.c` and `printf.c` were in the block below and are not any
+# more. They wrote the stdio builtins that take a stream, which the compiler's table had no way to
+# name, and the table can say it now. They stay on the execution list under a different issue,
+# because what they check beyond the declaration is a fold that has not been written.
 [[exclude]]
 cases = [
-  "execute/builtins/fprintf.c",
-  "execute/builtins/fputs.c",
-  "execute/builtins/printf.c",
   "execute/pr47237.c",
   "execute/pr85331.c",
   "execute/pr94591.c",
@@ -473,14 +474,18 @@ cases = [
   "execute/pr94591.c",
 ]
 
-# These three are the `FILE` group of the same issue, kept apart from the block above because the
-# diagnostic is the other one: the program writes `__builtin_fprintf` itself rather than calling a
-# library function the compiler is expected to know, so it reads as a call to a function nobody
-# declared rather than as a builtin with no rule.
+# These three were the `FILE` group of tamnd/rucc#227 and built nothing at all, because the
+# signatures in the compiler's table had no way to name a stream. They build now and the reason
+# they are still here is the other half of what they test: each defines the library function to
+# abort when `__OPTIMIZE__` is set and then writes the calls gcc folds into a simpler function, so
+# a compiler that folds none of them arrives at the abort. A wrong answer rather than a refusal,
+# which is what `crashed` means here, since the suite's oracle is the abort itself. They pass at
+# `-O0`, where the definition is not guarded and gcc folds nothing either.
 [[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/227"
-why = "a builtin that reads or writes a FILE is not declared, E0521"
-outcome = "did not build"
+issue = "https://github.com/tamnd/rucc/issues/1636"
+why = "printf and fprintf with a format the compiler can read are not folded"
+outcome = "crashed"
+opt = ["1", "2", "3", "s", "z"]
 cases = [
   "execute/builtins/fprintf.c",
   "execute/builtins/fputs.c",
