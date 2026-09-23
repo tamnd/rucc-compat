@@ -314,8 +314,8 @@ why = "-finstrument-functions asks for entry and exit hooks that the program the
 # It is shorter than that issue expected. The guess there was nineteen hundred programs of red.
 # The unit is 1783 programs, which is the 1907 in the tarball less the 7 skipped, the 30 settled
 # above and the 87 that exist to be included by another file, and at `-O0` 1751 of them pass, 23
-# are named below and 9 are refused by gcc 16 as well. At `-O3` it is 1725, 32 and 18, and the
-# other 8 are what the levels above `-O0` still get wrong, all of them under `builtins` and all of
+# are named below and 9 are refused by gcc 16 as well. At `-O3` it is 1727, 32 and 18, and the
+# other 6 are what the levels above `-O0` still get wrong, all of them under `builtins` and all of
 # them wanting a length or a comparison answered from what a store wrote. The reason for the gap
 # between the guess and the count is that the issue was written when a call to an unknown builtin
 # stopped five hundred files at once, and it said to wait until the lowering rule set stopped
