@@ -314,9 +314,10 @@ why = "-finstrument-functions asks for entry and exit hooks that the program the
 # It is shorter than that issue expected. The guess there was nineteen hundred programs of red.
 # The unit is 1783 programs, which is the 1907 in the tarball less the 7 skipped, the 30 settled
 # above and the 87 that exist to be included by another file, and at `-O0` 1751 of them pass, 23
-# are named below and 9 are refused by gcc 16 as well. At `-O3` it is 1736, 29 and 18, and no
-# program fails there without an entry below naming it, since tamnd/rucc#1737 took `strcat.c` and
-# `strncpy.c`, the last two under `builtins` that did. The reason for the gap
+# are named below and 9 are refused by gcc 16 as well. At `-O3` it is 1740, 29 and 14, and no
+# program fails there without an entry below naming it. tamnd/rucc#1737 took `strcat.c` and
+# `strncpy.c` under `builtins`, and tamnd/rucc#1752 took `memcmp.c`, which was the last program
+# under `builtins` that did not build at every optimizing level. The reason for the gap
 # between the guess and the count is that the issue was written when a call to an unknown builtin
 # stopped five hundred files at once, and it said to wait until the lowering rule set stopped
 # moving so fast. It has.
