@@ -314,7 +314,7 @@ why = "-finstrument-functions asks for entry and exit hooks that the program the
 # It is shorter than that issue expected. The guess there was nineteen hundred programs of red.
 # The unit is 1783 programs, which is the 1907 in the tarball less the 7 skipped, the 30 settled
 # above and the 87 that exist to be included by another file, and at `-O0` 1751 of them pass, 23
-# are named below and 9 are refused by gcc 16 as well. At `-O3` it is 1733, 32 and 18, and no
+# are named below and 9 are refused by gcc 16 as well. At `-O3` it is 1736, 29 and 18, and no
 # program fails there without an entry below naming it, since tamnd/rucc#1737 took `strcat.c` and
 # `strncpy.c`, the last two under `builtins` that did. The reason for the gap
 # between the guess and the count is that the issue was written when a call to an unknown builtin
@@ -423,16 +423,13 @@ case = "execute/pr84169.c"
 # working out for itself that a static function it can see is `pure` or `const`, which is not
 # needed here and is not done. Eight calls to the missing functions before, none after, at all five
 # levels.
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/361"
-why = "the program asks for an optimizer as soon as __OPTIMIZE__ is defined"
-outcome = "did not build"
-opt = ["1", "2", "3", "s", "z"]
-cases = [
-  "execute/ieee/fp-cmp-6.c",
-  "execute/ieee/fp-cmp-7.c",
-  "execute/ieee/fp-cmp-9.c",
-]
+#
+# `execute/ieee/fp-cmp-6.c`, `fp-cmp-7.c` and `fp-cmp-9.c` were the last three in this block, so the
+# block is gone and the paragraphs above are what it held. The first and the last compare a NaN a
+# `const` global was given against a number the program could change and ask for every comparison
+# to fold, since a NaN is unordered against anything, and the second asks for `x > inf` to fold to
+# false. The optimizer narrows a floating point comparison by what a constant on either side allows
+# now, tamnd/rucc#1742, so the calls are gone at all five levels.
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/1198"
