@@ -313,17 +313,19 @@ why = "-finstrument-functions asks for entry and exit hooks that the program the
 #
 # It is shorter than that issue expected. The guess there was nineteen hundred programs of red.
 # The unit is 1783 programs, which is the 1907 in the tarball less the 7 skipped, the 30 settled
-# above and the 87 that exist to be included by another file, and at `-O0` 1752 of them pass, 22
-# are named below and 9 are refused by gcc 16 as well. At `-O3` it is 1743, 26 and 14, and no
+# above and the 87 that exist to be included by another file, and at `-O0` 1753 of them pass, 21
+# are named below and 9 are refused by gcc 16 as well. At `-O3` it is 1744, 25 and 14, and no
 # program fails there without an entry below naming it. tamnd/rucc#1737 took `strcat.c` and
 # `strncpy.c` under `builtins`, and tamnd/rucc#1752 took `memcmp.c`, which was the last program
 # under `builtins` that did not build at every optimizing level. tamnd/rucc#1760 took
 # `20030125-1.c`, which needs `floor` of a widened `float` done in `float`, and tamnd/rucc#1768
 # took `builtin-constant.c`, which needs `__builtin_constant_p` answered after optimizing.
 # tamnd/rucc#1773 took `pr84169.c`, which passes six `__int128` arguments and so needs one of
-# them in memory with a register left over. The reason for the gap between the guess and the
-# count is that the issue was written when a call to an unknown builtin stopped five hundred files
-# at once, and it said to wait until the lowering rule set stopped moving so fast. It has.
+# them in memory with a register left over, and tamnd/rucc#1784 took `pr92904.c`, which reads an
+# `__int128` off a `va_list` and passes one past the `...`. The reason for the gap between the
+# guess and the count is that the issue was written when a call to an unknown builtin stopped five
+# hundred files at once, and it said to wait until the lowering rule set stopped moving so fast.
+# It has.
 #
 # The programs gcc refuses are not on this list and are not in the skip list either. They are
 # decided by running the reference, so they cannot go stale and nobody has to notice when gcc
@@ -333,7 +335,7 @@ why = "-finstrument-functions asks for entry and exit hooks that the program the
 # `dg-additional-options` line is now compiled with them and nearly all of what gcc was refusing
 # it was refusing for want of the dialect the program asked for.
 #
-# 27 cases are named here across the six levels, and 18 blocks name them, because the reasons
+# 26 cases are named here across the six levels, and 17 blocks name them, because the reasons
 # are far fewer than the programs. The blocks are roughly sorted by size and none of them is large
 # any more: the biggest names five cases and two thirds of them name one. Inline assembly used to be
 # first by a long way, at seventy three cases, and it is three now that a template with no
@@ -469,12 +471,6 @@ cases = [
   "execute/pr121957.c",
   "execute/pr123625-3.c",
 ]
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/340"
-why = "va_arg of an __int128 is refused, E0653"
-outcome = "did not build"
-case = "execute/pr92904.c"
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/361"
