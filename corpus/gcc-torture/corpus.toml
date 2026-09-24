@@ -243,12 +243,6 @@ cases = [
 issue = "https://github.com/tamnd/rucc/issues/227"
 why = "a builtin that belongs to no family is not declared, E0500"
 
-# `execute/va-arg-pack-1.c` was in a block of its own here under tamnd/rucc#157 and is not any
-# more. The reason on it had stopped being the reason: `__builtin_va_arg_pack` gets through the
-# front end now, so `check` takes the file all the way through the tast, the IR and the round trip
-# and the entry was reporting a diagnostic nobody sees. What is left of the issue is on the
-# execution side, where the program still does not link.
-
 [[exclude]]
 case = "execute/pr80692.c"
 issue = "https://github.com/tamnd/rucc/issues/207"
@@ -463,17 +457,6 @@ issue = "https://github.com/tamnd/rucc-compat/issues/39"
 why = "the link step passes no libraries, so a call to libm has nowhere to resolve"
 outcome = "did not build"
 case = "execute/ieee/mzero4.c"
-
-# The reason here is not the one that was on it either. `bar` is `extern inline` with
-# `always_inline` and `gnu_inline` on it, which means the unit has no out of line copy of it and
-# every call has to be inlined, and `__builtin_va_arg_pack` is the thing that makes that possible
-# by forwarding the variadic arguments of the caller. rucc reads all of it and inlines none of it,
-# so the object calls a function nothing defines.
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/157"
-why = "a call to an always_inline gnu_inline function is emitted rather than inlined, so it does not link"
-outcome = "did not build"
-case = "execute/va-arg-pack-1.c"
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/207"
