@@ -203,6 +203,13 @@ cases = [
 # Six more come off in tamnd/rucc#1139, which lowers `__builtin_prefetch`. They are the whole of the
 # `builtin-prefetch` set and they pass at all six levels.
 #
+# Three more come off in tamnd/rucc#1865, which reads and sets the sign of an x87 `long double`
+# through the word at the top of it rather than as an eighty bit integer nothing lowers.
+# `20080502-1.c`, `ieee/copysign1.c` and `ieee/copysign2.c` pass at all six levels, and that was
+# everything excluded under tamnd/rucc#326, so the entry for it is gone. `ieee/cdivchkld.c` was the
+# fourth and gets past the sign now, and what stops it is a call returning a `_Complex long double`,
+# so it moved under tamnd/rucc#1162 with the other two.
+#
 # Six more come off in tamnd/rucc#1204, which implements the three builtins that were left in that
 # block: `__builtin_trap`, `__builtin_assume_aligned` and `__builtin_classify_type`. That is the
 # last of what tamnd/rucc#313 named, so the issue is closed and nothing is excluded under it any
@@ -341,23 +348,13 @@ why = "-fnon-call-exceptions needs a landing pad for a trapping instruction and 
 # nothing below is describing a gap the compiler has already closed.
 
 [[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/326"
-why = "an eighty bit float has no type in the rule set, E0653"
-outcome = "did not build"
-cases = [
-  "execute/20080502-1.c",
-  "execute/ieee/cdivchkld.c",
-  "execute/ieee/copysign1.c",
-  "execute/ieee/copysign2.c",
-]
-
-[[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/1162"
 why = "returning a `_Complex long double` is the x87 pair and has no rule, E0653"
 outcome = "did not build"
 cases = [
   "execute/20050121-1.c",
   "execute/complex-6.c",
+  "execute/ieee/cdivchkld.c",
 ]
 
 # `execute/20041114-1.c` was in this block and is not any more. It asks for the comparison in
