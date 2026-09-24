@@ -254,10 +254,12 @@ why = "decimal floating constants are not supported"
 # and that is closed as well: a flag asking for a pass this compiler does not have is a hint about
 # speed, so fifteen of the eighteen are taken and dropped and pass now.
 #
-# The three below are what is left of the block, and each of them names an option that changes
+# The two below are what is left of the block, and each of them names an option that changes
 # what the program does rather than how fast it does it, which is why each is refused with a
-# reason and has an issue of its own. The execution list further down names the same three,
-# because an option the driver refuses stops the program before either command looks at it.
+# reason and has an issue of its own. The execution list further down names the same two,
+# because an option the driver refuses stops the program before either command looks at it. The
+# third was `execute/eeprof-1.c`, which passes since tamnd/rucc#1860 calls the hooks
+# `-finstrument-functions` asks for.
 [[exclude]]
 case = "execute/pr39501.c"
 issue = "https://github.com/tamnd/rucc/issues/1051"
@@ -267,11 +269,6 @@ why = "-ffast-math defines a macro a header reads and changes the mode the whole
 case = "execute/20101011-1.c"
 issue = "https://github.com/tamnd/rucc/issues/1052"
 why = "-fnon-call-exceptions needs a landing pad for a trapping instruction and there is none"
-
-[[exclude]]
-case = "execute/eeprof-1.c"
-issue = "https://github.com/tamnd/rucc/issues/1053"
-why = "-finstrument-functions asks for entry and exit hooks that the program then counts"
 
 # Ten of these were here and are not any more. They got all the way through and stopped on the last
 # step of `check`, which prints the IR and reads it back, each of them on one instruction built over
@@ -481,9 +478,3 @@ issue = "https://github.com/tamnd/rucc/issues/1052"
 why = "-fnon-call-exceptions needs a landing pad for a trapping instruction and there is none"
 outcome = "did not build"
 case = "execute/20101011-1.c"
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/1053"
-why = "-finstrument-functions asks for entry and exit hooks that the program then counts"
-outcome = "did not build"
-case = "execute/eeprof-1.c"
