@@ -432,13 +432,6 @@ cases = [
 ]
 
 [[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/361"
-why = "the program asks for an optimizer as soon as __OPTIMIZE__ is defined"
-outcome = "crashed"
-opt = ["1", "2", "3", "s", "z"]
-case = "execute/990208-1.c"
-
-[[exec-exclude]]
 issue = "https://github.com/tamnd/rucc-compat/issues/39"
 why = "the link step passes no libraries, so a call to libm has nowhere to resolve"
 outcome = "did not build"
@@ -494,16 +487,3 @@ issue = "https://github.com/tamnd/rucc/issues/1053"
 why = "-finstrument-functions asks for entry and exit hooks that the program then counts"
 outcome = "did not build"
 case = "execute/eeprof-1.c"
-
-# Thirteen of the sixteen calls in this program are right and the three behind its own
-# `#ifdef __OPTIMIZE__` are not, which is why it passes at -O0 and is listed at the five levels
-# an optimizer runs at. The file's comment calls those three extensions to gcc2 whose failure
-# indicates an optimization regression, and that is what this is: the builtin is allowed to answer
-# zero for anything it does not know. It reached the gate with the `-fgnu89-inline` its own
-# dg-options line asks for, and without that option it was never compiling the program it says.
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/604"
-why = "__builtin_constant_p is answered before inlining, so a constant that only appears after it reads zero"
-outcome = "crashed"
-opt = ["1", "2", "3", "s", "z"]
-case = "execute/bcp-1.c"
