@@ -250,11 +250,10 @@ cases = [
 # `execute/pr85331.c` and `pr94591.c` were in the block below as well and are not any more. Both
 # call `__builtin_shuffle`, which tamnd/rucc#1888 expands in the front end, and both came off the
 # execution list in the same change. They pass at every level.
-[[exclude]]
-case = "execute/pr47237.c"
-issue = "https://github.com/tamnd/rucc/issues/227"
-why = "a builtin that belongs to no family is not declared, E0500"
-
+#
+# `execute/pr47237.c` was in the block below and is not any more. It calls `__builtin_apply_args`
+# and `__builtin_apply`, which tamnd/rucc#1914 builds on x86-64, and it came off the execution list
+# in the same change. It passes at every level.
 [[exclude]]
 case = "execute/pr80692.c"
 issue = "https://github.com/tamnd/rucc/issues/207"
@@ -399,12 +398,6 @@ why = "-fnon-call-exceptions needs a landing pad for a trapping instruction and 
 # to fold, since a NaN is unordered against anything, and the second asks for `x > inf` to fold to
 # false. The optimizer narrows a floating point comparison by what a constant on either side allows
 # now, tamnd/rucc#1742, so the calls are gone at all five levels.
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/227"
-why = "a builtin that belongs to no family is not declared, E0500"
-outcome = "did not build"
-case = "execute/pr47237.c"
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/349"
