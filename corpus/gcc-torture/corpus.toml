@@ -246,12 +246,12 @@ cases = [
 # which is the fold each of them checks for beyond the declaration: a call in the printf family
 # that writes a string nothing has to be formatted into becomes the smaller call that writes it.
 # All three run correctly at all six levels.
+#
+# `execute/pr85331.c` and `pr94591.c` were in the block below as well and are not any more. Both
+# call `__builtin_shuffle`, which tamnd/rucc#1888 expands in the front end, and both came off the
+# execution list in the same change. They pass at every level.
 [[exclude]]
-cases = [
-  "execute/pr47237.c",
-  "execute/pr85331.c",
-  "execute/pr94591.c",
-]
+case = "execute/pr47237.c"
 issue = "https://github.com/tamnd/rucc/issues/227"
 why = "a builtin that belongs to no family is not declared, E0500"
 
@@ -404,11 +404,7 @@ why = "-fnon-call-exceptions needs a landing pad for a trapping instruction and 
 issue = "https://github.com/tamnd/rucc/issues/227"
 why = "a builtin that belongs to no family is not declared, E0500"
 outcome = "did not build"
-cases = [
-  "execute/pr47237.c",
-  "execute/pr85331.c",
-  "execute/pr94591.c",
-]
+case = "execute/pr47237.c"
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/349"
