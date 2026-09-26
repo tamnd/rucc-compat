@@ -265,17 +265,13 @@ why = "decimal floating constants are not supported"
 # and that is closed as well: a flag asking for a pass this compiler does not have is a hint about
 # speed, so fifteen of the eighteen are taken and dropped and pass now.
 #
-# The two below are what is left of the block, and each of them names an option that changes
-# what the program does rather than how fast it does it, which is why each is refused with a
-# reason and has an issue of its own. The execution list further down names the same two,
-# because an option the driver refuses stops the program before either command looks at it. The
-# third was `execute/eeprof-1.c`, which passes since tamnd/rucc#1860 calls the hooks
-# `-finstrument-functions` asks for.
-[[exclude]]
-case = "execute/pr39501.c"
-issue = "https://github.com/tamnd/rucc/issues/1051"
-why = "-ffast-math defines a macro a header reads and changes the mode the whole process runs in"
-
+# The one below is what is left of the block. It names an option that changes what the program
+# does rather than how fast it does it, which is why it is refused with a reason and has an issue
+# of its own. The execution list further down names it too, because an option the driver refuses
+# stops the program before either command looks at it. There were three. `execute/eeprof-1.c`
+# passes since tamnd/rucc#1860 calls the hooks `-finstrument-functions` asks for, and
+# `execute/pr39501.c` passes since tamnd/rucc#1051 takes `-ffast-math` with the macros gcc
+# defines for it and the startup file gcc links for it.
 [[exclude]]
 case = "execute/20101011-1.c"
 issue = "https://github.com/tamnd/rucc/issues/1052"
@@ -436,24 +432,19 @@ outcome = "did not build"
 case = "execute/pr80692.c"
 
 # Thirty one programs were here under tamnd/rucc#489, for naming an option the driver did not
-# take. That issue is closed. Eleven of them build and run and are gone, and the three below are
-# what is left of the block.
+# take. That issue is closed. Eleven of them build and run and are gone, and the one below is
+# what is left of the block. `execute/pr39501.c` was beside it under tamnd/rucc#1051 and passes at
+# every level now that `-ffast-math` is taken.
 #
 # Eighteen of the thirty one named an option that turns one of gcc's own passes on or off, which
 # is tamnd/rucc#1019, and fifteen of those build and run at all six levels now that such an option
-# is taken and dropped. The three left name an option that changes what the program does, so the
-# driver refuses it, and it refuses it before anything is read, which is why the check list above
-# names the same three.
+# is taken and dropped. The three left named an option that changes what the program does, so the
+# driver refused it before anything was read, which is why the check list above names the one of
+# them still refused.
 #
 # `execute/pr23135.c` was the fourth of them and is gone too. It moved to the tamnd/rucc#335 block
 # once the option was taken, because what stopped it underneath was a structure passed by value
 # too large to unroll, and that block is gone now that such a structure is copied by the runtime.
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/1051"
-why = "-ffast-math defines a macro a header reads and changes the mode the whole process runs in"
-outcome = "did not build"
-case = "execute/pr39501.c"
-
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/1052"
 why = "-fnon-call-exceptions needs a landing pad for a trapping instruction and there is none"
