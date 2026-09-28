@@ -6,9 +6,10 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use crate::corpus::{Corpus, Question, Register, Settled, Unit, UnitKind};
+use crate::corpus::{Corpus, Question, Register, Settled, Source, Unit, UnitKind};
 use crate::ledger;
 use crate::lexer;
+use crate::meson;
 use crate::toml::Error;
 use crate::work;
 
@@ -677,6 +678,13 @@ pub fn cases(repo: &Path, corpus: &Corpus, scratch: &Path) -> Result<Found, Erro
         match unit.kind {
             UnitKind::Source => sources(&tree, unit, &mut found)?,
             UnitKind::Headers => headers(&tree, unit, scratch, &mut found)?,
+            UnitKind::CompileCommands => {
+                let version = match &corpus.source {
+                    Source::Build(build) => build.version.as_str(),
+                    _ => unreachable!("the manifest reader refuses this unit anywhere else"),
+                };
+                meson::cases(&tree, version, unit, &mut found)?;
+            }
         }
     }
     found.cases.sort_by(|a, b| a.name.cmp(&b.name));
@@ -1030,8 +1038,9 @@ mod tests {
         Corpus {
             name: "t".to_owned(),
             summary: "s".to_owned(),
-            source: crate::corpus::Source::Installed,
+            source: Source::Installed,
             probe: Vec::new(),
+            arch: Vec::new(),
             units: vec![Unit {
                 name: "execute".to_owned(),
                 kind: UnitKind::Source,

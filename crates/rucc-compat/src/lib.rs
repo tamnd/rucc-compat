@@ -19,6 +19,8 @@
 //! - [`measure`] times each of a few large files through rucc and reads how much memory it
 //!   held, and fails when either is over the bound the manifest sets, which is the one kind of
 //!   regression no answer being right or wrong will ever show.
+//! - [`meson`] reads a meson build directory's compile database, which is how a project too
+//!   big to describe in a manifest becomes a corpus, one case per compile with its own flags.
 //! - [`coverage`] reads what the compiler says about which of its lowering rules a build fired,
 //!   and unions those over a corpus, which is the one coverage question nothing but a corpus can
 //!   answer.
@@ -41,6 +43,7 @@ pub mod fetch;
 pub mod ledger;
 pub mod lexer;
 pub mod measure;
+pub mod meson;
 pub mod pipeline;
 pub mod sandbox;
 pub mod sha256;

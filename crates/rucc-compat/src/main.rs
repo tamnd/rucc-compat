@@ -140,6 +140,8 @@ fn list(repo: &Path, all: &[Corpus]) -> Result<ExitCode, String> {
             Source::Tarball(t) if !t.is_recorded() => "hash unrecorded".to_owned(),
             Source::Tarball(t) if corpus.is_fetched(repo) => format!("vendored {}", t.version),
             Source::Tarball(t) => format!("not fetched, {}", t.version),
+            Source::Build(b) if corpus.is_fetched(repo) => format!("meson build {}", b.version),
+            Source::Build(b) => format!("no build, {}", b.version),
         };
         println!("{:<10} {:<20} {}", corpus.name, state, corpus.summary);
     }
@@ -161,13 +163,20 @@ fn fetch_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, 
     let wanted = chosen(all, &names)?;
     let mut failed = false;
     for corpus in wanted {
-        match corpus.source {
+        match &corpus.source {
             Source::Installed => {
                 println!("{}: installed, nothing to fetch", corpus.name);
                 continue;
             }
             Source::Local => {
                 println!("{}: in this repository, nothing to fetch", corpus.name);
+                continue;
+            }
+            Source::Build(b) => {
+                println!(
+                    "{}: built by meson where {} points, nothing to fetch",
+                    corpus.name, b.variable
+                );
                 continue;
             }
             Source::Tarball(_) => {}
@@ -241,7 +250,7 @@ fn run_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, St
             continue;
         }
         if !corpus.is_fetched(repo) {
-            eprintln!("{}: not fetched, run `rucc-compat fetch {}`", corpus.name, corpus.name);
+            eprintln!("{}", corpus.not_ready(repo));
             failures += 1;
             continue;
         }
@@ -306,7 +315,7 @@ fn check_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, 
             continue;
         }
         if !corpus.is_fetched(repo) {
-            eprintln!("{}: not fetched, run `rucc-compat fetch {}`", corpus.name, corpus.name);
+            eprintln!("{}", corpus.not_ready(repo));
             failures += 1;
             continue;
         }
@@ -416,7 +425,7 @@ fn exec_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, S
             continue;
         }
         if !corpus.is_fetched(repo) {
-            eprintln!("{}: not fetched, run `rucc-compat fetch {}`", corpus.name, corpus.name);
+            eprintln!("{}", corpus.not_ready(repo));
             failures += 1;
             continue;
         }
@@ -508,7 +517,7 @@ fn measure_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode
             continue;
         }
         if !corpus.is_fetched(repo) {
-            eprintln!("{}: not fetched, run `rucc-compat fetch {}`", corpus.name, corpus.name);
+            eprintln!("{}", corpus.not_ready(repo));
             failures += 1;
             continue;
         }

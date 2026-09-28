@@ -13,6 +13,10 @@ pub const UNRECORDED: &str = "unrecorded";
 /// the three platforms this compiler is built for.
 pub const PLATFORMS: &[&str] = &["linux", "macos", "windows"];
 
+/// What a corpus's `arch` is allowed to name, which is what `std::env::consts::ARCH` says on the
+/// machines this compiler is built for.
+pub const ARCHES: &[&str] = &["x86_64", "aarch64"];
+
 /// The outcomes an execution exclusion is allowed to say it covers.
 ///
 /// The four ways a case can fail, and not the four ways it can be left alone. An exclusion for
@@ -56,6 +60,33 @@ pub enum Source {
     /// attribute rucc claims does what GCC documents. They are ours, so they carry this
     /// repository's license, have nothing to fetch and have no hash to check.
     Local,
+    /// A project somebody has configured with meson, found through an environment variable
+    /// naming its build directory.
+    ///
+    /// For a project whose compiles cannot be written down in a manifest, which is every project
+    /// of any size: the build directory records each compile with its flags in
+    /// `compile_commands.json`, and a unit of kind `compile-commands` takes its cases from there.
+    /// Nothing is vendored, because the build has to be configured on the machine that runs it,
+    /// and a corpus whose variable is not set is not this machine.
+    Build(Build),
+}
+
+/// A build directory corpus, as the manifest describes it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Build {
+    /// The environment variable that names the build directory.
+    pub variable: String,
+    /// The version of the project the manifest is about, which the build directory has to be a
+    /// build of. An exclusion list written against one release says nothing about another.
+    pub version: String,
+}
+
+impl Build {
+    /// The build directory, when the variable names one.
+    #[must_use]
+    pub fn dir(&self) -> Option<PathBuf> {
+        env::var_os(&self.variable).filter(|v| !v.is_empty()).map(PathBuf::from)
+    }
 }
 
 /// A tarball corpus, as the manifest describes it.
@@ -137,6 +168,9 @@ pub enum UnitKind {
     /// Headers, each one included from a file of one line, which is how a header set is
     /// checked for being includable on its own.
     Headers,
+    /// Every compile in the `compile_commands.json` of a [`Source::Build`] corpus, each with the
+    /// flags the build used. See [`crate::meson`].
+    CompileCommands,
 }
 
 /// One case the pipeline check is not expected to get through yet.
@@ -385,6 +419,13 @@ pub struct Corpus {
     /// different distributions and a probe that only knows one of them makes the corpus
     /// silently stop running on the others.
     pub probe: Vec<String>,
+    /// The architectures this corpus means anything on, each one of [`ARCHES`], or every one
+    /// when empty.
+    ///
+    /// For programs that are about one instruction set. The intrinsics corpus calls x86 intrinsics
+    /// through the headers rucc ships for x86, and on an arm64 machine neither compiler has them,
+    /// so the run there would be a list of build failures that say nothing about rucc.
+    pub arch: Vec<String>,
     /// What to preprocess.
     pub units: Vec<Unit>,
     /// The directories inside a unit whose cases need more than their own file.
@@ -460,21 +501,45 @@ impl Corpus {
             Source::Installed => repo.to_path_buf(),
             Source::Local => repo.join("corpus").join(&self.name),
             Source::Tarball(t) => repo.join("vendor").join(&self.name).join(&t.root),
+            Source::Build(b) => b.dir().unwrap_or_else(|| repo.to_path_buf()),
         }
     }
 
     /// Whether this machine is one this corpus says anything about.
     #[must_use]
     pub fn applies(&self) -> bool {
-        self.probe.is_empty() || self.probe.iter().any(|path| Path::new(path).exists())
+        let arch = self.arch.is_empty() || self.arch.iter().any(|a| a == env::consts::ARCH);
+        let probe = self.probe.is_empty() || self.probe.iter().any(|path| Path::new(path).exists());
+        let build = match &self.source {
+            Source::Build(b) => b.dir().is_some(),
+            _ => true,
+        };
+        arch && probe && build
     }
 
-    /// Whether the tree is there, for [`Source::Tarball`].
+    /// Whether the tree is there, for [`Source::Tarball`], and whether the build directory has
+    /// a compile database in it, for [`Source::Build`].
     #[must_use]
     pub fn is_fetched(&self, repo: &Path) -> bool {
         match self.source {
             Source::Installed | Source::Local => true,
             Source::Tarball(_) => self.tree(repo).is_dir(),
+            Source::Build(_) => self.tree(repo).join(crate::meson::DATABASE).is_file(),
+        }
+    }
+
+    /// What to tell somebody whose run found the corpus not ready.
+    #[must_use]
+    pub fn not_ready(&self, repo: &Path) -> String {
+        match &self.source {
+            Source::Build(b) => format!(
+                "{}: {} names {}, which has no {}. Configure it with meson first.",
+                self.name,
+                b.variable,
+                self.tree(repo).display(),
+                crate::meson::DATABASE
+            ),
+            _ => format!("{}: not fetched, run `rucc-compat fetch {}`", self.name, self.name),
         }
     }
 }
@@ -530,10 +595,14 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
             root: root.need("root", &whose)?.to_owned(),
             extract: root.list("extract"),
         }),
+        "build" => Source::Build(Build {
+            variable: root.need("variable", &whose)?.to_owned(),
+            version: root.need("version", &whose)?.to_owned(),
+        }),
         other => {
             return Err(Error {
                 message: format!(
-                    "{whose}: `source` is `{other}`, which is not `installed`, `local` or `tarball`"
+                    "{whose}: `source` is `{other}`, which is not `installed`, `local`, `tarball` or `build`"
                 ),
             });
         }
@@ -544,6 +613,27 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
     }
     if units.is_empty() {
         return Err(Error { message: format!("{whose}: a corpus with no [[unit]] runs nothing") });
+    }
+    // The database is in the build directory, so a unit that reads one has nothing to read in
+    // any other kind of corpus.
+    if let Some(unit) = units.iter().find(|u| u.kind == UnitKind::CompileCommands) {
+        if !matches!(source, Source::Build(_)) {
+            return Err(Error {
+                message: format!(
+                    "{whose}: unit `{}` reads a compile database, and only a `build` corpus has one",
+                    unit.name
+                ),
+            });
+        }
+    }
+    let arch = root.list("arch");
+    if let Some(odd) = arch.iter().find(|a| !ARCHES.contains(&a.as_str())) {
+        return Err(Error {
+            message: format!(
+                "{whose}: `arch` is `{odd}`, which is not one of {}",
+                ARCHES.join(", ")
+            ),
+        });
     }
     let oracle = match root.str("oracle") {
         None => None,
@@ -594,6 +684,7 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
         summary: root.need("summary", &whose)?.to_owned(),
         source,
         probe: root.list("probe"),
+        arch,
         units,
         alongside,
         excluded,
@@ -803,17 +894,25 @@ fn unit(fields: &Fields, whose: &str) -> Result<Unit, Error> {
     let kind = match fields.need("kind", whose)? {
         "source" => UnitKind::Source,
         "headers" => UnitKind::Headers,
+        "compile-commands" => UnitKind::CompileCommands,
         other => {
             return Err(Error {
                 message: format!(
-                    "{whose}: unit `kind` is `{other}`, which is not `source` or `headers`"
+                    "{whose}: unit `kind` is `{other}`, which is not `source`, `headers` or `compile-commands`"
                 ),
             });
         }
     };
     let files = fields.list("files");
     let dir = fields.str("dir").map(str::to_owned);
-    if files.is_empty() && dir.is_none() {
+    if kind == UnitKind::CompileCommands && (!files.is_empty() || dir.is_some()) {
+        return Err(Error {
+            message: format!(
+                "{whose}: unit `{name}` takes its files from the compile database, so it has no `files` or `dir`"
+            ),
+        });
+    }
+    if files.is_empty() && dir.is_none() && kind != UnitKind::CompileCommands {
         return Err(Error { message: format!("{whose}: a unit needs `files` or `dir`") });
     }
     let libs = fields.list("libs");
@@ -833,7 +932,7 @@ fn unit(fields: &Fields, whose: &str) -> Result<Unit, Error> {
     };
     let seconds = bound("seconds")?;
     let megabytes = bound("megabytes")?;
-    if (seconds.is_some() || megabytes.is_some()) && kind != UnitKind::Source {
+    if (seconds.is_some() || megabytes.is_some()) && kind == UnitKind::Headers {
         return Err(Error {
             message: format!(
                 "{whose}: unit `{name}` is a header unit with a bound, and `measure` compiles source files"
@@ -1046,6 +1145,60 @@ mod tests {
         assert!(!load(&fake.root, "sys").unwrap().applies());
         fake.corpus("sys", INSTALLED);
         assert!(load(&fake.root, "sys").unwrap().applies());
+    }
+
+    #[test]
+    fn a_build_corpus_is_where_its_variable_points_and_nowhere_when_it_is_unset() {
+        let fake = Fake::new("build");
+        let manifest = |variable: &str| {
+            format!(
+                "name = \"pg\"\nsummary = \"a build\"\nsource = \"build\"\nvariable = \"{variable}\"\nversion = \"18.6\"\n\n[[unit]]\nname = \"meson\"\nkind = \"compile-commands\"\n"
+            )
+        };
+        // Variables this process already has or never will, rather than setting one, because the
+        // tests run on several threads and changing the environment under them is a race.
+        fake.corpus("pg", &manifest("RUCC_COMPAT_NOBODY_SETS_THIS"));
+        let corpus = load(&fake.root, "pg").unwrap();
+        assert_eq!(corpus.units[0].kind, UnitKind::CompileCommands);
+        assert!(!corpus.applies(), "an unset variable is not this machine");
+        // Cargo sets this for every test it runs, and a crate directory has no compile database.
+        fake.corpus("pg", &manifest("CARGO_MANIFEST_DIR"));
+        let corpus = load(&fake.root, "pg").unwrap();
+        assert!(corpus.applies());
+        assert_eq!(corpus.tree(&fake.root), PathBuf::from(env!("CARGO_MANIFEST_DIR")));
+        assert!(!corpus.is_fetched(&fake.root), "there is no compile database there");
+        assert!(corpus.not_ready(&fake.root).contains("CARGO_MANIFEST_DIR"));
+    }
+
+    #[test]
+    fn a_compile_database_unit_is_refused_outside_a_build_corpus_and_with_files() {
+        let fake = Fake::new("build-odd");
+        fake.corpus("sys", &INSTALLED.replace("kind = \"headers\"", "kind = \"compile-commands\""));
+        let e = load(&fake.root, "sys").unwrap_err();
+        assert!(e.message.contains("files"), "{}", e.message);
+        let text = INSTALLED
+            .replace("kind = \"headers\"\nfiles = [\"stdio.h\"]", "kind = \"compile-commands\"");
+        fake.corpus("sys", &text);
+        let e = load(&fake.root, "sys").unwrap_err();
+        assert!(e.message.contains("only a `build` corpus"), "{}", e.message);
+    }
+
+    #[test]
+    fn a_corpus_for_another_architecture_does_not_apply_and_an_unknown_one_is_refused() {
+        let fake = Fake::new("arch");
+        let other = if env::consts::ARCH == "x86_64" { "aarch64" } else { "x86_64" };
+        let with = |arch: &str| {
+            INSTALLED.replace(
+                "source = \"installed\"",
+                &format!("source = \"installed\"\narch = [\"{arch}\"]"),
+            )
+        };
+        fake.corpus("sys", &with(other));
+        assert!(!load(&fake.root, "sys").unwrap().applies());
+        fake.corpus("sys", &with(env::consts::ARCH));
+        assert!(load(&fake.root, "sys").unwrap().applies());
+        fake.corpus("sys", &with("pdp11"));
+        assert!(load(&fake.root, "sys").unwrap_err().message.contains("pdp11"));
     }
 
     #[test]
