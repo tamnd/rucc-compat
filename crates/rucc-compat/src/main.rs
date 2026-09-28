@@ -693,6 +693,7 @@ mod tests {
             here.join("rucc/target/release/rucc")
         );
         assert_eq!(anchored(PathBuf::from("gcc")), PathBuf::from("gcc"));
-        assert_eq!(anchored(PathBuf::from("/usr/bin/gcc")), PathBuf::from("/usr/bin/gcc"));
+        let absolute = here.join("bin").join("gcc");
+        assert_eq!(anchored(absolute.clone()), absolute);
     }
 }
