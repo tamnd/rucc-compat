@@ -127,6 +127,8 @@ An installed corpus is the header set of the machine the harness runs on, which 
 
 A vendored corpus is a tarball at a pinned version, fetched by `rucc-compat fetch` and checked against the sha256 in the manifest before it is unpacked into `vendor/`. The tarball is not committed. Its license file is, at the path the manifest names, and a fetch that unpacks a tree without that file fails. `vendor/` is ignored by git, so a corpus is reproducible from the manifest and nothing large ever lands in the history.
 
+A local corpus is programs we wrote, kept under `corpus/<name>/` beside the manifest. The only one is `has-feature`, one small program per GNU attribute and builtin rucc claims, which prints what `__has_attribute` or `__has_builtin` says and then checks what GCC's manual promises the feature does. It runs under `rucc-compat exec has-feature` and is compared against GCC like any other execution corpus, so a feature that works but answers no to the question configure scripts ask shows up as a wrong answer.
+
 A corpus is made of named units, and `--unit` runs one of them. That is how the forty standard headers can be a quick check on every commit while the sweep over every header the machine has is something the nightly run does.
 
 Adding one is a `corpus.toml` and nothing else. `CONTRIBUTING.md` says what the fields mean.

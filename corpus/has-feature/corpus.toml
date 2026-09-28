@@ -1,0 +1,30 @@
+name = "has-feature"
+summary = "One small program per GNU attribute and builtin rucc claims, checking the claim and then what GCC documents the feature does."
+
+# The programs are ours and live next to this manifest, so there is nothing to fetch. They are
+# under this repository's license.
+source = "local"
+
+# Every program prints whether the compiler claims the feature, with __has_attribute or
+# __has_builtin, and then one line per behaviour GCC's manual promises, and the reference builds
+# the same program. So a difference is either a claim that disagrees with GCC's or a behaviour
+# that does. The first matters as much as the second: configure scripts and headers such as
+# Postgres's c.h decide what to use by asking, and a feature that works and answers no is a
+# feature nobody gets.
+#
+# Which names are here: every attribute rucc's crates/rucc-gnu/features.toml marks implemented,
+# the attributes Postgres uses whatever the matrix says about them, and the builtin families
+# Postgres and glibc lean on. check.h is what every program includes.
+oracle = "differential"
+timeout = 10
+
+[[unit]]
+name = "attributes"
+kind = "source"
+dir = "attributes"
+
+[[unit]]
+name = "builtins"
+kind = "source"
+dir = "builtins"
+libs = ["-lm"]

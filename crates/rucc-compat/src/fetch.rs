@@ -31,7 +31,10 @@ pub struct Fetched {
 pub fn fetch(repo: &Path, corpus: &Corpus, record: bool) -> Result<Fetched, Error> {
     let Source::Tarball(tarball) = &corpus.source else {
         return Err(Error {
-            message: format!("{}: an installed corpus has nothing to fetch", corpus.name),
+            message: format!(
+                "{}: nothing to fetch, since only a tarball corpus is downloaded",
+                corpus.name
+            ),
         });
     };
     let into = repo.join("vendor").join(&corpus.name);
