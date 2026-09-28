@@ -32,6 +32,8 @@ The fields:
 - `root` is the directory the tarball unpacks into.
 - `extract` is optional and is the list of paths inside the tarball to unpack, the rest being read past and left on the floor. For a corpus that is a directory inside a much larger release this is the difference between what the corpus costs and what the project it came from costs: the gcc-torture tarball is the whole of GCC at a hundred and seven megabytes and the tests in it are eight. Name the license file in it as well as the tests, since the fetch checks for the license in the unpacked tree and a tree without one fails.
 - One `[[unit]]` block per thing to preprocess, each with a `name` that `--unit` selects and that the case names begin with. `kind = "source"` names files in `files`, or takes every `.c` file under `dir`. `kind = "headers"` takes the headers in `files`, or every header under `dir`, and includes each one from a file of its own, which is how a header set is checked for standing up on its own. `skip` drops paths under `dir`, and each one wants a comment next to it saying why. `flags` are passed to both compilers unchanged, and a relative include path in them is resolved against the tree. `libs` names the libraries a case links against, each spelled `-lname`, and they go after the case's own files on the link line so an execution run can find `sin` or `floor` in `-lm`.
+- `seconds` and `megabytes` on a source unit are optional, and are what `measure` holds rucc to when it compiles one file of the unit: how long it may take and how much resident memory it may hold at once, in MiB. A unit with neither is not measured. Set them several times above what the file costs today and write the measured numbers next to them, so the next person can see how much headroom there is.
+- `levels` is the list of optimization levels `measure` compiles each bounded file at, each one of `0`, `1`, `2`, `3`, `s` and `z`. It is required when any unit names a bound, because the cost of a file moves a long way between levels and a bound set at one says nothing about another.
 
 A unit that names a `dir` is walked rather than listed, so a suite of two hundred programs is five lines of manifest rather than a list nobody updates when the pin moves. A file the manifest names is called after the tree it is in and a file found by walking is called after the directory the unit already named, so a walked case is `single-exec/00001.c` rather than repeating the directory in every one of two hundred names.
 
@@ -145,6 +147,8 @@ An entry is a promise to remove the entry. When the issue closes, the entry goes
 - `lexer.rs` splits an output back into preprocessing tokens.
 - `differ.rs` runs both compilers and compares.
 - `pipeline.rs` takes a corpus through rucc alone: the front end, the lowering, the verifier and the IR round trip.
+- `exec.rs` builds the programs and runs them, and `sandbox.rs` runs one program under a timeout and says how it ended, how long it took and the most memory it held.
+- `measure.rs` compiles the bounded files of a corpus and fails when rucc goes over a bound.
 - `main.rs` is the command line and nothing else.
 
 Before either compiler runs, `agreement` makes them agree about the things a difference must not come from.

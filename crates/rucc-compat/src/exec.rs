@@ -1016,7 +1016,7 @@ fn cut(line: &str) -> String {
 }
 
 /// What a compiler says it is, in one line.
-fn version(compiler: &Path) -> String {
+pub(crate) fn version(compiler: &Path) -> String {
     let Ok(out) = Command::new(compiler).arg("--version").output() else {
         return format!("{} (it would not say)", compiler.display());
     };
@@ -1028,7 +1028,7 @@ fn version(compiler: &Path) -> String {
 }
 
 /// The machine, as much of it as belongs in a file anybody may read.
-fn platform() -> String {
+pub(crate) fn platform() -> String {
     format!("{} {}", std::env::consts::OS, std::env::consts::ARCH)
 }
 
@@ -1264,7 +1264,7 @@ mod tests {
     }
 
     fn ran(end: End, out: &str) -> Ran {
-        Ran { end, out: out.as_bytes().to_vec(), err: Vec::new() }
+        Ran { end, out: out.as_bytes().to_vec(), err: Vec::new(), took: Duration::ZERO, peak: None }
     }
 
     fn excusing(word: &str) -> Exclusion {

@@ -1,0 +1,69 @@
+name = "scale"
+summary = "Generated Postgres parsers, the largest single functions a real build hands the compiler, held to a bound on time and memory."
+
+# Postgres stopped shipping the bison output in its release tarballs with 17, so a pinned tarball
+# of Postgres itself has gram.y and no gram.c, and making one would put a particular bison on every
+# machine that runs this. libpg_query carries the generated files from a real Postgres 18 build,
+# already configured for a 64 bit Linux, and each of them compiles on its own against the headers
+# next to it. The Makefile names the Postgres it came from, which is 18.4.
+#
+# The tag is commit 204fbdbd3ed5f8691ab358e49f1fc5397b4679e2, and the URL ends in the archive's
+# own name so that the file in vendor/ is one the CI cache recognises as a tarball.
+source = "tarball"
+upstream = "https://github.com/pganalyze/libpg_query/archive/refs/tags/18.0.0.tar.gz"
+version = "18.0.0"
+sha256 = "6ad7783f272acfd116455c66a03298a0cac9a9168281df547969219112f0260f"
+root = "libpg_query-18.0.0"
+
+# libpg_query is BSD-3-Clause. The Postgres sources under src/postgres are under the PostgreSQL
+# license, which is in src/postgres/COPYRIGHT and comes along with the directory.
+license = "BSD-3-Clause"
+license-file = "libpg_query-18.0.0/LICENSE"
+
+# The generated parsers and the headers they include are all under src/postgres. The rest of the
+# tarball is libpg_query's own code, its tests and a vendored protobuf, none of which is used here.
+extract = [
+  "libpg_query-18.0.0/LICENSE",
+  "libpg_query-18.0.0/src/postgres",
+]
+
+# What `measure` compiles every bounded file at. -O0 is what a development build of Postgres uses
+# and -O2 is what a release build uses, and the costs of the two are far enough apart that a bound
+# on one says nothing about the other.
+levels = ["0", "2"]
+
+# The backend's SQL grammar: fifty four thousand lines, most of it one function with a switch of
+# some two thousand three hundred cases, and parse tables that are initializers of more than a
+# hundred thousand elements. It is the file that found tamnd/rucc#769 and tamnd/rucc#1497, both
+# of which were the compiler holding far more memory than the output needed, and the bounds are
+# there to catch the next one.
+#
+# Measured on a four core x86-64 Linux machine that was busy with other builds at the time:
+#
+#   rucc     -O0  3.05 s  211 MiB    -O2  7.92 s  305 MiB
+#   gcc 16   -O0  4.88 s  143 MiB    -O2  9.67 s  202 MiB
+#
+# The bounds are several times that on purpose. A regression of the kind this is for is a factor
+# of ten, not a few percent, and a bound that a slow or busy machine trips on is a bound people
+# learn to ignore.
+[[unit]]
+name = "gram"
+kind = "source"
+files = ["src/postgres/src_backend_parser_gram.c"]
+flags = ["-I", "src/postgres/include"]
+seconds = 60
+megabytes = 2048
+
+# The PL/pgSQL grammar, from the same build. A tenth the size of the backend's, so it is here as
+# the ordinary generated parser next to the extreme one: a change that costs it anything is the
+# same change showing up earlier.
+#
+#   rucc     -O0  0.40 s   43 MiB    -O2  0.74 s   49 MiB
+#   gcc 16   -O0  0.59 s   60 MiB    -O2  3.02 s   75 MiB
+[[unit]]
+name = "plpgsql"
+kind = "source"
+files = ["src/postgres/src_pl_plpgsql_src_pl_gram.c"]
+flags = ["-I", "src/postgres/include"]
+seconds = 30
+megabytes = 512

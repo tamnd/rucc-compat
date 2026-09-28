@@ -64,6 +64,19 @@ The exclusions work the way the pipeline check's do, in a separate `[[exec-exclu
 
 Every level is run, and not as a setting on one answer. `-O0` and `-O2` run different passes over different code, and the headers change underneath them as well, since glibc defines a family of functions inline behind `__OPTIMIZE__` being set and `__OPTIMIZE_SIZE__` not being set. A sweep at one level says nothing about the other five.
 
+## What a file costs to compile
+
+`rucc-compat measure` asks what a compile cost rather than whether it was right. A compiler that starts holding every function of a file in memory at once still writes the same object, so none of the checks above would notice, and the first anybody hears of it is a build running out of memory on a generated parser. That has already happened twice, as tamnd/rucc#769 and tamnd/rucc#1497.
+
+```
+./target/release/rucc-compat fetch scale
+./target/release/rucc-compat measure scale --rucc ../rucc/target/release/rucc --cc gcc-16 --report
+```
+
+A unit opts in by naming a bound in its manifest, `seconds`, `megabytes` or both, and the corpus names the levels to compile it at. Each file is compiled to an object once per level, one at a time so the times mean something, and the run fails when rucc takes longer than the bound, holds more resident memory than the bound, crashes, or does not build the file. A compile that goes past its time is killed there. The reference compiles the same file first and its numbers go in the report for comparison, and are never judged, since gcc's cost moves between its own releases for reasons that have nothing to do with rucc. A file the reference will not compile on the machine is skipped rather than blamed on rucc.
+
+The bounds are set several times above what the file costs today. The regressions this is for are a factor of ten, and a bound that a slow or busy machine trips on is a bound people learn to ignore.
+
 ## Which lowering rules the corpus reaches
 
 Two different things get called lowering coverage. Whether every IR opcode has a rule to lower it is a property of the compiler, it is checked when the compiler is built, and no corpus is needed to find the answer out. Whether every rule that is written ever fires is a property of the corpus, and nothing but a corpus can answer it. A rule that is written, proved and never selected has never run on a real machine, and rules nothing fires are where dead entries in the rule set collect, since nothing else would ever notice one.
