@@ -25,25 +25,8 @@ skip = [
   # file too, so refusing it is not a gap and there is nothing here for an exclusion to point
   # an issue at.
   "34_array_assignment.c",
+  # A function written in 32-bit assembly at file scope. The assembler behind the reference
+  # compiler refuses `pusha` and `pushl` in 64-bit mode, and rucc refuses the same instructions,
+  # so there is no gap here either.
+  "99_fastcall.c",
 ]
-
-# Six cases rucc does not get through yet, each one naming the issue that will take it off this
-# list. Three are one gap, which is an `asm` at file scope. The other three ask for no builtin
-# at all: they include a glibc header that defines three static inline functions over the byte
-# swap builtins, none of them calls one, and this compiler emits a static function nothing
-# refers to, so all three end up carrying a call to a builtin nothing lowers.
-
-[[exclude]]
-case = "tests2/85_asm-outside-function.c"
-issue = "https://github.com/tamnd/rucc/issues/155"
-why = "an asm at file scope is not accepted, E0519"
-
-[[exclude]]
-case = "tests2/98_al_ax_extend.c"
-issue = "https://github.com/tamnd/rucc/issues/155"
-why = "an asm at file scope is not accepted, E0519"
-
-[[exclude]]
-case = "tests2/99_fastcall.c"
-issue = "https://github.com/tamnd/rucc/issues/155"
-why = "an asm at file scope is not accepted, E0519"
