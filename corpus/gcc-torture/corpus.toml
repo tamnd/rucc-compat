@@ -394,14 +394,11 @@ why = "decimal floating constants are not supported"
 # false. The optimizer narrows a floating point comparison by what a constant on either side allows
 # now, tamnd/rucc#1742, so the calls are gone at all five levels.
 
-# `execute/pr121957.c` and `execute/pr123625-3.c` were in this block too. Every `asm goto` in them
-# has an empty template, which cannot jump and so falls through into its first arm, and that is
-# compiled now, tamnd/rucc#1953. What is left is x87 `fpatan` and `fsqrt` with `t` and `u` operands.
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/349"
-why = "a template with instructions in it needs an assembler, E0653"
-outcome = "did not build"
-case = "execute/990413-2.c"
+# The inline assembly block, tamnd/rucc#349, is gone. `execute/pr121957.c` and `execute/pr123625-3.c`
+# were the two with an `asm goto` whose template is empty, which cannot jump and so falls through
+# into its first arm, tamnd/rucc#1953. `execute/990413-2.c` was the last, x87 `fpatan` and `fsqrt`
+# with `t` and `u` operands, which are pushed before the template and popped after it now,
+# tamnd/rucc#1954.
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/207"
