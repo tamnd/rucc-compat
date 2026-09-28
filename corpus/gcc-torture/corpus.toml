@@ -41,6 +41,11 @@ dir = "."
 # the suite is written in GNU C of no particular year. gnu17 is the last dialect all of it was
 # written against, and it is what the differential compares under as well.
 flags = ["-std=gnu17"]
+# libm on every link. A case that calls `floor`, `sin` or `sqrt` is entitled to the library that
+# defines them, and gcc folding the call when it can see the argument is why the link lines never
+# needed it for gcc. `execute/float-floor.c`, `execute/ieee/20041213-1.c` and
+# `execute/ieee/mzero4.c` were excluded under tamnd/rucc-compat#39 until the manifest could say so.
+libs = ["-lm"]
 skip = [
   # A function with no type in front of it, and nothing on the command line asking for the
   # dialect that allowed it. GCC 14 turned that from a warning into an error, so gcc 16 refuses
@@ -398,26 +403,6 @@ cases = [
   "execute/pr121957.c",
   "execute/pr123625-3.c",
 ]
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc-compat/issues/39"
-why = "the link step passes no libraries, so a call to libm has nowhere to resolve"
-outcome = "did not build"
-opt = ["1", "2", "3"]
-case = "execute/float-floor.c"
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc-compat/issues/39"
-why = "the link step passes no libraries, so a call to libm has nowhere to resolve"
-outcome = "did not build"
-opt = ["2", "3"]
-case = "execute/ieee/20041213-1.c"
-
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc-compat/issues/39"
-why = "the link step passes no libraries, so a call to libm has nowhere to resolve"
-outcome = "did not build"
-case = "execute/ieee/mzero4.c"
 
 [[exec-exclude]]
 issue = "https://github.com/tamnd/rucc/issues/207"

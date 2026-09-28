@@ -1040,6 +1040,7 @@ mod tests {
                 skip: Vec::new(),
                 flags: Vec::new(),
                 link: Vec::new(),
+                libs: Vec::new(),
             }],
             alongside: vec![rule],
             excluded: Vec::new(),
@@ -1268,6 +1269,7 @@ mod tests {
             skip: vec!["skipped.c".to_owned()],
             flags: Vec::new(),
             link: Vec::new(),
+            libs: Vec::new(),
         };
         let mut found = Found::default();
         sources(&root, &unit, &mut found).unwrap();
@@ -1308,6 +1310,7 @@ mod tests {
             skip: vec!["skipped.c".to_owned()],
             flags: Vec::new(),
             link: Vec::new(),
+            libs: Vec::new(),
         };
         let entry = Settled {
             case: "suite/b.c".to_owned(),
@@ -1384,6 +1387,7 @@ mod tests {
             skip: Vec::new(),
             flags: vec!["-std=gnu17".to_owned()],
             link: Vec::new(),
+            libs: Vec::new(),
         };
         let mut found = Found::default();
         sources(&root, &unit, &mut found).unwrap();
