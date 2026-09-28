@@ -33,6 +33,11 @@ dir = "tests/single-exec"
 # refuses those programs under its own default of gnu23 exactly as rucc does, so leaving the
 # dialect to whatever each compiler defaults to measures the year rather than the compiler.
 flags = ["-std=gnu17"]
+# libm on every link, which is what a hosted C program that calls a math function is entitled to.
+# `single-exec/00174.c` calls `sin(2)`, which gcc folds and rucc emits a call for, and it links
+# on all three routes with this. It was excluded under tamnd/rucc-compat#39 until the manifest
+# could say so.
+libs = ["-lm"]
 
 # No exclusion for `check`. Every program in the suite gets through the front end, the lowering
 # to IR and the round trip, which is the first corpus here to reach that and is the rung of the
@@ -62,18 +67,3 @@ flags = ["-std=gnu17"]
 # during the body rather than a missing rule and was the only one of these blocks whose work was
 # not in the rule set. That is tamnd/rucc#291 and the frame grows now.
 
-# The one program in the suite that calls a math function, and the argument is a constant. GCC
-# folds `sin(2)` where it stands and never names the library, so it links with no `-lm` and nothing
-# here ever needed one. rucc does not fold it and emits the call, which is a call to a name only
-# libm defines, and the link step here passes no libraries on any of the three routes. Passing them
-# is the missing piece and it is the harness's rather than the compiler's: a program that calls
-# `sin` is entitled to `-lm`, and folding it is an optimization this corpus should not be waiting
-# on. This case was in the floating point block until that came out, and in the stack argument
-# block after that, and it was never really either of them.
-[[exec-exclude]]
-issue = "tamnd/rucc-compat#39"
-why = "the link step passes no libraries, so a call to libm has nowhere to resolve"
-outcome = "did not build"
-cases = [
-  "single-exec/00174.c",
-]

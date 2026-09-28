@@ -745,22 +745,34 @@ fn reference_failed(verdict: &Status) -> String {
     )
 }
 
-/// The files that go into one case, which is the case itself and whatever its unit links with
-/// every case.
-fn inputs(case: &Case, corpus: &Corpus) -> Vec<PathBuf> {
-    let mut inputs = vec![case.file.clone()];
+/// What one case is built from: the files that are compiled and the libraries they are linked
+/// against.
+struct Inputs {
+    /// The case itself and whatever its unit and its directory link with every case.
+    files: Vec<PathBuf>,
+    /// What its unit's `libs` names, which goes on the link after every file, since a library is
+    /// searched for what the objects before it left undefined.
+    libs: Vec<OsString>,
+}
+
+/// What goes into one case, which is the case itself, whatever its unit links with every case,
+/// and the libraries the unit names.
+fn inputs(case: &Case, corpus: &Corpus) -> Inputs {
+    let mut files = vec![case.file.clone()];
+    let mut libs = Vec::new();
     if let Some(unit) = corpus.units.iter().find(|u| u.name == case.unit) {
-        inputs.extend(unit.link.iter().map(|name| case.dir.join(name)));
+        files.extend(unit.link.iter().map(|name| case.dir.join(name)));
+        libs.extend(unit.libs.iter().map(OsString::from));
     }
     // Then whatever the directory this case is in asks for, which is the files every case there
     // links against and the one helper that belongs to this case alone. The helper is looked for
     // rather than required, so a directory where most cases have one and a few do not is a rule
     // somebody can still write.
     if let Some(rule) = corpus.alongside(&case.unit, &case.name) {
-        inputs.extend(rule.link.iter().map(|name| case.dir.join(name)));
-        inputs.extend(rule.companion_of(&case.file));
+        files.extend(rule.link.iter().map(|name| case.dir.join(name)));
+        files.extend(rule.companion_of(&case.file));
     }
-    inputs
+    Inputs { files, libs }
 }
 
 /// Builds one case one way, and answers with the executable.
@@ -773,7 +785,7 @@ fn build(
     compiler: &Path,
     mine: bool,
     route: Route,
-    inputs: &[PathBuf],
+    inputs: &Inputs,
     case: &Case,
     settings: &Settings,
     out: &Path,
@@ -785,9 +797,10 @@ fn build(
         Route::Driver => {
             let mut args = flags(case, settings);
             args.extend(recording("driver"));
-            for input in inputs {
+            for input in &inputs.files {
                 args.extend(spelled(input, &case.dir));
             }
+            args.extend(inputs.libs.iter().cloned());
             args.push("-o".into());
             args.push(exe.clone().into_os_string());
             once(compiler, &args, &case.dir)?;
@@ -799,8 +812,8 @@ fn build(
                 Route::Assembly => ("-S", "s"),
                 _ => ("-c", "o"),
             };
-            let mut parts = Vec::with_capacity(inputs.len());
-            for (index, input) in inputs.iter().enumerate() {
+            let mut parts = Vec::with_capacity(inputs.files.len());
+            for (index, input) in inputs.files.iter().enumerate() {
                 let part = out.join(format!("part{index}.{ext}"));
                 let mut args = flags(case, settings);
                 args.extend(recording(&format!("part{index}")));
@@ -814,6 +827,7 @@ fn build(
             // The reference compiler is the assembler and the linker, which is what makes this
             // route depend on nothing of ours after the assembly text.
             let mut args: Vec<OsString> = parts.into_iter().map(PathBuf::into_os_string).collect();
+            args.extend(inputs.libs.iter().cloned());
             // Whether the link makes a position independent executable is pinned rather than
             // inherited, because it is a distribution's choice and not a fact about the program.
             // Debian and Ubuntu build gcc to default to `-pie` and a gcc built from source

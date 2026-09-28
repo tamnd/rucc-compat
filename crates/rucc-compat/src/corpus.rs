@@ -253,6 +253,18 @@ pub struct Unit {
     /// the case rather than being built once by the reference, because a helper built by the
     /// reference would hide every bug in the code that calls across a translation unit.
     pub link: Vec<String>,
+    /// Libraries every case of this unit is linked against, each spelled `-lname`.
+    ///
+    /// Apart from [`Unit::flags`] because a flag goes on every compile and a library has to go on
+    /// the link, and two of the three routes compile each file on their own and link the parts
+    /// afterwards with nothing but the parts. A `-lm` in the flags would reach the link on the one
+    /// route that does everything in one invocation and on no other.
+    ///
+    /// libm is the reason it exists. A program that calls `floor` or `sin` is entitled to be
+    /// linked against the library that has them, and gcc folding the call when the argument is a
+    /// constant is what made a suite with no library on its link lines look like it did not need
+    /// one: the object gcc writes never names the function, and the object rucc writes does.
+    pub libs: Vec<String>,
 }
 
 /// What goes on the command line of every case in one directory of a unit.
@@ -754,6 +766,14 @@ fn unit(fields: &Fields, whose: &str) -> Result<Unit, Error> {
     if files.is_empty() && dir.is_none() {
         return Err(Error { message: format!("{whose}: a unit needs `files` or `dir`") });
     }
+    let libs = fields.list("libs");
+    if let Some(odd) = libs.iter().find(|lib| !lib.starts_with("-l") || lib.len() == 2) {
+        return Err(Error {
+            message: format!(
+                "{whose}: `libs` holds `{odd}`, which is not a library spelled `-lname`"
+            ),
+        });
+    }
     Ok(Unit {
         name,
         kind,
@@ -762,6 +782,7 @@ fn unit(fields: &Fields, whose: &str) -> Result<Unit, Error> {
         skip: fields.list("skip"),
         flags: fields.list("flags"),
         link: fields.list("link"),
+        libs,
     })
 }
 
@@ -1256,6 +1277,31 @@ mod tests {
         fake.corpus("sys", &text);
         let e = load(&fake.root, "sys").unwrap_err();
         assert!(e.message.contains("says nothing"), "{}", e.message);
+    }
+
+    #[test]
+    fn a_unit_may_name_the_libraries_its_cases_link_against() {
+        let fake = Fake::new("libs");
+        let text =
+            INSTALLED.replace("files = [\"stdio.h\"]", "files = [\"stdio.h\"]\nlibs = [\"-lm\"]");
+        fake.corpus("sys", &text);
+        assert_eq!(load(&fake.root, "sys").unwrap().units[0].libs, ["-lm"]);
+        fake.corpus("sys", INSTALLED);
+        assert!(load(&fake.root, "sys").unwrap().units[0].libs.is_empty());
+    }
+
+    #[test]
+    fn a_library_not_spelled_as_one_is_refused() {
+        let fake = Fake::new("libs-odd");
+        for odd in ["m", "-l", "-O2"] {
+            let text = INSTALLED.replace(
+                "files = [\"stdio.h\"]",
+                &format!("files = [\"stdio.h\"]\nlibs = [\"{odd}\"]"),
+            );
+            fake.corpus("sys", &text);
+            let e = load(&fake.root, "sys").unwrap_err();
+            assert!(e.message.contains(&format!("`{odd}`")), "{}", e.message);
+        }
     }
 
     #[test]

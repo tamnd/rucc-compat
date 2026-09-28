@@ -163,6 +163,7 @@ mod tests {
                 skip: Vec::new(),
                 flags: Vec::new(),
                 link: Vec::new(),
+                libs: Vec::new(),
             }],
             alongside: Vec::new(),
             excluded: Vec::new(),
