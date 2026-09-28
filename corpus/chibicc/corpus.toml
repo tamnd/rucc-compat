@@ -90,11 +90,11 @@ skip = [
 # the header the compiler did not ship and the access to an atomic object underneath it, which
 # `test/atomic.c` wanted. The compile side of this list is empty again.
 
-[[exec-exclude]]
-case = "test/asm.c"
-issue = "https://github.com/tamnd/rucc/issues/349"
-why = "an asm with instructions in its template needs an assembler, E0653"
-outcome = "did not build"
+# `test/asm.c` was here under tamnd/rucc#349, first because an asm with instructions in its
+# template needed an assembler. Once that was closed it built and hung instead: its asm statements
+# return early with `mov %rbp, %rsp; pop %rbp; ret`, which needs the frame gcc keeps at `-O0`, and
+# rucc kept no frame pointer at any level. tamnd/rucc#1959 keeps one at `-O0`, and the file passes
+# on all three routes. Above `-O0` gcc drops the frame too and the case is skipped.
 
 # `test/vla.c` was here and is not any more, and it took two separate things to get it out.
 # The entry said the frame does not grow during the body, which is tamnd/rucc#291, and once that
