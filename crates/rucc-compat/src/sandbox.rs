@@ -11,10 +11,15 @@
 //! program that returned 139 from `main` look identical to a shell, and they are opposite
 //! events: the first is nearly always a miscompilation and the second is nearly always the
 //! test doing what it was written to do. So the end of a run is [`End`] rather than a number.
+//!
+//! Every run also says how long it took and, where the machine can say, the most memory it held
+//! at once. Nothing here judges either number. They are what the `measure` command holds a
+//! compiler to, since a compiler that gets the right answer while taking eight gigabytes to do it
+//! has still failed the person who ran it.
 
 use std::ffi::OsStr;
 use std::path::Path;
-use std::process::{Command, ExitStatus, Stdio};
+use std::process::{Child, Command, ExitStatus, Stdio};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -92,6 +97,19 @@ pub struct Ran {
     pub out: Vec<u8>,
     /// Everything it wrote to standard error, which is captured and never compared.
     pub err: Vec<u8>,
+    /// How long it ran, from being started to being seen to have ended.
+    ///
+    /// Seen rather than exact, because the wait is a poll that sleeps at most twenty milliseconds
+    /// between looks. That is noise on anything worth timing and it is the same noise for both
+    /// compilers.
+    pub took: Duration,
+    /// The most resident memory it held at any one time, in kibibytes, or `None` where this
+    /// machine has no way to say.
+    ///
+    /// The kernel's own high water mark, handed back when the process is reaped, so a peak that
+    /// lasted a millisecond is counted the same as one that lasted the whole run. Sampling from
+    /// outside would miss exactly the short spikes a regression in a compiler tends to be.
+    pub peak: Option<u64>,
 }
 
 impl Ran {
@@ -145,27 +163,31 @@ pub fn run<A: AsRef<OsStr>>(
 
     let started = Instant::now();
     let mut nap = Duration::from_micros(200);
-    let end = loop {
-        match child.try_wait() {
+    let (end, peak) = loop {
+        match reap(&mut child, false) {
             Err(e) => return Err(format!("could not wait for {}: {e}", program.display())),
-            Ok(Some(status)) => break end_of(status),
+            Ok(Some((status, peak))) => break (end_of(status), peak),
             Ok(None) => {}
         }
         if started.elapsed() >= limits.timeout {
             let _ = child.kill();
-            let _ = child.wait();
-            break End::TimedOut;
+            let peak = match reap(&mut child, true) {
+                Ok(Some((_, peak))) => peak,
+                _ => None,
+            };
+            break (End::TimedOut, peak);
         }
         thread::sleep(nap);
         // A program that ends immediately is noticed almost at once, and one that is going to
         // take its ten seconds is not asked ten thousand times whether it is done yet.
         nap = (nap * 2).min(Duration::from_millis(20));
     };
+    let took = started.elapsed();
 
     let taken = |handle: Option<thread::JoinHandle<Vec<u8>>>| {
         handle.and_then(|h| h.join().ok()).unwrap_or_default()
     };
-    Ok(Ran { end, out: taken(out), err: taken(err) })
+    Ok(Ran { end, out: taken(out), err: taken(err), took, peak })
 }
 
 /// A thread that reads one pipe to its end.
@@ -201,6 +223,70 @@ fn plain<A: AsRef<OsStr>>(program: &Path, args: &[A]) -> Command {
     let mut command = Command::new(program);
     command.args(args);
     command
+}
+
+/// Waits for the child, or only looks when `block` is false, and answers with how it ended and
+/// its peak resident memory in kibibytes.
+///
+/// `wait4` rather than the standard library's wait, because the standard library throws away the
+/// resource usage the kernel hands back with the exit status, and that is the only place the high
+/// water mark of a process that has already ended can be read from. The layout declared here is
+/// the one both Linux and macOS use on every target this harness is built for: two `timeval`s,
+/// each two `long`s wide once padding is counted, then fourteen `long`s, of which the peak is the
+/// first.
+#[cfg(unix)]
+fn reap(child: &mut Child, block: bool) -> std::io::Result<Option<(ExitStatus, Option<u64>)>> {
+    use std::ffi::{c_int, c_long};
+    use std::os::unix::process::ExitStatusExt as _;
+
+    #[repr(C)]
+    struct Usage {
+        times: [c_long; 4],
+        peak: c_long,
+        rest: [c_long; 13],
+    }
+
+    unsafe extern "C" {
+        fn wait4(pid: c_int, status: *mut c_int, options: c_int, usage: *mut Usage) -> c_int;
+    }
+
+    /// The same value on Linux and on macOS.
+    const WNOHANG: c_int = 1;
+
+    let pid = c_int::try_from(child.id()).map_err(std::io::Error::other)?;
+    loop {
+        let mut status: c_int = 0;
+        let mut usage = Usage { times: [0; 4], peak: 0, rest: [0; 13] };
+        let options = if block { 0 } else { WNOHANG };
+        // SAFETY: `pid` is a child of this process that nothing else waits for, since the
+        // standard library only reaps a child when asked to and nothing here asks. Both pointers
+        // are to locals that live across the call, and `Usage` is laid out as `struct rusage` is.
+        let got = unsafe { wait4(pid, &raw mut status, options, &raw mut usage) };
+        if got == pid {
+            // Linux counts the peak in kibibytes and macOS counts it in bytes.
+            let peak = u64::try_from(usage.peak).ok().filter(|kib| *kib > 0);
+            let peak =
+                if cfg!(target_os = "macos") { peak.map(|bytes| bytes / 1024) } else { peak };
+            return Ok(Some((ExitStatus::from_raw(status), peak)));
+        }
+        if got == 0 {
+            return Ok(None);
+        }
+        let e = std::io::Error::last_os_error();
+        if e.kind() != std::io::ErrorKind::Interrupted {
+            return Err(e);
+        }
+    }
+}
+
+/// Everywhere else the standard library's wait, and no peak, which the report says out loud
+/// rather than printing a number that was never measured.
+#[cfg(not(unix))]
+fn reap(child: &mut Child, block: bool) -> std::io::Result<Option<(ExitStatus, Option<u64>)>> {
+    match block {
+        true => child.wait().map(|status| Some((status, None))),
+        false => child.try_wait().map(|status| status.map(|status| (status, None))),
+    }
 }
 
 #[cfg(unix)]
@@ -381,6 +467,43 @@ mod tests {
             End::Signalled { number: 11, name: "SIGSEGV" }
         );
         assert_eq!(sh("printf under", &limits).text(), "under");
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn a_run_says_how_long_it_took() {
+        let ran = sh("sleep 0.3", &Limits::default());
+        assert_eq!(ran.end, End::Exited(0));
+        assert!(ran.took >= Duration::from_millis(300), "{:?}", ran.took);
+        assert!(ran.took < Duration::from_secs(5), "{:?}", ran.took);
+    }
+
+    /// The peak is read when the process is reaped, so it has to be there for a program that has
+    /// already ended and it has to count memory the program let go of before it did.
+    #[test]
+    #[cfg(unix)]
+    fn a_run_says_the_most_memory_it_held_and_a_bigger_program_holds_more() {
+        let small = sh("exit 0", &Limits::default());
+        // Sixteen megabytes held in a shell variable, then dropped before the shell exits.
+        let big = sh(
+            "x=$(head -c 16777216 /dev/zero | tr '\\0' a); y=${#x}; x=; exit 0",
+            &Limits { timeout: Duration::from_secs(60), ..Limits::default() },
+        );
+        assert_eq!(big.end, End::Exited(0));
+        let small = small.peak.expect("a unix machine reports a peak");
+        let big = big.peak.expect("a unix machine reports a peak");
+        assert!(small > 0);
+        assert!(big >= 16 * 1024, "the peak was {big} KiB");
+        assert!(big > small);
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn a_program_that_is_killed_for_time_still_has_how_long_it_took() {
+        let limits = Limits { timeout: Duration::from_millis(300), ..Limits::default() };
+        let ran = sh("while : ; do : ; done", &limits);
+        assert_eq!(ran.end, End::TimedOut);
+        assert!(ran.took >= Duration::from_millis(300));
     }
 
     #[test]

@@ -271,6 +271,26 @@ pub struct Unit {
     /// constant is what made a suite with no library on its link lines look like it did not need
     /// one: the object gcc writes never names the function, and the object rucc writes does.
     pub libs: Vec<String>,
+    /// How many seconds rucc may take to compile one file of this unit, for `measure`.
+    ///
+    /// A unit with neither this nor [`Unit::megabytes`] is not measured at all. The bound is on
+    /// the compiler under test and nothing else: the reference is timed next to it so a reader can
+    /// see what the file costs a mature compiler, and is never judged by it.
+    pub seconds: Option<u64>,
+    /// How much resident memory rucc may hold at once compiling one file of this unit, in MiB.
+    ///
+    /// Resident rather than address space, because the regressions this catches are a compiler
+    /// keeping every function's IR alive at once, and those show up as pages touched. A limit on
+    /// address space would also count what an allocator reserves and never uses.
+    pub megabytes: Option<u64>,
+}
+
+impl Unit {
+    /// Whether `measure` holds this unit to a bound.
+    #[must_use]
+    pub fn is_bounded(&self) -> bool {
+        self.seconds.is_some() || self.megabytes.is_some()
+    }
 }
 
 /// What goes on the command line of every case in one directory of a unit.
@@ -396,6 +416,11 @@ pub struct Corpus {
     /// easily do the first and not the second. One list would make an entry ambiguous about
     /// which of the two it was excusing.
     pub exec_excluded: Vec<Exclusion>,
+    /// The optimization levels `measure` compiles each bounded file at, each one of [`LEVELS`].
+    ///
+    /// Written down per corpus rather than assumed, because the cost of a file moves a long way
+    /// between levels and a bound that was set at `-O0` says nothing about `-O2`.
+    pub levels: Vec<String>,
 }
 
 impl Corpus {
@@ -541,6 +566,22 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
     let excluded = exclusions(&doc, "exclude", &whose, false)?;
     let exec_excluded = exclusions(&doc, "exec-exclude", &whose, true)?;
     let settled = settled(&doc, &whose)?;
+    let levels = root.list("levels");
+    if let Some(odd) = levels.iter().find(|level| !LEVELS.contains(&level.as_str())) {
+        return Err(Error {
+            message: format!(
+                "{whose}: `levels` holds `{odd}`, which is not one of {}",
+                LEVELS.join(", ")
+            ),
+        });
+    }
+    if levels.is_empty() && units.iter().any(Unit::is_bounded) {
+        return Err(Error {
+            message: format!(
+                "{whose}: a unit has a bound and there are no `levels`, so `measure` would not know what to compile it at"
+            ),
+        });
+    }
     if oracle.is_none() && !exec_excluded.is_empty() {
         return Err(Error {
             message: format!(
@@ -560,6 +601,7 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
         oracle,
         timeout,
         exec_excluded,
+        levels,
     })
 }
 
@@ -782,6 +824,22 @@ fn unit(fields: &Fields, whose: &str) -> Result<Unit, Error> {
             ),
         });
     }
+    let bound = |key: &str| match fields.int(key) {
+        None => Ok(None),
+        Some(n) if n > 0 => Ok(Some(u64::try_from(n).expect("a positive number"))),
+        Some(n) => Err(Error {
+            message: format!("{whose}: unit `{name}` has `{key}` {n}, which is not a bound"),
+        }),
+    };
+    let seconds = bound("seconds")?;
+    let megabytes = bound("megabytes")?;
+    if (seconds.is_some() || megabytes.is_some()) && kind != UnitKind::Source {
+        return Err(Error {
+            message: format!(
+                "{whose}: unit `{name}` is a header unit with a bound, and `measure` compiles source files"
+            ),
+        });
+    }
     Ok(Unit {
         name,
         kind,
@@ -791,6 +849,8 @@ fn unit(fields: &Fields, whose: &str) -> Result<Unit, Error> {
         flags: fields.list("flags"),
         link: fields.list("link"),
         libs,
+        seconds,
+        megabytes,
     })
 }
 
@@ -1331,6 +1391,71 @@ mod tests {
             let e = load(&fake.root, "sys").unwrap_err();
             assert!(e.message.contains(&format!("`{odd}`")), "{}", e.message);
         }
+    }
+
+    const BOUNDED: &str = "name = \"big\"\nsummary = \"one large file\"\nsource = \"installed\"\nlevels = [\"0\", \"2\"]\n\n[[unit]]\nname = \"grammar\"\nkind = \"source\"\nfiles = [\"gram.c\"]\nseconds = 90\nmegabytes = 2048\n";
+
+    #[test]
+    fn a_unit_may_bound_the_time_and_memory_one_of_its_files_costs() {
+        let fake = Fake::new("bounded");
+        fake.corpus("big", BOUNDED);
+        let corpus = load(&fake.root, "big").unwrap();
+        assert_eq!(corpus.levels, ["0", "2"]);
+        let unit = &corpus.units[0];
+        assert_eq!((unit.seconds, unit.megabytes), (Some(90), Some(2048)));
+        assert!(unit.is_bounded());
+        fake.corpus("sys", INSTALLED);
+        let plain = load(&fake.root, "sys").unwrap();
+        assert!(!plain.units[0].is_bounded());
+        assert!(plain.levels.is_empty());
+    }
+
+    #[test]
+    fn one_bound_on_its_own_is_enough() {
+        let fake = Fake::new("bounded-one");
+        fake.corpus("big", &BOUNDED.replace("seconds = 90\n", ""));
+        let unit = &load(&fake.root, "big").unwrap().units[0];
+        assert_eq!((unit.seconds, unit.megabytes), (None, Some(2048)));
+        assert!(unit.is_bounded());
+    }
+
+    #[test]
+    fn a_bound_that_is_not_a_positive_number_is_refused() {
+        let fake = Fake::new("bounded-odd");
+        for odd in ["seconds = 0", "megabytes = -1"] {
+            let key = odd.split(' ').next().unwrap();
+            let text = BOUNDED
+                .replace("seconds = 90", "")
+                .replace("megabytes = 2048", "")
+                .replace("files = [\"gram.c\"]", &format!("files = [\"gram.c\"]\n{odd}"));
+            fake.corpus("big", &text);
+            let e = load(&fake.root, "big").unwrap_err();
+            assert!(e.message.contains(&format!("`{key}`")), "{}", e.message);
+        }
+    }
+
+    #[test]
+    fn a_bound_with_no_levels_to_measure_it_at_is_refused() {
+        let fake = Fake::new("bounded-no-levels");
+        fake.corpus("big", &BOUNDED.replace("levels = [\"0\", \"2\"]\n", ""));
+        let e = load(&fake.root, "big").unwrap_err();
+        assert!(e.message.contains("no `levels`"), "{}", e.message);
+    }
+
+    #[test]
+    fn a_level_that_is_not_one_is_refused() {
+        let fake = Fake::new("bounded-odd-level");
+        fake.corpus("big", &BOUNDED.replace("\"2\"]", "\"fast\"]"));
+        let e = load(&fake.root, "big").unwrap_err();
+        assert!(e.message.contains("`fast`"), "{}", e.message);
+    }
+
+    #[test]
+    fn a_header_unit_cannot_be_bounded() {
+        let fake = Fake::new("bounded-headers");
+        fake.corpus("big", &BOUNDED.replace("kind = \"source\"", "kind = \"headers\""));
+        let e = load(&fake.root, "big").unwrap_err();
+        assert!(e.message.contains("header unit"), "{}", e.message);
     }
 
     #[test]

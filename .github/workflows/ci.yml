@@ -210,6 +210,55 @@ jobs:
           path: results/
           if-no-files-found: ignore
 
+  # What the largest files rucc is asked to compile cost it, in time and in memory, held to the
+  # bounds the scale manifest sets. None of the jobs above would notice a compiler that gets the
+  # right answer while holding every function of a file in memory at once, and that regression
+  # has happened twice, as tamnd/rucc#769 and tamnd/rucc#1497.
+  #
+  # Outside the required check for the reason the pipeline job is: it builds rucc from its main
+  # branch. The runner's own gcc is the reference, because the reference is only there to put a
+  # number next to rucc's and is never judged, so a particular gcc buys nothing here.
+  measure:
+    name: measure over scale
+    needs: quick
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: check out the compiler
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: tamnd/rucc
+          path: rucc
+      - uses: Swatinem/rust-cache@v2.9.2
+      - name: build the compiler
+        run: cargo build --release --bin rucc --manifest-path rucc/Cargo.toml
+      - name: build the harness
+        run: cargo build --release
+      - name: name the cache after the tarball
+        id: tarball
+        run: |
+          sha=$(sed -n 's/^sha256 = "\(.*\)"$/\1/p' corpus/scale/corpus.toml)
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+      - name: reuse the download if we have it
+        uses: actions/cache@v6.1.0
+        with:
+          path: vendor/scale/*.tar.*
+          key: corpus-scale-${{ steps.tarball.outputs.sha }}
+      - name: fetch the corpus
+        run: ./target/release/rucc-compat fetch scale
+      - name: compile each file and hold it to its bounds
+        run: |
+          ./target/release/rucc-compat measure scale \
+            --rucc rucc/target/release/rucc --cc gcc \
+            --machine github-ubuntu-24.04 --report
+      - name: keep the report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: measure-scale
+          path: results/
+          if-no-files-found: ignore
+
   # The programs built and run, which is the only job here that says anything about the back
   # half of the compiler. Every job above can be green while the executable prints the wrong
   # answer, because every job above is a question about compiling.

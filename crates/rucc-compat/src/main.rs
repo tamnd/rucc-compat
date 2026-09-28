@@ -8,8 +8,8 @@ use rucc_compat::corpus::{self, Corpus, Source};
 use rucc_compat::coverage::{self, Marks, Verdict};
 use rucc_compat::differ::{self, Settings};
 use rucc_compat::exec::{self, Route};
-use rucc_compat::pipeline;
 use rucc_compat::{fetch, repo_root};
+use rucc_compat::{measure, pipeline};
 
 const USAGE: &str = "\
 rucc-compat, the compatibility harness for rucc
@@ -20,6 +20,7 @@ usage:
   rucc-compat run [corpus...] [options]
   rucc-compat check [corpus...] [options]
   rucc-compat exec [corpus...] [options]
+  rucc-compat measure [corpus...] [options]
   rucc-compat coverage [file or directory...] [--report] [--floor PERCENT] [--unreached]
 
 commands:
@@ -28,15 +29,17 @@ commands:
   run              preprocess with rucc and with cc and report the differences
   check            take a corpus through rucc alone: tast, ir, and the ir round trip
   exec             build the programs, run them, and say whether they were right
+  measure          time the bounded files through rucc and fail over a time or memory bound
   coverage         union what exec recorded and say which lowering rules nothing fired
 
 options:
   --rucc PATH      the compiler under test, or $RUCC, or `rucc`
-  --cc PATH        run and exec: the reference compiler, or $CC, or `cc`
+  --cc PATH        run, exec and measure: the reference compiler, or $CC, or `cc`
+  --no-reference   measure only: time rucc on its own
   --markers        run only: compare line markers as well as tokens
   --path NAME      exec only: build this way, one of assembly, object, driver, repeatable
-  --opt LEVEL      exec only: the level to pass both compilers after -O
-  --machine NAME   exec only: what to call this machine in the report
+  --opt LEVEL      exec and measure: the level to pass both compilers after -O
+  --machine NAME   exec and measure: what to call this machine in the report
   --timeout N      exec only: seconds per run, over what the manifest asks for
   --rule-coverage FILE
                    exec only: ask which lowering rules fired and union it into FILE
@@ -64,6 +67,11 @@ a manifest tracks work rather than hiding it.
 which is every case the rule could fire on, so it says the same thing about staleness as a
 sweep does over a small fraction of the work. It is the run to make after closing a gap, when
 the question is which entries come off the list rather than whether anything broke.
+
+`measure` looks only at units that name a `seconds` or `megabytes` bound, and compiles each of
+their files at each of the corpus's `levels`, one at a time so that the times mean something. It
+fails when rucc goes over a bound, and the reference is timed alongside for comparison only. A
+corpus with no bounded unit is passed over.
 
 `exec` runs a corpus only when its manifest names an oracle, since without one there is
 nothing to decide a run by. A corpus with no oracle is reported as such and passed over.
@@ -117,6 +125,7 @@ fn run() -> Result<ExitCode, String> {
         "run" => run_them(&repo, &all, rest),
         "check" => check_them(&repo, &all, rest),
         "exec" => exec_them(&repo, &all, rest),
+        "measure" => measure_them(&repo, &all, rest),
         "coverage" => coverage_of(&repo, rest),
         other => Err(format!("`{other}` is not a command, try --help")),
     }
@@ -451,6 +460,83 @@ fn exec_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, S
         fs::write(&path, fired.listing()).map_err(|e| format!("{}: {e}", path.display()))?;
         println!("{}", fired.summary());
         println!("  wrote {}", path.display());
+    }
+    Ok(if failures == 0 { ExitCode::SUCCESS } else { ExitCode::FAILURE })
+}
+
+fn measure_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, String> {
+    let mut settings = measure::Settings {
+        rucc: from_env("RUCC", "rucc"),
+        cc: Some(from_env("CC", "cc")),
+        ..measure::Settings::default()
+    };
+    let mut report = false;
+    let mut names = Vec::new();
+    let mut at = 0;
+    while at < args.len() {
+        let arg = args[at].as_str();
+        match arg {
+            "--report" => report = true,
+            "--rucc" => settings.rucc = PathBuf::from(value(args, &mut at, arg)?),
+            "--cc" => settings.cc = Some(PathBuf::from(value(args, &mut at, arg)?)),
+            "--no-reference" => settings.cc = None,
+            "--unit" => settings.unit = Some(value(args, &mut at, arg)?),
+            "--opt" => settings.opt = Some(value(args, &mut at, arg)?),
+            "--machine" => settings.machine = Some(value(args, &mut at, arg)?),
+            "--only" => settings.only.push(value(args, &mut at, arg)?),
+            other if other.starts_with('-') => {
+                return Err(format!("`{other}` is not an option of measure"));
+            }
+            other => names.push(other.to_owned()),
+        }
+        at += 1;
+    }
+    let wanted = chosen(all, &names)?;
+    let scratch = repo.join("target").join("measure");
+    let mut failures = 0;
+    for corpus in wanted {
+        if !corpus.units.iter().any(|unit| unit.is_bounded()) {
+            // Not a failure. Most corpora are about getting an answer right, and a corpus that
+            // sets no bound has said nothing about what it may cost.
+            if !names.is_empty() {
+                println!("{}: no bounded unit, nothing to measure", corpus.name);
+            }
+            continue;
+        }
+        if !corpus.applies() {
+            println!("{}: not this machine, skipped", corpus.name);
+            continue;
+        }
+        if !corpus.is_fetched(repo) {
+            eprintln!("{}: not fetched, run `rucc-compat fetch {}`", corpus.name, corpus.name);
+            failures += 1;
+            continue;
+        }
+        let scratch = scratch.join(&corpus.name);
+        let done = measure::run(repo, corpus, &settings, &scratch).map_err(|e| e.to_string())?;
+        println!("{}", done.summary());
+        for outcome in &done.outcomes {
+            let ours = outcome.ours.map_or_else(|| "not run".to_owned(), |c| c.said());
+            let theirs = match outcome.theirs {
+                Some(cost) => format!(", reference {}", cost.said()),
+                None => String::new(),
+            };
+            println!(
+                "  {} at -O{}: {} ({ours}{theirs}, bound {})",
+                outcome.case,
+                outcome.level,
+                outcome.status.word(),
+                outcome.bound.said()
+            );
+        }
+        if report {
+            let dir = repo.join("results");
+            fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+            let path = dir.join(measure::result_file(&corpus.name));
+            fs::write(&path, measure::markdown(&done)).map_err(|e| e.to_string())?;
+            println!("  wrote {}", path.display());
+        }
+        failures += done.failures();
     }
     Ok(if failures == 0 { ExitCode::SUCCESS } else { ExitCode::FAILURE })
 }

@@ -167,6 +167,8 @@ mod tests {
                 flags: Vec::new(),
                 link: Vec::new(),
                 libs: Vec::new(),
+                seconds: None,
+                megabytes: None,
             }],
             alongside: Vec::new(),
             excluded: Vec::new(),
@@ -174,6 +176,7 @@ mod tests {
             oracle: None,
             timeout: crate::corpus::TIMEOUT,
             exec_excluded: Vec::new(),
+            levels: Vec::new(),
         }
     }
 
