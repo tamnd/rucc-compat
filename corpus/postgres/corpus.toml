@@ -41,18 +41,3 @@ skip = [
   # so this is not a gap.
   "src/common/unicode/norm_test.c",
 ]
-
-# 1575 of the 1579 cases get through. The other four fail only at the IR round trip, and all
-# four are the same bug. A static function whose unread pointer parameter gets removed at -O2
-# keeps the `!aligned` fact on that parameter, the printer writes it as `%?`, and the text does
-# not read back. The build compiles at -O2, so this corpus sees the bug and -O0 does not.
-
-[[exclude]]
-cases = [
-  "meson/src/backend/backup/basebackup.c",
-  "meson/src/backend/parser/gram.c",
-  "meson/src/backend/utils/adt/selfuncs.c",
-  "meson/src/backend/utils/adt/varlena.c",
-]
-issue = "https://github.com/tamnd/rucc/issues/2048"
-why = "a dropped parameter keeps its !aligned fact, which prints as %? and does not read back"
