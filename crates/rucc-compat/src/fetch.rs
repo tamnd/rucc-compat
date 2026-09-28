@@ -158,6 +158,7 @@ mod tests {
             summary: "s".to_owned(),
             source,
             probe: Vec::new(),
+            arch: Vec::new(),
             units: vec![Unit {
                 name: "amalgamation".to_owned(),
                 kind: UnitKind::Source,
