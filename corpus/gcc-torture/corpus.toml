@@ -259,10 +259,9 @@ cases = [
 # `execute/pr47237.c` was in the block below and is not any more. It calls `__builtin_apply_args`
 # and `__builtin_apply`, which tamnd/rucc#1914 builds on x86-64, and it came off the execution list
 # in the same change. It passes at every level.
-[[exclude]]
-case = "execute/pr80692.c"
-issue = "https://github.com/tamnd/rucc/issues/207"
-why = "decimal floating constants are not supported"
+# `execute/pr80692.c` was excluded here for its `_Decimal64` constants, and is not any more. The
+# decimal types are compiled through libgcc's BID routines since tamnd/rucc#1978, and it passes at
+# every level.
 
 # Thirty one programs used to be here, under tamnd/rucc#489, for naming an option the driver did
 # not take. That issue is closed and thirteen of them came off this list with it. Eighteen were
@@ -400,9 +399,6 @@ why = "decimal floating constants are not supported"
 # with `t` and `u` operands, which are pushed before the template and popped after it now,
 # tamnd/rucc#1954.
 
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/207"
-why = "decimal floating constants are not supported"
-outcome = "did not build"
-case = "execute/pr80692.c"
+# `execute/pr80692.c` was the last one here, under tamnd/rucc#207, and builds and runs since
+# tamnd/rucc#1978.
 
