@@ -473,6 +473,15 @@ fn exec_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, S
     Ok(if failures == 0 { ExitCode::SUCCESS } else { ExitCode::FAILURE })
 }
 
+/// A relative path with a directory in it, made absolute against the working directory.
+fn anchored(path: PathBuf) -> PathBuf {
+    if path.is_relative() && path.components().count() > 1 {
+        std::env::current_dir().map_or(path.clone(), |here| here.join(&path))
+    } else {
+        path
+    }
+}
+
 fn measure_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, String> {
     let mut settings = measure::Settings {
         rucc: from_env("RUCC", "rucc"),
@@ -500,6 +509,11 @@ fn measure_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode
         }
         at += 1;
     }
+    // Each compile runs in the directory of the file it compiles, so a relative path such as
+    // `rucc/target/release/rucc` has to be made absolute here or it names nothing there. A bare
+    // name is left for the search path to find.
+    settings.rucc = anchored(settings.rucc);
+    settings.cc = settings.cc.map(anchored);
     let wanted = chosen(all, &names)?;
     let scratch = repo.join("target").join("measure");
     let mut failures = 0;
@@ -537,6 +551,12 @@ fn measure_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode
                 outcome.status.word(),
                 outcome.bound.said()
             );
+            if let measure::Status::DidNotBuild(why)
+            | measure::Status::Crashed(why)
+            | measure::Status::Skipped(why) = &outcome.status
+            {
+                println!("    {why}");
+            }
         }
         if report {
             let dir = repo.join("results");
@@ -658,5 +678,21 @@ fn from_env(name: &str, fallback: &str) -> PathBuf {
     match std::env::var(name) {
         Ok(value) if !value.is_empty() => PathBuf::from(value),
         _ => PathBuf::from(fallback),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_relative_compiler_path_is_made_absolute_and_a_bare_name_is_not() {
+        let here = std::env::current_dir().expect("a working directory");
+        assert_eq!(
+            anchored(PathBuf::from("rucc/target/release/rucc")),
+            here.join("rucc/target/release/rucc")
+        );
+        assert_eq!(anchored(PathBuf::from("gcc")), PathBuf::from("gcc"));
+        assert_eq!(anchored(PathBuf::from("/usr/bin/gcc")), PathBuf::from("/usr/bin/gcc"));
     }
 }
