@@ -443,34 +443,64 @@ fn collapse(line: &str) -> String {
     out
 }
 
-/// The first line the two disagree on, found in `by` and printed from `show`.
+/// The first line the two disagree on, found in `by` and printed from the collapsed lines.
 ///
 /// Two arrays because the question and the answer are not the same text. A token difference is
 /// located by comparing tokens, since a search over the collapsed lines would stop at the
 /// first line whose spacing differs and report a missing space as though it were the bug. What
 /// gets printed is still the line, because that is what a reader can act on.
 ///
-/// `by` and `show` are the same length and line up, so an index found in one is valid in the
-/// other.
+/// The tokens are compared as one stream and not a line at a time. gcc breaks the expansion of a
+/// macro from a system header over four lines where rucc writes one, so a comparison of lines
+/// stops there and prints a spacing difference, while the token that really differs is further
+/// on. Each side then prints the line that holds the first token they disagree on, and those
+/// need not be the same line number.
 fn first_difference(ours: &Normalized, theirs: &Normalized, by: By) -> Diff {
     let (mine, yours) = match by {
-        By::Tokens => (&ours.tokens, &theirs.tokens),
-        By::Spacing => (&ours.spacing, &theirs.spacing),
-        By::Markers => (&ours.markers, &theirs.markers),
+        By::Tokens => {
+            let (mine, yours) = (numbered(&ours.tokens), numbered(&theirs.tokens));
+            let mut at = 0;
+            while at < mine.len() && at < yours.len() && mine[at].1 == yours[at].1 {
+                at += 1;
+            }
+            let line = |side: &[(usize, &str)], lines: &[String]| {
+                side.get(at).map_or(lines.len(), |&(line, _)| line)
+            };
+            (line(&mine, &ours.spacing), line(&yours, &theirs.spacing))
+        }
+        By::Spacing => at_first(&ours.spacing, &theirs.spacing),
+        By::Markers => at_first(&ours.markers, &theirs.markers),
     };
-    let mut at = 0;
-    while at < mine.len() && at < yours.len() && mine[at] == yours[at] {
-        at += 1;
-    }
     let (show_ours, show_theirs) = match by {
         By::Markers => (&ours.markers, &theirs.markers),
         By::Tokens | By::Spacing => (&ours.spacing, &theirs.spacing),
     };
+    let end = || "<end of output>".to_owned();
     Diff {
-        line: at + 1,
-        ours: show_ours.get(at).cloned().unwrap_or_else(|| "<end of output>".to_owned()),
-        theirs: show_theirs.get(at).cloned().unwrap_or_else(|| "<end of output>".to_owned()),
+        line: mine + 1,
+        ours: show_ours.get(mine).cloned().unwrap_or_else(end),
+        theirs: show_theirs.get(yours).cloned().unwrap_or_else(end),
     }
+}
+
+/// Where two lists of lines first disagree, the same index on both sides.
+fn at_first(mine: &[String], yours: &[String]) -> (usize, usize) {
+    let mut at = 0;
+    while at < mine.len() && at < yours.len() && mine[at] == yours[at] {
+        at += 1;
+    }
+    (at, at)
+}
+
+/// Every token of an output in order, with the line it is on.
+fn numbered(lines: &[String]) -> Vec<(usize, &str)> {
+    let mut out = Vec::new();
+    for (at, line) in lines.iter().enumerate() {
+        out.extend(
+            line.split(SEPARATOR).filter(|token| !token.is_empty()).map(|token| (at, token)),
+        );
+    }
+    out
 }
 
 /// Which of the three forms a search runs over.
@@ -1229,6 +1259,18 @@ mod tests {
         let diff = first_difference(&ours, &theirs, By::Tokens);
         assert_eq!(diff.line, 2);
         assert_eq!(diff.ours, "<end of output>");
+    }
+
+    #[test]
+    fn a_line_broken_in_another_place_does_not_hide_the_token_difference_after_it() {
+        // The shape of a system header macro: gcc breaks the expansion over lines and rucc
+        // writes it on one. The tokens agree until `z`, which is two lines further on in ours.
+        let ours = normalize("x = f ( 1 , 2 );\nint a;\nint b;\n");
+        let theirs = normalize("x =\nf ( 1 , 2 )\n;\nint a;\nint z;\n");
+        let diff = first_difference(&ours, &theirs, By::Tokens);
+        assert_eq!(diff.line, 3);
+        assert_eq!(diff.ours, "int b;");
+        assert_eq!(diff.theirs, "int z;");
     }
 
     #[test]
