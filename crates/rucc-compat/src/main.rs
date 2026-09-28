@@ -136,6 +136,7 @@ fn list(repo: &Path, all: &[Corpus]) -> Result<ExitCode, String> {
         let state = match &corpus.source {
             _ if !corpus.applies() => "not this machine".to_owned(),
             Source::Installed => "installed".to_owned(),
+            Source::Local => "in this repository".to_owned(),
             Source::Tarball(t) if !t.is_recorded() => "hash unrecorded".to_owned(),
             Source::Tarball(t) if corpus.is_fetched(repo) => format!("vendored {}", t.version),
             Source::Tarball(t) => format!("not fetched, {}", t.version),
@@ -160,9 +161,16 @@ fn fetch_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, 
     let wanted = chosen(all, &names)?;
     let mut failed = false;
     for corpus in wanted {
-        if corpus.source == Source::Installed {
-            println!("{}: installed, nothing to fetch", corpus.name);
-            continue;
+        match corpus.source {
+            Source::Installed => {
+                println!("{}: installed, nothing to fetch", corpus.name);
+                continue;
+            }
+            Source::Local => {
+                println!("{}: in this repository, nothing to fetch", corpus.name);
+                continue;
+            }
+            Source::Tarball(_) => {}
         }
         match fetch::fetch(repo, corpus, record) {
             Ok(done) if record => println!("{}: sha256 {}", corpus.name, done.sha256),

@@ -50,6 +50,12 @@ pub enum Source {
     Installed,
     /// A tarball at a pinned version, fetched and verified before it is unpacked.
     Tarball(Tarball),
+    /// Programs written for this repository and kept next to the manifest, in `corpus/<name>`.
+    ///
+    /// For the questions no upstream suite asks in the form we need, such as whether each
+    /// attribute rucc claims does what GCC documents. They are ours, so they carry this
+    /// repository's license, have nothing to fetch and have no hash to check.
+    Local,
 }
 
 /// A tarball corpus, as the manifest describes it.
@@ -452,6 +458,7 @@ impl Corpus {
     pub fn tree(&self, repo: &Path) -> PathBuf {
         match &self.source {
             Source::Installed => repo.to_path_buf(),
+            Source::Local => repo.join("corpus").join(&self.name),
             Source::Tarball(t) => repo.join("vendor").join(&self.name).join(&t.root),
         }
     }
@@ -466,7 +473,7 @@ impl Corpus {
     #[must_use]
     pub fn is_fetched(&self, repo: &Path) -> bool {
         match self.source {
-            Source::Installed => true,
+            Source::Installed | Source::Local => true,
             Source::Tarball(_) => self.tree(repo).is_dir(),
         }
     }
@@ -513,6 +520,7 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
     }
     let source = match root.need("source", &whose)? {
         "installed" => Source::Installed,
+        "local" => Source::Local,
         "tarball" => Source::Tarball(Tarball {
             upstream: root.need("upstream", &whose)?.to_owned(),
             version: root.need("version", &whose)?.to_owned(),
@@ -525,7 +533,7 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
         other => {
             return Err(Error {
                 message: format!(
-                    "{whose}: `source` is `{other}`, which is not `installed` or `tarball`"
+                    "{whose}: `source` is `{other}`, which is not `installed`, `local` or `tarball`"
                 ),
             });
         }
@@ -1004,6 +1012,27 @@ mod tests {
         assert_eq!(corpus.source, Source::Installed);
         assert_eq!(corpus.units[0].kind, UnitKind::Headers);
         assert!(corpus.is_fetched(&fake.root));
+    }
+
+    #[test]
+    fn a_local_corpus_is_the_directory_its_manifest_is_in() {
+        let fake = Fake::new("local");
+        fake.corpus(
+            "mine",
+            &INSTALLED.replace("\"sys\"", "\"mine\"").replace("installed", "local"),
+        );
+        let corpus = load(&fake.root, "mine").unwrap();
+        assert_eq!(corpus.source, Source::Local);
+        assert_eq!(corpus.tree(&fake.root), fake.root.join("corpus").join("mine"));
+        assert!(corpus.is_fetched(&fake.root), "there is nothing to fetch");
+    }
+
+    #[test]
+    fn a_source_that_is_not_one_is_refused_and_the_message_names_the_three() {
+        let fake = Fake::new("source-odd");
+        fake.corpus("sys", &INSTALLED.replace("\"installed\"", "\"somewhere\""));
+        let e = load(&fake.root, "sys").unwrap_err();
+        assert!(e.message.contains("`local`"), "{}", e.message);
     }
 
     #[test]
