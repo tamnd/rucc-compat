@@ -693,7 +693,7 @@ pub fn cases(repo: &Path, corpus: &Corpus, scratch: &Path) -> Result<Found, Erro
 /// seven files from the preprocessor differential to make one census tidier would be the trade
 /// this repository exists to refuse.
 ///
-/// After the walk rather than during it, for the reason [`take_settled`] is: a rule is written
+/// After the walk rather than during it, for the reason `take_settled` is: a rule is written
 /// about the names the report uses and the walk is about files on a disk.
 #[must_use]
 pub fn without_helpers(mut found: Found, corpus: &Corpus) -> Found {
@@ -1041,6 +1041,8 @@ mod tests {
                 flags: Vec::new(),
                 link: Vec::new(),
                 libs: Vec::new(),
+                seconds: None,
+                megabytes: None,
             }],
             alongside: vec![rule],
             excluded: Vec::new(),
@@ -1048,6 +1050,7 @@ mod tests {
             oracle: None,
             timeout: TIMEOUT,
             exec_excluded: Vec::new(),
+            levels: Vec::new(),
         }
     }
 
@@ -1270,6 +1273,8 @@ mod tests {
             flags: Vec::new(),
             link: Vec::new(),
             libs: Vec::new(),
+            seconds: None,
+            megabytes: None,
         };
         let mut found = Found::default();
         sources(&root, &unit, &mut found).unwrap();
@@ -1311,6 +1316,8 @@ mod tests {
             flags: Vec::new(),
             link: Vec::new(),
             libs: Vec::new(),
+            seconds: None,
+            megabytes: None,
         };
         let entry = Settled {
             case: "suite/b.c".to_owned(),
@@ -1388,6 +1395,8 @@ mod tests {
             flags: vec!["-std=gnu17".to_owned()],
             link: Vec::new(),
             libs: Vec::new(),
+            seconds: None,
+            megabytes: None,
         };
         let mut found = Found::default();
         sources(&root, &unit, &mut found).unwrap();

@@ -16,6 +16,9 @@
 //! - [`exec`] builds the programs and runs them, which is the only question that covers the
 //!   back half of the compiler, since everything above it is a question about compiling and all
 //!   of them can be green while the executable prints the wrong answer.
+//! - [`measure`] times each of a few large files through rucc and reads how much memory it
+//!   held, and fails when either is over the bound the manifest sets, which is the one kind of
+//!   regression no answer being right or wrong will ever show.
 //! - [`coverage`] reads what the compiler says about which of its lowering rules a build fired,
 //!   and unions those over a corpus, which is the one coverage question nothing but a corpus can
 //!   answer.
@@ -37,6 +40,7 @@ pub mod exec;
 pub mod fetch;
 pub mod ledger;
 pub mod lexer;
+pub mod measure;
 pub mod pipeline;
 pub mod sandbox;
 pub mod sha256;
