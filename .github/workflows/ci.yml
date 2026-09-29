@@ -268,8 +268,7 @@ jobs:
   # the job below rather than here, because it is nineteen hundred programs and this job runs on
   # every commit.
   #
-  # x86-64 Linux only, because that is the one target rucc generates code for today. The second
-  # target and the second host are M6, and the matrix here grows when they arrive.
+  # x86-64 Linux here. The second host and target, macOS arm64, is the job after this one.
   #
   # Every level, because a level is not a setting on one answer. `-O0` and `-O2` run different
   # passes over different code and the headers themselves change underneath them: glibc defines a
@@ -339,6 +338,63 @@ jobs:
         uses: actions/upload-artifact@v4.6.2
         with:
           name: exec-${{ matrix.corpus }}-O${{ matrix.opt }}
+          path: results/
+          if-no-files-found: ignore
+
+  # The same two corpora built and run natively on macOS arm64, which is the second host and the
+  # second target at once: rucc writes the Mach-O objects, Apple's `ld` links them against the
+  # SDK, and the programs run on the runner. It is the M6 exit criterion in tamnd/rucc#7, which
+  # asks for rung 0 natively on a Mac and not only cross-compiled.
+  #
+  # The reference is the runner's own clang, which is the compiler Apple's headers are written
+  # for, and the one the assembly and object paths hand their output to for linking.
+  exec-macos:
+    name: exec on macos arm64 over ${{ matrix.corpus }} at -O${{ matrix.opt }}
+    needs: quick
+    runs-on: macos-26
+    strategy:
+      fail-fast: false
+      matrix:
+        corpus: [c-testsuite, chibicc]
+        opt: ["0", "1", "2", "3", "s", "z"]
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: check out the compiler
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: tamnd/rucc
+          path: rucc
+      - uses: Swatinem/rust-cache@v2.9.2
+      - name: build the compiler
+        run: cargo build --release --bin rucc --manifest-path rucc/Cargo.toml
+      - name: build the harness
+        run: cargo build --release
+      - name: the reference compiler and the SDK
+        run: |
+          cc --version | head -1
+          xcrun --show-sdk-path
+      - name: name the cache after the tarball
+        id: tarball
+        run: |
+          sha=$(sed -n 's/^sha256 = "\(.*\)"$/\1/p' corpus/${{ matrix.corpus }}/corpus.toml)
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+      - name: reuse the download if we have it
+        uses: actions/cache@v6.1.0
+        with:
+          path: vendor/${{ matrix.corpus }}/*.tar.*
+          key: corpus-${{ matrix.corpus }}-${{ steps.tarball.outputs.sha }}
+      - name: fetch the corpus
+        run: ./target/release/rucc-compat fetch ${{ matrix.corpus }}
+      - name: build them and run them
+        run: |
+          ./target/release/rucc-compat exec ${{ matrix.corpus }} \
+            --rucc rucc/target/release/rucc --cc cc --opt ${{ matrix.opt }} \
+            --machine github-macos-26 --report
+      - name: keep the report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: exec-macos-${{ matrix.corpus }}-O${{ matrix.opt }}
           path: results/
           if-no-files-found: ignore
 
