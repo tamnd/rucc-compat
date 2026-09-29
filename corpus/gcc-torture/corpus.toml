@@ -402,3 +402,30 @@ cases = [
 # `execute/pr80692.c` was the last one here, under tamnd/rucc#207, and builds and runs since
 # tamnd/rucc#1978.
 
+
+# Windows only. These three pass on Linux and fail on x86_64-windows-gnu on all three routes, under
+# Wine and natively. `execute/20010122-1.c` walks the frame pointer chain with
+# `__builtin_return_address(1)`, and on Windows rucc sets the frame pointer up after the fixed
+# allocation, so there is no chain to walk, tamnd/rucc#2144. `execute/pr47237.c` calls
+# `__builtin_apply`, which is lowered for the System V convention only, and `execute/pr80692.c`
+# uses `_Decimal64`, which rucc has on x86-64 Linux only, both tamnd/rucc#2145.
+[[exec-exclude]]
+case = "execute/20010122-1.c"
+issue = "tamnd/rucc#2144"
+why = "__builtin_return_address above level 0 needs a frame pointer chain Windows frames do not keep"
+outcome = "wrong answer"
+when = ["windows"]
+
+[[exec-exclude]]
+case = "execute/pr47237.c"
+issue = "tamnd/rucc#2145"
+why = "__builtin_apply_args is lowered for the System V convention only"
+outcome = "did not build"
+when = ["windows"]
+
+[[exec-exclude]]
+case = "execute/pr80692.c"
+issue = "tamnd/rucc#2145"
+why = "the decimal float types are not there for Windows targets"
+outcome = "did not build"
+when = ["windows"]
