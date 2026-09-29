@@ -13,6 +13,27 @@ pub const UNRECORDED: &str = "unrecorded";
 /// the three platforms this compiler is built for.
 pub const PLATFORMS: &[&str] = &["linux", "macos", "windows"];
 
+/// Which of [`PLATFORMS`] a target triple builds programs for, or `None` for one that is none of
+/// them.
+///
+/// Read off the words of the triple rather than a list of triples, so `x86_64-windows-gnu`,
+/// `x86_64-w64-mingw32` and `aarch64-pc-windows-msvc` all come out as Windows without anybody
+/// having to add them.
+#[must_use]
+pub fn os_of(target: &str) -> Option<&'static str> {
+    let words: Vec<&str> = target.split('-').collect();
+    let any = |test: &dyn Fn(&str) -> bool| words.iter().any(|word| test(word));
+    if any(&|word| word == "windows" || word.starts_with("mingw")) {
+        Some("windows")
+    } else if any(&|word| word == "linux") {
+        Some("linux")
+    } else if any(&|word| word == "macos" || word.starts_with("darwin")) {
+        Some("macos")
+    } else {
+        None
+    }
+}
+
 /// What a corpus's `arch` is allowed to name, which is what `std::env::consts::ARCH` says on the
 /// machines this compiler is built for.
 pub const ARCHES: &[&str] = &["x86_64", "aarch64"];
@@ -188,6 +209,11 @@ pub struct Exclusion {
     pub why: String,
     /// The operating systems this excuses the case on, empty meaning all of them.
     ///
+    /// For an execution exclusion that is the system the programs are built for and run on, which
+    /// is the one `exec --target` names when it is given, so an entry for a Windows gap says
+    /// `windows` whether the run is on Windows or on Linux under Wine. Everywhere else it is the
+    /// machine the harness runs on.
+    ///
     /// Some gaps are one platform's: a structure passed to a variadic function is lowered on a
     /// Mac and is not on Linux, so the same case fails on one machine and passes on the other.
     /// An entry with no `when` would then be stale wherever it passes, and the run would be red
@@ -223,7 +249,13 @@ impl Exclusion {
     /// Whether this entry says anything about the machine it is being read on.
     #[must_use]
     pub fn here(&self) -> bool {
-        self.when.is_empty() || self.when.iter().any(|os| os == env::consts::OS)
+        self.on(env::consts::OS)
+    }
+
+    /// Whether this entry says anything about programs built for and run on this system.
+    #[must_use]
+    pub fn on(&self, system: &str) -> bool {
+        self.when.is_empty() || self.when.iter().any(|os| os == system)
     }
 
     /// Whether this entry says anything at the level the run is being made at.
@@ -475,9 +507,22 @@ impl Corpus {
     /// there is one.
     #[must_use]
     pub fn exec_excuse(&self, case: &str, opt: Option<&str>, route: &str) -> Option<&Exclusion> {
+        self.exec_excuse_on(case, opt, route, env::consts::OS)
+    }
+
+    /// The same, for programs built for and run on another system, which is what a run with a
+    /// target asks.
+    #[must_use]
+    pub fn exec_excuse_on(
+        &self,
+        case: &str,
+        opt: Option<&str>,
+        route: &str,
+        system: &str,
+    ) -> Option<&Exclusion> {
         self.exec_excluded
             .iter()
-            .find(|e| e.case == case && e.here() && e.at(opt) && e.along(route))
+            .find(|e| e.case == case && e.on(system) && e.at(opt) && e.along(route))
     }
 
     /// The rule about the directory this case is in, if it is in one.
@@ -1199,6 +1244,16 @@ mod tests {
         assert!(load(&fake.root, "sys").unwrap().applies());
         fake.corpus("sys", &with("pdp11"));
         assert!(load(&fake.root, "sys").unwrap_err().message.contains("pdp11"));
+    }
+
+    #[test]
+    fn a_target_is_the_system_its_words_name() {
+        assert_eq!(os_of("x86_64-windows-gnu"), Some("windows"));
+        assert_eq!(os_of("x86_64-w64-mingw32"), Some("windows"));
+        assert_eq!(os_of("aarch64-pc-windows-msvc"), Some("windows"));
+        assert_eq!(os_of("x86_64-linux-gnu"), Some("linux"));
+        assert_eq!(os_of("aarch64-apple-darwin24.1.0"), Some("macos"));
+        assert_eq!(os_of("riscv64-unknown-elf"), None);
     }
 
     #[test]

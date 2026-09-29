@@ -40,6 +40,8 @@ options:
   --path NAME      exec only: build this way, one of assembly, object, driver, repeatable
   --opt LEVEL      exec and measure: the level to pass both compilers after -O
   --machine NAME   exec and measure: what to call this machine in the report
+  --target TRIPLE  exec only: build for this target, passed to rucc as --target
+  --runner CMD     exec only: run the programs through CMD, such as wine64
   --timeout N      exec only: seconds per run, over what the manifest asks for
   --rule-coverage FILE
                    exec only: ask which lowering rules fired and union it into FILE
@@ -75,6 +77,12 @@ corpus with no bounded unit is passed over.
 
 `exec` runs a corpus only when its manifest names an oracle, since without one there is
 nothing to decide a run by. A corpus with no oracle is reported as such and passed over.
+
+`--target` builds for another system, and only rucc is told: a gcc builds for one target, so
+`--cc` names one that builds for this one, such as `x86_64-w64-mingw32-gcc`. `--runner` runs
+the programs of both compilers through a command, such as `wine64` or `qemu-aarch64`. With a
+target, an execution exclusion's `when` is about the system the target names rather than the
+machine, and the results and the `--failed` record go to files of their own.
 
 `--rule-coverage` writes one file holding the union over every corpus the command ran, in the
 format the compiler's own `-Zrule-coverage` writes, so that `coverage` can be given several of
@@ -367,6 +375,20 @@ fn exec_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, S
                 settings.coverage = true;
             }
             "--machine" => settings.machine = Some(value(args, &mut at, arg)?),
+            "--target" => {
+                let target = value(args, &mut at, arg)?;
+                if corpus::os_of(&target).is_none() {
+                    return Err(format!(
+                        "`{target}` is not a target for Linux, macOS or Windows, so no `when` \
+                         could say anything about it"
+                    ));
+                }
+                settings.target = Some(target);
+            }
+            "--runner" => {
+                let text = value(args, &mut at, arg)?;
+                settings.runner = text.split_whitespace().map(str::to_owned).collect();
+            }
             "--path" => {
                 let word = value(args, &mut at, arg)?;
                 let route = Route::named(&word).ok_or_else(|| {
@@ -409,8 +431,12 @@ fn exec_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, S
     // wrong answers and link errors scattered over cases that pass when the sweep is run alone.
     // Six levels in parallel is the difference between half an hour and five minutes on a
     // machine with the cores for it.
-    let scratch =
-        repo.join("target").join("exec").join(settings.opt.as_deref().unwrap_or("default"));
+    // The target is in it for the same reason, so a Windows sweep can run beside a native one.
+    let mut scratch = repo.join("target").join("exec");
+    if let Some(target) = &settings.target {
+        scratch.push(target);
+    }
+    let scratch = scratch.join(settings.opt.as_deref().unwrap_or("default"));
     let mut failures = 0;
     let mut fired = Marks::default();
     for corpus in wanted {
@@ -444,7 +470,11 @@ fn exec_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, S
         if report {
             let dir = repo.join("results");
             fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-            let path = dir.join(exec::result_file(&corpus.name, settings.opt.as_deref()));
+            let path = dir.join(exec::result_file(
+                &corpus.name,
+                settings.opt.as_deref(),
+                settings.target.as_deref(),
+            ));
             fs::write(&path, exec::markdown(&done, &settings)).map_err(|e| e.to_string())?;
             println!("  wrote {}", path.display());
         }
