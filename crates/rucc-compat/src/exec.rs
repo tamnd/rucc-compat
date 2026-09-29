@@ -14,6 +14,7 @@
 //! summary that collapsed them into passed and failed would hide the difference between a
 //! compiler that is wrong and a compiler that is incomplete, and those are not the same news.
 
+use std::env;
 use std::ffi::OsString;
 use std::fmt::Write as _;
 use std::fs;
@@ -145,6 +146,17 @@ pub struct Settings {
     /// Only the compiler under test is asked, since the flag is one of ours and the reference has
     /// never heard of it.
     pub coverage: bool,
+    /// The target to ask the compiler under test for, or `None` for its default.
+    ///
+    /// Only rucc is told. It is a cross compiler whichever target it is asked for, and a gcc is
+    /// not, so a run for another target names a reference that already builds for it, such as
+    /// `x86_64-w64-mingw32-gcc`.
+    pub target: Option<String>,
+    /// What to run the programs through, such as `wine64`, or empty to run them directly.
+    ///
+    /// Both compilers' programs go through it, since the reference is run to decide what the
+    /// right answer is and it cannot be run here any more than ours can.
+    pub runner: Vec<String>,
 }
 
 impl Default for Settings {
@@ -164,6 +176,8 @@ impl Default for Settings {
             memory: Some(MEMORY),
             jobs: None,
             coverage: false,
+            target: None,
+            runner: Vec::new(),
         }
     }
 }
@@ -192,6 +206,23 @@ impl Settings {
     /// list.
     fn is_narrowed(&self) -> bool {
         self.limit.is_some() || self.unit.is_some() || !self.only.is_empty() || self.failed
+    }
+
+    /// The system the programs are built for and run on, in the words an exclusion's `when` uses.
+    #[must_use]
+    pub fn system(&self) -> &'static str {
+        self.target.as_deref().and_then(crate::corpus::os_of).unwrap_or(env::consts::OS)
+    }
+
+    /// What the program a build makes is called, which on Windows has to end in `.exe` because a
+    /// mingw-w64 gcc adds it when it is not there and the program would not be where it was asked
+    /// to be.
+    #[must_use]
+    pub fn program(&self) -> &'static str {
+        match self.system() {
+            "windows" => "run.exe",
+            _ => "run",
+        }
     }
 
     /// The `-O` flag both compilers get, if there is one.
@@ -524,7 +555,11 @@ pub fn run(
     }
     // Narrowed before the limit, so `--limit 20 --failed` is the first twenty of the failures
     // rather than whichever of the first twenty cases happened to fail.
-    let record = ledger::path(repo, &corpus.name, "exec", settings.opt.as_deref());
+    let command = match &settings.target {
+        Some(target) => format!("exec-{target}"),
+        None => "exec".to_owned(),
+    };
+    let record = ledger::path(repo, &corpus.name, &command, settings.opt.as_deref());
     let keep = ledger::Keep::new(&settings.only, settings.failed.then_some(record.as_path()))
         .map_err(|message| Error { message: format!("{}: {message}", corpus.name) })?;
     let cases: Vec<Case> = cases.into_iter().filter(|c| keep.wants(&c.name)).collect();
@@ -539,7 +574,14 @@ pub fn run(
             .into_iter()
             .filter(|c| {
                 settings.routes.iter().any(|route| {
-                    corpus.exec_excuse(&c.name, settings.opt.as_deref(), route.word()).is_some()
+                    corpus
+                        .exec_excuse_on(
+                            &c.name,
+                            settings.opt.as_deref(),
+                            route.word(),
+                            settings.system(),
+                        )
+                        .is_some()
                 })
             })
             .collect(),
@@ -567,8 +609,14 @@ pub fn run(
         for (route, status) in check(case, corpus, oracle, &settings, &dir, &limits) {
             // Asked per route rather than once for the case, because an entry may name the paths
             // it speaks on and the three paths do not do the same thing with what rucc produced.
-            let excused =
-                corpus.exec_excuse(&case.name, settings.opt.as_deref(), route.word()).cloned();
+            let excused = corpus
+                .exec_excuse_on(
+                    &case.name,
+                    settings.opt.as_deref(),
+                    route.word(),
+                    settings.system(),
+                )
+                .cloned();
             mine.push(Outcome { case: case.name.clone(), route, status, excused });
         }
         // Read before the directory goes, since what the compiler wrote about this case is in it.
@@ -699,12 +747,12 @@ pub fn check(
     // makes, one step later, and it is made by running rather than by a list, so it cannot go
     // stale and nobody has to notice when the reference changes its mind.
     let expected = match oracle {
-        Oracle::Differential => match sandbox::run(&theirs, &[] as &[&str], dir, limits) {
+        Oracle::Differential => match launch(&theirs, dir, limits, settings) {
             Ok(ran) => Some(ran),
             Err(why) => return every(&Status::NotCompared { why }),
         },
         Oracle::SelfCheck | Oracle::Recorded => {
-            match sandbox::run(&theirs, &[] as &[&str], dir, limits) {
+            match launch(&theirs, dir, limits, settings) {
                 Err(why) => return every(&Status::Skipped { why }),
                 Ok(ran) => match judge(oracle, case, &ran, None) {
                     Status::Passed => None,
@@ -722,7 +770,7 @@ pub fn check(
         let at = dir.join(route.word());
         let status = match build(&settings.rucc, true, *route, &inputs, case, settings, &at) {
             Err(why) => Status::DidNotBuild { why },
-            Ok(exe) => match sandbox::run(&exe, &[] as &[&str], &at, limits) {
+            Ok(exe) => match launch(&exe, &at, limits, settings) {
                 Err(why) => Status::DidNotBuild { why },
                 Ok(ran) => judge(oracle, case, &ran, expected.as_ref()),
             },
@@ -730,6 +778,38 @@ pub fn check(
         out.push((*route, status));
     }
     out
+}
+
+/// Runs a program a build made, through the runner when there is one.
+///
+/// A Windows program's standard output is in text mode, so every newline it prints arrives as a
+/// carriage return and a newline, and the answers a corpus records were written on Unix. Both
+/// compilers' programs do it, so it says nothing about either, and it is taken back out here
+/// rather than taught to every oracle.
+fn launch(exe: &Path, dir: &Path, limits: &Limits, settings: &Settings) -> Result<Ran, String> {
+    let mut ran = match settings.runner.split_first() {
+        None => sandbox::run(exe, &[] as &[&str], dir, limits),
+        Some((runner, rest)) => {
+            let mut args: Vec<OsString> = rest.iter().map(OsString::from).collect();
+            args.push(exe.as_os_str().to_owned());
+            sandbox::run(Path::new(runner), &args, dir, limits)
+        }
+    }?;
+    if settings.system() == "windows" {
+        ran.out = unix_lines(&ran.out);
+    }
+    Ok(ran)
+}
+
+/// The same bytes with each carriage return that comes right before a newline taken out.
+fn unix_lines(out: &[u8]) -> Vec<u8> {
+    let mut lines = Vec::with_capacity(out.len());
+    for (at, byte) in out.iter().enumerate() {
+        if *byte != b'\r' || out.get(at + 1) != Some(&b'\n') {
+            lines.push(*byte);
+        }
+    }
+    lines
 }
 
 /// Why a case whose own oracle the reference compiler does not satisfy is skipped.
@@ -791,11 +871,11 @@ fn build(
     out: &Path,
 ) -> Result<PathBuf, String> {
     fs::create_dir_all(out).map_err(|e| format!("{}: {e}", out.display()))?;
-    let exe = out.join("run");
+    let exe = out.join(settings.program());
     let recording = |what: &str| recording(mine, settings, out, what);
     match route {
         Route::Driver => {
-            let mut args = flags(case, settings);
+            let mut args = flags(case, settings, mine);
             args.extend(recording("driver"));
             for input in &inputs.files {
                 args.extend(spelled(input, &case.dir));
@@ -815,7 +895,7 @@ fn build(
             let mut parts = Vec::with_capacity(inputs.files.len());
             for (index, input) in inputs.files.iter().enumerate() {
                 let part = out.join(format!("part{index}.{ext}"));
-                let mut args = flags(case, settings);
+                let mut args = flags(case, settings, mine);
                 args.extend(recording(&format!("part{index}")));
                 args.push(flag.into());
                 args.extend(spelled(input, &case.dir));
@@ -836,7 +916,7 @@ fn build(
             // an exclusion list cannot say anything true about. The driver route is left alone:
             // rucc's own driver decides that for itself, and a gap that only a position
             // independent link finds is one worth keeping a route that finds it.
-            if cfg!(target_os = "linux") {
+            if settings.system() == "linux" {
                 args.push("-no-pie".into());
             }
             args.push("-o".into());
@@ -881,9 +961,13 @@ fn once(compiler: &Path, args: &[OsString], dir: &Path) -> Result<(), String> {
     }
 }
 
-/// The flags both compilers get for a case, which is the corpus's own and the level.
-fn flags(case: &Case, settings: &Settings) -> Vec<OsString> {
+/// The flags a compiler gets for a case, which is the corpus's own and the level, and the target
+/// when it is the compiler under test.
+fn flags(case: &Case, settings: &Settings, mine: bool) -> Vec<OsString> {
     let mut args: Vec<OsString> = case.flags.iter().map(OsString::from).collect();
+    if let Some(target) = settings.target.as_ref().filter(|_| mine) {
+        args.push(format!("--target={target}").into());
+    }
     if let Some(level) = settings.level() {
         args.push(level.into());
     }
@@ -1029,7 +1113,7 @@ pub(crate) fn version(compiler: &Path) -> String {
 
 /// The machine, as much of it as belongs in a file anybody may read.
 pub(crate) fn platform() -> String {
-    format!("{} {}", std::env::consts::OS, std::env::consts::ARCH)
+    format!("{} {}", env::consts::OS, env::consts::ARCH)
 }
 
 /// The report, as the markdown that lands in `results/`.
@@ -1040,6 +1124,14 @@ pub fn markdown(report: &Report, settings: &Settings) -> String {
     let _ = writeln!(out, "Compiler under test: `{}`.\n", report.rucc);
     let _ = writeln!(out, "Reference: `{}`.\n", report.cc);
     let _ = writeln!(out, "Machine: {}.\n", report.machine);
+    if let Some(target) = &settings.target {
+        let _ = match settings.runner.is_empty() {
+            true => writeln!(out, "Target: `{target}`, run directly.\n"),
+            false => {
+                writeln!(out, "Target: `{target}`, run through `{}`.\n", settings.runner.join(" "))
+            }
+        };
+    }
     let level = match &report.opt {
         Some(level) => format!("`-O{level}`"),
         None => "whatever each compiler defaults to".to_owned(),
@@ -1239,7 +1331,11 @@ pub fn markdown(report: &Report, settings: &Settings) -> String {
 /// The level is in the name because a run at `-O0` and a run at `-O2` are different results and
 /// writing them both to one path would leave whichever finished last.
 #[must_use]
-pub fn result_file(corpus: &str, opt: Option<&str>) -> String {
+pub fn result_file(corpus: &str, opt: Option<&str>, target: Option<&str>) -> String {
+    let corpus = match target {
+        Some(target) => format!("{corpus}-{target}"),
+        None => corpus.to_owned(),
+    };
     match opt {
         None => format!("{corpus}-exec.md"),
         Some(level) => format!("{corpus}-exec-O{level}.md"),
@@ -1652,9 +1748,20 @@ unused rules/x86-64.rules:19 (sub.i32 x y)
     }
 
     #[test]
+    fn a_windows_newline_is_a_newline_and_a_lone_carriage_return_is_kept() {
+        assert_eq!(unix_lines(b"a\r\nb\r\n"), b"a\nb\n");
+        assert_eq!(unix_lines(b"a\rb\r"), b"a\rb\r");
+        assert_eq!(unix_lines(b"a\r\r\n"), b"a\r\n");
+    }
+
+    #[test]
     fn the_level_is_in_the_result_file_name_because_two_levels_are_two_results() {
-        assert_eq!(result_file("c-testsuite", None), "c-testsuite-exec.md");
-        assert_eq!(result_file("c-testsuite", Some("2")), "c-testsuite-exec-O2.md");
+        assert_eq!(result_file("c-testsuite", None, None), "c-testsuite-exec.md");
+        assert_eq!(result_file("c-testsuite", Some("2"), None), "c-testsuite-exec-O2.md");
+        assert_eq!(
+            result_file("c-testsuite", Some("2"), Some("x86_64-windows-gnu")),
+            "c-testsuite-x86_64-windows-gnu-exec-O2.md"
+        );
     }
 
     #[test]

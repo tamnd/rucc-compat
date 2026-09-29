@@ -66,6 +66,8 @@ when = ["linux"]
 
 It names the operating systems the entry excuses the case on, out of `linux`, `macos` and `windows`, and anything else fails the load. Leaving it out means every platform, which is what almost every entry wants. Reach for it only where the case really does pass on one machine and fail on another, since without it such an entry is stale wherever the case passes and the run comes out red on one platform whichever way it is written.
 
+On an execution exclusion `when` is about the system the programs are built for and run on, which is the machine's own unless `exec --target` names another. So a gap that is Windows' says `windows` and it holds for a run on a Windows machine and for a run on Linux with `--target x86_64-windows-gnu --runner wine64` alike. The entries the pipeline check reads are still about the machine, since that check never builds for anything else.
+
 A single entry can name a list of cases instead of one, with `cases`, for the runs where one missing feature takes out hundreds of them:
 
 ```toml
@@ -180,7 +182,19 @@ The far half is `scripts/on-hardware-remote.sh`, which is a file rather than a s
 
 It works the machine out rather than being told about it. The reference compiler is the first of `gcc-16`, `/opt/gcc-16.2.0/bin/gcc-16`, `gcc` and `cc` that is there, and how many levels run at once is how many cores there are, up to the six, because six sweeps on four cores is six processes competing for one core each and these are somebody's machines. A machine whose reference is not gcc 16 still runs and is still judged on failures, but stale entries there are printed rather than red: an older gcc accepts programs gcc 16 refuses, so a case that is skipped on one machine runs on the other and passing it is not the list going stale. A corpus that will not download is named and dropped rather than failing the run, because a tarball server answering 504 has nothing to say about the compiler.
 
-What it does not cover is a Windows machine. The far half is a POSIX shell script and rucc does not host on Windows yet, so a Windows box is out of scope until that milestone. Its Linux subsystem is not a substitute worth the plumbing: it is another Linux machine, which the Linux hosts already are.
+What it does not cover is running on a Windows machine, since the far half is a POSIX shell script. Windows programs are covered another way, by building them on a Linux host and running them there under Wine or on a Windows machine, which the next section is about.
+
+## Windows programs
+
+`exec` builds for another target with `--target` and runs what it built through `--runner`. Only rucc is told the target, because a gcc builds for one target and is chosen by name instead, so a Windows run on a Linux host with the mingw-w64 cross compiler and Wine installed is:
+
+```
+./target/release/rucc-compat exec c-testsuite --rucc ../rucc/target/release/rucc --target x86_64-windows-gnu --cc x86_64-w64-mingw32-gcc --runner wine64
+```
+
+The reference is run through the runner as well, since it is what decides whether a case is a fair question. rucc needs a Windows sysroot, the same one the compiler's own `tests/exec/windows` uses. The programs are named `run.exe`, the carriage returns a Windows program writes before each newline are taken out before anything is compared, and the report and the `--failed` record go to files with the target in their names, so a Windows sweep sits beside a Linux one rather than on top of it. An entry for a gap that is only Windows' says `when = ["windows"]`.
+
+Wine is not a Windows machine, and a result that matters should be checked on one.
 
 ## Style
 

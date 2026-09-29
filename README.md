@@ -52,7 +52,10 @@ A case can be off the list for two other reasons and the manifest keeps the thre
 ```
 ./target/release/rucc-compat exec c-testsuite --rucc ../rucc/target/release/rucc
 ./target/release/rucc-compat exec chibicc --report
+./target/release/rucc-compat exec c-testsuite --target x86_64-windows-gnu --cc x86_64-w64-mingw32-gcc --runner wine64
 ```
+
+The last one builds the programs for Windows and runs them under Wine, and CONTRIBUTING.md has what else changes when a run has a target.
 
 Every case is built three ways, because the three depend on different amounts of the compiler. `-S` and then the system assembler and linker needs no encoder, no object writer and no relocations, and what it produces in the middle is text somebody can read. `-c` and then the system linker is the encoder and the relocations and nothing else. The driver on its own is the whole of it, including finding a linker. A case that passes one way and fails another is reported as exactly that, which is what checks the encoder against the assembly printer without anybody writing a byte level differential: the two come out of one instruction description, so a disagreement between them is a disagreement inside that description and it turns up as a wrong answer rather than as a diff nobody reads.
 
