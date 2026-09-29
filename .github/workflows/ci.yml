@@ -465,6 +465,78 @@ jobs:
           path: results/
           if-no-files-found: ignore
 
+  # The same corpora for x86_64-windows-gnu, built and run natively on a Windows runner. This is
+  # the first exit criterion of the W3 milestone in tamnd/rucc#2069. The compiler fetches its own
+  # mingw-w64 sysroot and builds its runtime for the target the way rucc's own Windows job does,
+  # and the reference is MSYS2's MinGW gcc, which is the compiler those headers are written for.
+  #
+  # Two levels rather than six, because a process costs several times more to start on Windows
+  # and the torture suite is nineteen hundred of them. -O0 and -O2 are the two that find
+  # different bugs. It runs on the schedule and on demand, for the same reason as the job above.
+  exec-windows:
+    name: exec on windows x86-64 over ${{ matrix.corpus }} at -O${{ matrix.opt }}
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: quick
+    runs-on: windows-2025
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        corpus: [c-testsuite, gcc-torture]
+        opt: ["0", "2"]
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: check out the compiler
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: tamnd/rucc
+          path: rucc
+      - uses: Swatinem/rust-cache@v2.9.2
+      - name: build the compiler, the sysroot and the runtime
+        run: |
+          cargo build --release --bin rucc --manifest-path rucc/Cargo.toml
+          rucc/target/release/rucc.exe --fetch x86_64-windows-gnu
+          cd rucc && cargo xtask builtins --target x86_64-windows-gnu
+      - name: build the harness
+        run: cargo build --release
+      - name: the reference compiler
+        id: msys2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: false
+          install: mingw-w64-x86_64-gcc
+      - name: put the reference on the path
+        run: |
+          echo "${{ steps.msys2.outputs.msys2-location }}\mingw64\bin" >> "$GITHUB_PATH"
+      - name: name the cache after the tarball
+        id: tarball
+        run: |
+          sha=$(sed -n 's/^sha256 = "\(.*\)"$/\1/p' corpus/${{ matrix.corpus }}/corpus.toml)
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+      - name: reuse the download if we have it
+        uses: actions/cache@v6.1.0
+        with:
+          path: vendor/${{ matrix.corpus }}/*.tar.*
+          key: corpus-${{ matrix.corpus }}-${{ steps.tarball.outputs.sha }}
+      - name: fetch the corpus
+        run: ./target/release/rucc-compat fetch ${{ matrix.corpus }}
+      - name: build them and run them
+        run: |
+          gcc --version | head -1
+          ./target/release/rucc-compat exec ${{ matrix.corpus }} \
+            --rucc rucc/target/release/rucc.exe --cc gcc --target x86_64-windows-gnu \
+            --opt ${{ matrix.opt }} --machine github-windows-2025 --report
+      - name: keep the report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: exec-windows-${{ matrix.corpus }}-O${{ matrix.opt }}
+          path: results/
+          if-no-files-found: ignore
+
   # What the sweep reached of the compiler's lowering rule set, checked against the list of what
   # it cannot reach.
   #
