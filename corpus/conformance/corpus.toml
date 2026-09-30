@@ -1,0 +1,26 @@
+name = "conformance"
+summary = "One row per construct of C89 through C23 and of the GNU matrix, each row a program that exercises it or the issue that will make one pass."
+
+# The programs are ours and live next to this manifest, so there is nothing to fetch. They are
+# under this repository's license.
+source = "local"
+
+# Every program prints what the constructs it is about computed, and the reference builds the
+# same program with the same flags, so a difference is rucc and gcc disagreeing about the
+# language. The exit status is compared as well, which is how a row about returning from `main`
+# is measured.
+#
+# What each program is for is in rows.toml beside this file, one row per construct, and
+# `rucc-compat rows conformance` holds the two to each other: every row names a case or an
+# issue, and every case is named by a row.
+oracle = "differential"
+timeout = 10
+
+# Each standard is its own unit built in its own mode, and with -pedantic-errors, so a program
+# about C89 cannot lean on something later without both compilers refusing it. A construct is
+# filed under the standard that brought it in, and it is measured in that standard's mode.
+[[unit]]
+name = "c89"
+kind = "source"
+dir = "c89"
+flags = ["-std=c89", "-pedantic-errors"]

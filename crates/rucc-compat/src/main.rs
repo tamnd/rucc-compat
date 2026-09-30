@@ -10,7 +10,7 @@ use rucc_compat::coverage::{self, Marks, Verdict};
 use rucc_compat::differ::{self, Settings};
 use rucc_compat::exec::{self, Route};
 use rucc_compat::{fetch, kernel, repo_root};
-use rucc_compat::{measure, pipeline, screen};
+use rucc_compat::{measure, pipeline, rows, screen};
 
 const USAGE: &str = "\
 rucc-compat, the compatibility harness for rucc
@@ -24,6 +24,7 @@ usage:
   rucc-compat screen [corpus...] [options]
   rucc-compat measure [corpus...] [options]
   rucc-compat asm [corpus...] [options]
+  rucc-compat rows [corpus...] [--matrix FILE]
   rucc-compat coverage [file or directory...] [--report] [--floor PERCENT] [--unreached]
 
 commands:
@@ -35,6 +36,7 @@ commands:
   screen           build the programs with cc under sanitizers and list the ones they catch
   measure          time the bounded files through rucc and fail over a time or memory bound
   asm              assemble what the reference made of a kernel's units with both assemblers
+  rows             check a corpus's rows.toml against its cases and count the rows
   coverage         union what exec recorded and say which lowering rules nothing fired
 
 options:
@@ -59,6 +61,7 @@ options:
   --excluded       check and exec: run only the cases the manifest excludes here
   --report         write results/<corpus>.md as well as printing the summary
   --record         fetch only: print the sha256 of the download and unpack nothing
+  --matrix FILE    rows only: rucc's crates/rucc-gnu/features.toml, every feature needs a row
   --floor PERCENT  coverage only: fail when less than that much of the rule set fired
   --unreached      coverage only: check every rule nothing fired against unreached.toml
 
@@ -105,6 +108,14 @@ what rucc said. `--as` takes the assembler as words, such as `llvm-mc -filetype=
 x86_64-linux-gnu` on a machine with no gas, and off x86-64 Linux rucc needs `--target
 x86_64-linux-gnu` as well. With `--report` the hashes of the texts go to
 `results/<corpus>-inputs.sha256`, and the run says how many changed since the last one.
+
+`rows` reads the corpora that keep a `rows.toml` beside their manifest and passes over the rest.
+A row is one construct of the language: the standard that brought it in, the clause that says
+what it does, and the case that exercises it or the issue that will make one pass. It fails on a
+row naming a case that is not there and on a case no row names, and says how many rows there are
+per standard, which is the number a green run is a claim about. `--matrix` holds the `gnu` rows
+to rucc's GNU matrix as well, so every attribute, builtin and extension in it has a row. `exec`
+prints the same count under the summary of a corpus that has rows.
 
 `--rule-coverage` writes one file holding the union over every corpus the command ran, in the
 format the compiler's own `-Zrule-coverage` writes, so that `coverage` can be given several of
@@ -158,6 +169,7 @@ fn run() -> Result<ExitCode, String> {
         "screen" => screen_them(&repo, &all, rest),
         "measure" => measure_them(&repo, &all, rest),
         "coverage" => coverage_of(&repo, rest),
+        "rows" => rows_of(&repo, &all, rest),
         "asm" => asm_them(&repo, &all, rest),
         other => Err(format!("`{other}` is not a command, try --help")),
     }
@@ -615,6 +627,19 @@ fn exec_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, S
         let scratch = scratch.join(&corpus.name);
         let done = exec::run(repo, corpus, &settings, &scratch).map_err(|e| e.to_string())?;
         println!("{}", done.summary());
+        // The rows are counted rather than checked here, since `rows` is the command that holds
+        // them to the cases, and a sweep that stopped on a misspelled row would be a sweep that
+        // reported nothing about the programs.
+        if let Ok(Some(listed)) = rows::load(repo, corpus) {
+            let names: Vec<String> = listed.iter().filter_map(|r| r.case.clone()).collect();
+            let covered = listed.iter().filter(|r| r.case.is_some() && r.issue.is_none()).count();
+            let distinct: std::collections::BTreeSet<&String> = names.iter().collect();
+            println!(
+                "  {} rows over {} cases, {covered} of them with nothing admitted",
+                listed.len(),
+                distinct.len()
+            );
+        }
         for outcome in done.outcomes.iter().filter(|o| o.is_failure()) {
             println!("  {} on {}: {}", outcome.status.word(), outcome.route.word(), outcome.case);
         }
@@ -656,6 +681,69 @@ fn exec_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, S
         fs::write(&path, fired.listing()).map_err(|e| format!("{}: {e}", path.display()))?;
         println!("{}", fired.summary());
         println!("  wrote {}", path.display());
+    }
+    Ok(if failures == 0 { ExitCode::SUCCESS } else { ExitCode::FAILURE })
+}
+
+fn rows_of(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, String> {
+    let mut matrix = None;
+    let mut names = Vec::new();
+    let mut at = 0;
+    while at < args.len() {
+        let arg = args[at].as_str();
+        match arg {
+            "--matrix" => matrix = Some(PathBuf::from(value(args, &mut at, arg)?)),
+            other if other.starts_with('-') => {
+                return Err(format!("`{other}` is not an option of rows"));
+            }
+            other => names.push(other.to_owned()),
+        }
+        at += 1;
+    }
+    let features = match &matrix {
+        Some(path) => {
+            let text = fs::read_to_string(path).map_err(|e| format!("{}: {e}", path.display()))?;
+            let names = rows::matrix_names(&text);
+            if names.is_empty() {
+                return Err(format!("{}: no `[[feature]]` with a name in it", path.display()));
+            }
+            Some(names)
+        }
+        None => None,
+    };
+    let wanted = chosen(all, &names)?;
+    let scratch = repo.join("target").join("rows");
+    let mut failures = 0;
+    let mut any = false;
+    for corpus in wanted {
+        let Some(listed) = rows::load(repo, corpus).map_err(|e| e.to_string())? else {
+            continue;
+        };
+        any = true;
+        let cases =
+            rows::cases_of(repo, corpus, &scratch.join(&corpus.name)).map_err(|e| e.to_string())?;
+        match rows::check(&listed, &cases, &corpus.name) {
+            Ok(count) => println!("{}", count.summary()),
+            Err(e) => {
+                eprintln!("{e}");
+                failures += 1;
+            }
+        }
+        if let Some(features) = &features {
+            match rows::check_matrix(&listed, features, &corpus.name) {
+                Ok(()) => println!(
+                    "  every one of the {} features in the matrix has a row",
+                    features.len()
+                ),
+                Err(e) => {
+                    eprintln!("{e}");
+                    failures += 1;
+                }
+            }
+        }
+    }
+    if !any {
+        return Err("no corpus named here keeps a rows.toml".to_owned());
     }
     Ok(if failures == 0 { ExitCode::SUCCESS } else { ExitCode::FAILURE })
 }
