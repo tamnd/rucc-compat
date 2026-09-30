@@ -49,6 +49,10 @@ jobs:
         run: cargo clippy --workspace --all-targets
       - name: cargo doc
         run: cargo doc --workspace --no-deps
+      # The NEON programs are written by a script from a table, and a program somebody edited by
+      # hand is one the next run of the script quietly throws away.
+      - name: the generated programs are current
+        run: python3 scripts/arm_neon.py --check
 
   test:
     name: test on ${{ matrix.name }}
@@ -338,6 +342,68 @@ jobs:
         uses: actions/upload-artifact@v4.6.2
         with:
           name: exec-${{ matrix.corpus }}-O${{ matrix.opt }}
+          path: results/
+          if-no-files-found: ignore
+
+  # The intrinsics corpus on both architectures rucc targets on Linux, at the two levels that find
+  # different bugs. Unlike the corpora above it has nothing to fetch: every program is in this
+  # repository, and each one calls an intrinsic from rucc's own headers and prints what came back,
+  # so the only thing that decides a case is whether gcc and rucc print the same thing.
+  #
+  # The units say which architecture they are for. On the x86-64 runner the SSE, cpuid and CRC32C
+  # units run and the NEON and ACLE ones are walked and left alone; on the Arm runner it is the
+  # other way round. An exclusion for an Arm case is not called stale on the x86 runner for the
+  # same reason, since a case that was never offered has not passed.
+  #
+  # The Arm runner also checks that the table the NEON programs are generated from is the list of
+  # intrinsics rucc's arm_neon.h ships today. A new intrinsic in the compiler that is not in the
+  # table is an intrinsic nobody is testing, and this is the step that says so.
+  intrinsics:
+    name: intrinsics on ${{ matrix.runner }} at -O${{ matrix.opt }}
+    needs: quick
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
+        opt: ["0", "2"]
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: check out the compiler
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: tamnd/rucc
+          path: rucc
+      - uses: Swatinem/rust-cache@v2.9.2
+      - name: build the compiler
+        run: cargo build --release --bin rucc --manifest-path rucc/Cargo.toml
+      - name: build the harness
+        run: cargo build --release
+      - name: the table is the header
+        if: runner.arch == 'ARM64'
+        run: python3 scripts/arm_neon.py --check --table rucc/crates/rucc-session/runtime/include/arm_neon.h
+      # The same reference as everywhere else when the PPA has it for this architecture, and the
+      # runner's own gcc when it does not, since an older gcc is still a gcc that knows every
+      # intrinsic in these headers and a job that cannot start tests nothing.
+      - name: the reference compiler
+        id: reference
+        run: |
+          cc=gcc
+          if sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test && sudo apt-get install -y gcc-16; then
+            cc=gcc-16
+          fi
+          $cc --version | head -1
+          echo "cc=$cc" >> "$GITHUB_OUTPUT"
+      - name: build them and run them
+        run: |
+          ./target/release/rucc-compat exec intrinsics \
+            --rucc rucc/target/release/rucc --cc ${{ steps.reference.outputs.cc }} \
+            --opt ${{ matrix.opt }} --machine github-${{ matrix.runner }} --report
+      - name: keep the report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: intrinsics-${{ matrix.runner }}-O${{ matrix.opt }}
           path: results/
           if-no-files-found: ignore
 
