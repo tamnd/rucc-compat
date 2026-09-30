@@ -144,16 +144,11 @@ why = "the kept mask is a shift by 64 at vsli_n's 0 and vsri_n's 64, and the mac
 outcome = "wrong answer"
 
 # When both operands are NaN, which of the two comes back is not something C says, and gcc is not
-# consistent about it either: at -O0 it gives vmul_n_f32((qNaN 1, sNaN 3), -qNaN 2) as the scalar's
-# NaN, -qNaN 2, and at -O2 as the vector's, qNaN 1. rucc gives the vector's at both levels, which is
-# what FMUL by element does, so this is the reference moving rather than rucc being wrong, and the
-# exclusion is only at -O0.
-[[exec-exclude]]
-cases = ["neon/vmul_n_f32.c", "neon/vmulq_n_f32.c"]
-issue = "tamnd/rucc#1991"
-why = "with a NaN in both operands gcc -O0 returns the scalar's NaN and -O2 and rucc the vector's"
-outcome = "wrong answer"
-opt = ["0"]
+# consistent about it: at -O0 it gives vmul_n_f32((qNaN 1, sNaN 3), -qNaN 2) as the scalar's NaN,
+# -qNaN 2, and at -O2 as the vector's, qNaN 1, which is what FMUL by element does and what rucc
+# gives at both levels. Inside the vmul_n family's program the two disagreed at -O0 over the random
+# inputs, and in a program of their own they agree at both levels, so "neon/vmul_n_f32.c" and
+# "neon/vmulq_n_f32.c" are kept apart for that reason and are not excused.
 
 # rucc's assembly for a function with target("+crc"), and for a unit built with -march=armv8-a+crc,
 # has the crc32 instructions and no `.arch armv8-a+crc` directive, which gcc writes at the top of
