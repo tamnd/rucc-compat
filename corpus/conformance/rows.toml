@@ -3478,6 +3478,14 @@ case = "gnu/float_builtins.c"
 feature = "__builtin_cimagl"
 
 [[row]]
+id = "gnu/builtin/__builtin_complex"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_complex builds a complex value from its two halves with no arithmetic"
+case = "gnu/float_builtins.c"
+feature = "__builtin_complex"
+
+[[row]]
 id = "gnu/builtin/__builtin_inf"
 standard = "gnu"
 clause = "Floating Point Builtins"

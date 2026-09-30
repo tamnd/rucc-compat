@@ -24,8 +24,10 @@ int main(void)
     printf("fpclassify %d %d %d %d %d\n", __builtin_fpclassify(0, 1, 2, 3, 4, nan), __builtin_fpclassify(0, 1, 2, 3, 4, inf), __builtin_fpclassify(0, 1, 2, 3, 4, one), __builtin_fpclassify(0, 1, 2, 3, 4, 1e-320), __builtin_fpclassify(0, 1, 2, 3, 4, 0.0));
     printf("signbit %d %d %d\n", __builtin_signbit(-0.0) != 0, __builtin_signbitf(1.0f) != 0, __builtin_signbitl(-1.0L) != 0);
     _Complex double z = 3.0 + 4.0 * I;
-    _Complex float zf = 1.0f - 2.0f * I;
+    _Complex float zf = __builtin_complex(1.0f, -2.0f);
     _Complex long double zl = 5.0L + 6.0L * I;
+    _Complex double halves = __builtin_complex(0.0, -0.0);
+    printf("halves %d %d\n", __builtin_signbit(__builtin_creal(halves)) != 0, __builtin_signbit(__builtin_cimag(halves)) != 0);
     printf("complex %g %g %g %g %Lg %Lg\n", __builtin_creal(z), __builtin_cimag(__builtin_conj(z)), (double)__builtin_crealf(__builtin_conjf(zf)), (double)__builtin_cimagf(zf), __builtin_creall(zl), __builtin_cimagl(__builtin_conjl(zl)));
     volatile double x = 2.5, y = -2.5;
     volatile float xf = 2.5f;
