@@ -8,8 +8,8 @@
 [[maybe_unused]] static int unused_helper(void) { return 0; }
 [[deprecated("use value")]] static int old(void) { return 1; }
 [[noreturn]] static void stop(int code) { exit(code); }
-[[unsequenced]] static int square(int x) { return x * x; }
-[[reproducible]] static int twice(int x) { return x * 2; }
+static int square(int x) [[unsequenced]] { return x * x; }
+static int twice(int x) [[reproducible]] { return x * 2; }
 [[gnu::always_inline]] static inline int one(void) { return 1; }
 
 static int classify(int n)
