@@ -22,7 +22,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::Duration;
 
-use crate::corpus::{Corpus, Exclusion, Oracle, Settled};
+use crate::corpus::{Arguments, Corpus, Exclusion, Oracle, Settled};
 use crate::coverage::{self, Marks};
 use crate::differ::{self, Case};
 use crate::ledger;
@@ -542,6 +542,17 @@ pub fn run(
     // the command line of the case it belongs to.
     let found = differ::without_helpers(differ::cases(repo, corpus, scratch)?, corpus);
     let all = found.cases;
+    // Refused rather than passed over, because an entry giving a command line to a case that is
+    // not there is usually a case that was renamed, and the case under its new name is now being
+    // run with nothing and failing for a reason the report would not show.
+    if let Some(stray) = corpus.arguments.iter().find(|a| !all.iter().any(|c| c.name == a.case)) {
+        return Err(Error {
+            message: format!(
+                "{}: there is an `arguments` entry for `{}`, which is not a case of this corpus",
+                corpus.name, stray.case
+            ),
+        });
+    }
     let cases: Vec<Case> = match &settings.unit {
         Some(unit) => all.iter().filter(|c| c.unit == *unit).cloned().collect(),
         None => all.clone(),
@@ -725,6 +736,7 @@ pub fn check(
     limits: &Limits,
 ) -> Vec<(Route, Status)> {
     let inputs = inputs(case, corpus);
+    let how = corpus.arguments_of(&case.name).map(|a| (a, case.dir.as_path()));
     let every = |status: &Status| -> Vec<(Route, Status)> {
         settings.routes.iter().map(|route| (*route, status.clone())).collect()
     };
@@ -745,12 +757,12 @@ pub fn check(
     // makes, one step later, and it is made by running rather than by a list, so it cannot go
     // stale and nobody has to notice when the reference changes its mind.
     let expected = match oracle {
-        Oracle::Differential => match launch(&theirs, dir, limits, settings) {
+        Oracle::Differential => match launch(&theirs, dir, limits, settings, how) {
             Ok(ran) => Some(ran),
             Err(why) => return every(&Status::NotCompared { why }),
         },
         Oracle::SelfCheck | Oracle::Recorded => {
-            match launch(&theirs, dir, limits, settings) {
+            match launch(&theirs, dir, limits, settings, how) {
                 Err(why) => return every(&Status::Skipped { why }),
                 Ok(ran) => match judge(oracle, case, &ran, None) {
                     Status::Passed => None,
@@ -768,7 +780,7 @@ pub fn check(
         let at = dir.join(route.word());
         let status = match build(&settings.rucc, true, *route, &inputs, case, settings, &at) {
             Err(why) => Status::DidNotBuild { why },
-            Ok(exe) => match launch(&exe, &at, limits, settings) {
+            Ok(exe) => match launch(&exe, &at, limits, settings, how) {
                 Err(why) => Status::DidNotBuild { why },
                 Ok(ran) => judge(oracle, case, &ran, expected.as_ref()),
             },
@@ -784,17 +796,31 @@ pub fn check(
 /// carriage return and a newline, and the answers a corpus records were written on Unix. Both
 /// compilers' programs do it, so it says nothing about either, and it is taken back out here
 /// rather than taught to every oracle.
+///
+/// A case the manifest gives [`Arguments`] to is run with them, and the files they name are
+/// copied from beside the case into the directory it runs in first, so that a path on its command
+/// line reads the same in its output as it did when the answer was recorded.
 pub(crate) fn launch(
     exe: &Path,
     dir: &Path,
     limits: &Limits,
     settings: &Settings,
+    how: Option<(&Arguments, &Path)>,
 ) -> Result<Ran, String> {
+    let mut given: Vec<OsString> = Vec::new();
+    if let Some((how, from)) = how {
+        for file in &how.files {
+            let to = dir.join(file);
+            fs::copy(from.join(file), &to).map_err(|e| format!("{}: {e}", to.display()))?;
+        }
+        given.extend(how.args.iter().map(OsString::from));
+    }
     let mut ran = match settings.runner.split_first() {
-        None => sandbox::run(exe, &[] as &[&str], dir, limits),
+        None => sandbox::run(exe, &given, dir, limits),
         Some((runner, rest)) => {
             let mut args: Vec<OsString> = rest.iter().map(OsString::from).collect();
             args.push(exe.as_os_str().to_owned());
+            args.extend(given);
             sandbox::run(Path::new(runner), &args, dir, limits)
         }
     }?;
@@ -1018,12 +1044,16 @@ pub fn judge(oracle: Oracle, case: &Case, ours: &Ran, theirs: Option<&Ran>) -> S
             None => Status::NotCompared {
                 why: "the corpus ships no expected output beside this program".to_owned(),
             },
-            Some(want) => {
+            Some((want, spacing)) => {
                 if !ours.end.is_clean() {
                     return Status::Wrong { why: ours.end.said() };
                 }
                 let got = ours.text();
-                match got == want {
+                let same = match spacing {
+                    Spacing::Exact => got == want,
+                    Spacing::Loose => loosely(&got) == loosely(&want),
+                };
+                match same {
                     true => Status::Passed,
                     false => Status::Wrong { why: differing(&want, &got) },
                 }
@@ -1060,14 +1090,51 @@ pub fn judge(oracle: Oracle, case: &Case, ours: &Ran, theirs: Option<&Ran>) -> S
 /// Two spellings, because the c-testsuite renamed these files at some point and the pin this
 /// repository holds is on the older side of that. Looking for both costs one `stat` and saves
 /// the whole corpus going quiet on the day the pin moves.
-fn recorded(file: &Path) -> Option<String> {
+///
+/// A third is tcc's, where `42_function_pointer.c` has its answer in `42_function_pointer.expect`
+/// with the `.c` taken off. That one comes back as [`Spacing::Loose`], because tcc's own Makefile
+/// compares its answers with `diff -b` and the files were written to that rule: trailing spaces
+/// were stripped out of them and a final newline was added whether the program prints one or not.
+/// Holding a program to bytes its own suite never held it to would call a right answer wrong.
+fn recorded(file: &Path) -> Option<(String, Spacing)> {
     let mut name = file.as_os_str().to_owned();
     name.push(".expected");
     let older = PathBuf::from(name);
     let mut name = file.as_os_str().to_owned();
     name.push(".expected_output");
     let newer = PathBuf::from(name);
-    fs::read_to_string(&older).or_else(|_| fs::read_to_string(&newer)).ok()
+    if let Ok(want) = fs::read_to_string(&older).or_else(|_| fs::read_to_string(&newer)) {
+        return Some((want, Spacing::Exact));
+    }
+    fs::read_to_string(file.with_extension("expect")).ok().map(|want| (want, Spacing::Loose))
+}
+
+/// How closely a recorded answer is held, which is set by the suite that recorded it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Spacing {
+    /// Byte for byte.
+    Exact,
+    /// The way `diff -b` compares, which is what tcc's suite was checked with.
+    Loose,
+}
+
+/// Output as `diff -b` sees it: every run of spaces and tabs counts as one, none at the end of a
+/// line counts at all, and neither do blank lines at the end of the output, which is how a missing
+/// final newline stops mattering. Space at the start of a line still counts as being there, since
+/// `diff -b` tells `x` from ` x` and only stops telling ` x` from `   x`.
+fn loosely(text: &str) -> Vec<String> {
+    let squeeze = |line: &str| {
+        let words = line.split_whitespace().collect::<Vec<_>>().join(" ");
+        match line.starts_with(char::is_whitespace) && !words.is_empty() {
+            true => format!(" {words}"),
+            false => words,
+        }
+    };
+    let mut lines: Vec<String> = text.lines().map(squeeze).collect();
+    while lines.last().is_some_and(String::is_empty) {
+        lines.pop();
+    }
+    lines
 }
 
 /// Where two outputs stopped agreeing, as one line somebody can read in a table.
@@ -1497,6 +1564,44 @@ mod tests {
         // The right output and a status saying the program was unhappy is still not a pass.
         let out = judge(Oracle::Recorded, &it, &ran(End::Exited(1), "one\ntwo\n"), None);
         assert_eq!(out.word(), "wrong answer");
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    /// tcc's answers were written for `diff -b`, so the spacing a program prints inside and at the
+    /// end of a line, and whether it ends on a newline, are not held against it. What it prints
+    /// is, and so is space at the start of a line where the answer has none.
+    #[test]
+    fn a_tcc_answer_is_compared_the_way_its_own_suite_compares_it() {
+        let dir = env::temp_dir().join(format!("rucc-compat-expect-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("38_multiple_array_index.c");
+        fs::write(&file, "int main(void) { return 0; }\n").unwrap();
+        fs::write(dir.join("38_multiple_array_index.expect"), "x=0: 1 2\nx=1: 3 4\n").unwrap();
+        let it = Case { file, dir: dir.clone(), ..case("u/38_multiple_array_index.c") };
+
+        let spaced = ran(End::Exited(0), "x=0: 1  2 \nx=1:\t3 4 ");
+        assert_eq!(judge(Oracle::Recorded, &it, &spaced, None), Status::Passed);
+        let indented = ran(End::Exited(0), " x=0: 1 2\nx=1: 3 4\n");
+        assert_eq!(judge(Oracle::Recorded, &it, &indented, None).word(), "wrong answer");
+        let wrong = ran(End::Exited(0), "x=0: 1 2\nx=1: 3 5\n");
+        assert_eq!(judge(Oracle::Recorded, &it, &wrong, None).word(), "wrong answer");
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    /// The loose rule is tcc's and nobody else's. A c-testsuite answer is still held to the byte,
+    /// since that suite was checked byte for byte and a trailing space there is a difference.
+    #[test]
+    fn a_c_testsuite_answer_is_still_held_to_the_byte() {
+        let dir = env::temp_dir().join(format!("rucc-compat-exact-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("a.c");
+        fs::write(&file, "int main(void) { return 0; }\n").unwrap();
+        fs::write(dir.join("a.c.expected"), "one\n").unwrap();
+        let it = Case { file, dir: dir.clone(), ..case("u/a.c") };
+        let spaced = ran(End::Exited(0), "one \n");
+        assert_eq!(judge(Oracle::Recorded, &it, &spaced, None).word(), "wrong answer");
         let _ = fs::remove_dir_all(&dir);
     }
 

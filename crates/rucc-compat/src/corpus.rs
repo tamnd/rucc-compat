@@ -395,6 +395,29 @@ impl Untrustworthy {
     }
 }
 
+/// What one case is run with, for a program that reads its command line.
+///
+/// A suite that records answers records them for a program run a particular way, and tcc's
+/// Makefile hands `31_args.c` five words and `46_grep.c` a pattern and its own file name. Run
+/// with nothing, both print a usage line where the answer should be, and a harness that could not
+/// say otherwise would have to call a right program wrong or leave it out.
+///
+/// Both compilers' programs get the same, since the reference is run first to decide whether the
+/// case is a fair one.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Arguments {
+    /// The case name, the same string the report prints.
+    pub case: String,
+    /// The words after the program name, as they are, with no shell in between.
+    pub args: Vec<String>,
+    /// Files beside the case to copy into the directory it runs in before it runs, named relative
+    /// to the case's own directory.
+    ///
+    /// For a program handed a file name, which then prints it. The recorded answer has the name
+    /// the way the suite wrote it, so the file has to be where that name finds it.
+    pub files: Vec<String>,
+}
+
 /// One group of things to preprocess.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Unit {
@@ -603,6 +626,8 @@ pub struct Corpus {
     pub exec_excluded: Vec<Exclusion>,
     /// The cases whose reference answer a sanitizer says is not to be relied on, in file order.
     pub untrustworthy: Vec<Untrustworthy>,
+    /// The cases that are run with something on their command line, in file order.
+    pub arguments: Vec<Arguments>,
     /// The optimization levels `measure` compiles each bounded file at, each one of [`LEVELS`].
     ///
     /// Written down per corpus rather than assumed, because the cost of a file moves a long way
@@ -644,6 +669,12 @@ impl Corpus {
     #[must_use]
     pub fn untrustworthy_at(&self, case: &str, opt: Option<&str>) -> Option<&Untrustworthy> {
         self.untrustworthy.iter().find(|u| u.case == case && u.at(opt))
+    }
+
+    /// What this case is run with, if it is run with anything.
+    #[must_use]
+    pub fn arguments_of(&self, case: &str) -> Option<&Arguments> {
+        self.arguments.iter().find(|a| a.case == case)
     }
 
     /// The rule about the directory this case is in, if it is in one.
@@ -875,6 +906,14 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
     let exec_excluded = exclusions(&doc, "exec-exclude", &whose, true)?;
     let settled = settled(&doc, &whose)?;
     let untrustworthy = untrustworthy(&doc, &whose)?;
+    let arguments = arguments(&doc, &whose)?;
+    if oracle.is_none() && !arguments.is_empty() {
+        return Err(Error {
+            message: format!(
+                "{whose}: there are [[arguments]] entries and no `oracle`, so nothing ever runs with them"
+            ),
+        });
+    }
     let levels = root.list("levels");
     if let Some(odd) = levels.iter().find(|level| !LEVELS.contains(&level.as_str())) {
         return Err(Error {
@@ -921,6 +960,7 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
         timeout,
         exec_excluded,
         untrustworthy,
+        arguments,
         levels,
     })
 }
@@ -1031,6 +1071,45 @@ fn untrustworthy(doc: &toml::Doc, whose: &str) -> Result<Vec<Untrustworthy>, Err
         for case in named {
             out.push(Untrustworthy { case, why: why.clone(), opt: opt.clone() });
         }
+    }
+    Ok(out)
+}
+
+/// Every `[[arguments]]` block of the manifest.
+///
+/// One case each, since two programs that take the same command line are a coincidence and not a
+/// rule. An entry that gives nothing is refused rather than read as running with nothing, and so
+/// is a second entry for the same case, since which of the two applied would be down to the order
+/// they were written in. A file to copy is a name under the case's directory and not a path out
+/// of it.
+fn arguments(doc: &toml::Doc, whose: &str) -> Result<Vec<Arguments>, Error> {
+    let mut out: Vec<Arguments> = Vec::new();
+    for fields in doc.named("arguments") {
+        let case = fields.need("case", whose)?.to_owned();
+        let entry = Arguments { case, args: fields.list("args"), files: fields.list("files") };
+        if entry.args.is_empty() && entry.files.is_empty() {
+            return Err(Error {
+                message: format!(
+                    "{whose}: the `arguments` entry for `{}` gives nothing, so it needs `args` or `files`",
+                    entry.case
+                ),
+            });
+        }
+        if out.iter().any(|a| a.case == entry.case) {
+            return Err(Error {
+                message: format!("{whose}: `{}` has two `arguments` entries", entry.case),
+            });
+        }
+        if let Some(odd) = entry.files.iter().find(|f| {
+            Path::new(f).is_absolute() || Path::new(f).components().any(|c| c.as_os_str() == "..")
+        }) {
+            return Err(Error {
+                message: format!(
+                    "{whose}: `files` names `{odd}`, which is not a name under the case's directory"
+                ),
+            });
+        }
+        out.push(entry);
     }
     Ok(out)
 }
@@ -1849,6 +1928,33 @@ mod tests {
         fake.corpus("sys", &text);
         let e = load(&fake.root, "sys").unwrap_err();
         assert!(e.message.contains("no `oracle`"), "{}", e.message);
+    }
+
+    #[test]
+    fn a_case_can_be_given_a_command_line_and_the_files_it_names() {
+        let fake = Fake::new("arguments");
+        let text = format!(
+            "oracle = \"recorded\"\n{INSTALLED}\n[[arguments]]\ncase = \"standard/a.h\"\nargs = [\"x\", \"a.h\"]\nfiles = [\"a.h\"]\n"
+        );
+        fake.corpus("sys", &text);
+        let corpus = load(&fake.root, "sys").unwrap();
+        let given = corpus.arguments_of("standard/a.h").unwrap();
+        assert_eq!(given.args, ["x", "a.h"]);
+        assert_eq!(given.files, ["a.h"]);
+        assert!(corpus.arguments_of("standard/b.h").is_none());
+    }
+
+    #[test]
+    fn an_arguments_entry_giving_nothing_or_reaching_outside_is_refused() {
+        for (name, body) in [
+            ("arguments-empty", "case = \"standard/a.h\"\n"),
+            ("arguments-outside", "case = \"standard/a.h\"\nfiles = [\"../a.h\"]\n"),
+        ] {
+            let fake = Fake::new(name);
+            let text = format!("oracle = \"recorded\"\n{INSTALLED}\n[[arguments]]\n{body}");
+            fake.corpus("sys", &text);
+            assert!(load(&fake.root, "sys").is_err(), "{name}");
+        }
     }
 
     #[test]

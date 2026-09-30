@@ -306,7 +306,8 @@ fn screen(
             return Verdict::Unscreened { why: format!("the sanitized build failed: {why}") };
         }
     };
-    match exec::launch(&exe, dir, limits, settings) {
+    let how = corpus.arguments_of(&case.name).map(|a| (a, case.dir.as_path()));
+    match exec::launch(&exe, dir, limits, settings, how) {
         Err(why) => Verdict::Unscreened { why },
         Ok(ran) => judge(&ran),
     }

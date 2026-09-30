@@ -8,6 +8,14 @@ root = "tcc-0.9.27"
 license = "LGPL-2.1-or-later"
 license-file = "tcc-0.9.27/COPYING"
 
+# Every program here has what it should print in a file beside it, `31_args.expect` for
+# `31_args.c`, and tcc's Makefile runs each one and compares. Most of those files were made by
+# running a gcc build of the program, and a few by tcc, which `exec` sorts out by running the
+# reference first: a program whose own file gcc 16 does not match is skipped rather than held
+# against anybody. The files were written to be compared with `diff -b`, so they are, see
+# `recorded` in `exec.rs`.
+oracle = "recorded"
+
 # The value of this suite is that it was not written to be portable. It is the set of things
 # people found out the hard way that gcc does, which is the part of C that no specification
 # will tell us about.
@@ -20,6 +28,9 @@ dir = "tests/tests2"
 # a function of no arguments. GCC 16 refuses those programs under its own default of gnu23 as
 # well, so the dialect is named here rather than left to whatever each compiler defaults to.
 flags = ["-std=gnu17"]
+# libm on every link, as tcc's own test makefile links it. `22_floating_point.c` and
+# `24_math_library.c` call `sin` and `cos` on constants, which gcc folds and rucc emits calls for.
+libs = ["-lm"]
 skip = [
   # Assignment to an array, which is a tcc extension. The reference compiler refuses this
   # file too, so refusing it is not a gap and there is nothing here for an exclusion to point
@@ -30,3 +41,16 @@ skip = [
   # so there is no gap here either.
   "99_fastcall.c",
 ]
+
+# The two programs tcc's Makefile hands a command line to, with the command line it hands them.
+# The pattern is what the Makefile writes with its `$$` turned back into the one `$` the shell
+# saw. `46_grep.c` prints the name of the file it was given, and the recorded answer has it as
+# `46_grep.c`, so the file is copied in beside the program and named the same way.
+[[arguments]]
+case = "tests2/31_args.c"
+args = ["arg1", "arg2", "arg3", "arg4", "arg5"]
+
+[[arguments]]
+case = "tests2/46_grep.c"
+args = ["[^* ]*[:a:d: ]+\\:\\*-/: $", "46_grep.c"]
+files = ["46_grep.c"]
