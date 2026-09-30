@@ -1,8 +1,9 @@
 # The rows of the conformance corpus, one per construct of the language.
 #
-# A row names the standard that brought the construct in, the clause of C17 that describes it,
-# since that is one numbering for all of them, and the case that exercises it or the issue that
-# will make one pass. `rucc-compat rows conformance` checks every row against the cases and every
+# A row names the standard that brought the construct in, the clause that describes it, and the
+# case that exercises it or the issue that will make one pass. The clause is C17's, since that is
+# one numbering for everything up to it, and C23's for what C23 brought in, which C17 has no
+# clause for. `rucc-compat rows conformance` checks every row against the cases and every
 # case against the rows. A case may stand behind several rows, since a program about operators
 # is a program about all of them.
 #
@@ -828,3 +829,535 @@ standard = "c99"
 clause = "7.21.6.5"
 what = "snprintf and the length it would have written"
 case = "c99/mixed.c"
+
+[[row]]
+id = "c11/alignas"
+standard = "c11"
+clause = "6.7.5"
+what = "_Alignas on objects and members, given a type or a constant"
+case = "c11/alignment.c"
+
+[[row]]
+id = "c11/alignof"
+standard = "c11"
+clause = "6.5.3.4"
+what = "_Alignof of a type"
+case = "c11/alignment.c"
+
+[[row]]
+id = "c11/stdalign"
+standard = "c11"
+clause = "7.15"
+what = "alignas and alignof from <stdalign.h> and their feature macros"
+case = "c11/alignment.c"
+
+[[row]]
+id = "c11/max-align-t"
+standard = "c11"
+clause = "7.19"
+what = "max_align_t"
+case = "c11/alignment.c"
+
+[[row]]
+id = "c11/aligned-alloc"
+standard = "c11"
+clause = "7.22.3.1"
+what = "aligned_alloc"
+case = "c11/alignment.c"
+
+[[row]]
+id = "c11/static-assert"
+standard = "c11"
+clause = "6.7.10"
+what = "_Static_assert at file scope, in a block and in a structure"
+case = "c11/static_assert_generic.c"
+
+[[row]]
+id = "c11/static-assert-macro"
+standard = "c11"
+clause = "7.2"
+what = "static_assert from <assert.h>"
+case = "c11/static_assert_generic.c"
+
+[[row]]
+id = "c11/generic-selection"
+standard = "c11"
+clause = "6.5.1.1"
+what = "_Generic choosing on the type after lvalue conversion"
+case = "c11/static_assert_generic.c"
+
+[[row]]
+id = "c11/generic-default"
+standard = "c11"
+clause = "6.5.1.1"
+what = "a default association and a selection yielding a function designator"
+case = "c11/static_assert_generic.c"
+
+[[row]]
+id = "c11/anonymous-structures"
+standard = "c11"
+clause = "6.7.2.1"
+what = "anonymous structures and unions and their members"
+case = "c11/anonymous_members.c"
+
+[[row]]
+id = "c11/anonymous-initialization"
+standard = "c11"
+clause = "6.7.9"
+what = "designators naming a member of an anonymous structure or union"
+case = "c11/anonymous_members.c"
+
+[[row]]
+id = "c11/noreturn"
+standard = "c11"
+clause = "6.7.4"
+what = "_Noreturn function specifier"
+case = "c11/noreturn_thread_local.c"
+
+[[row]]
+id = "c11/stdnoreturn"
+standard = "c11"
+clause = "7.23"
+what = "noreturn from <stdnoreturn.h>"
+case = "c11/noreturn_thread_local.c"
+
+[[row]]
+id = "c11/thread-local"
+standard = "c11"
+clause = "6.7.1"
+what = "_Thread_local objects, one per thread"
+case = "c11/noreturn_thread_local.c"
+
+[[row]]
+id = "c11/threads"
+standard = "c11"
+clause = "7.26"
+what = "thrd_create and thrd_join from <threads.h>"
+case = "c11/noreturn_thread_local.c"
+
+[[row]]
+id = "c11/atomic-qualifier"
+standard = "c11"
+clause = "6.7.3"
+what = "the _Atomic qualifier and _Atomic(type) specifier"
+case = "c11/atomics.c"
+
+[[row]]
+id = "c11/atomic-compound-assignment"
+standard = "c11"
+clause = "6.5.16.2"
+what = "compound assignment and increment on an atomic object"
+case = "c11/atomics.c"
+
+[[row]]
+id = "c11/stdatomic"
+standard = "c11"
+clause = "7.17"
+what = "load, store, exchange, compare and exchange and the fetch operations"
+case = "c11/atomics.c"
+
+[[row]]
+id = "c11/atomic-flag"
+standard = "c11"
+clause = "7.17.8"
+what = "atomic_flag, test and set, and clear"
+case = "c11/atomics.c"
+
+[[row]]
+id = "c11/atomic-lock-free"
+standard = "c11"
+clause = "7.17.5"
+what = "the lock free macros and atomic_is_lock_free"
+case = "c11/atomics.c"
+
+[[row]]
+id = "c11/atomic-fence"
+standard = "c11"
+clause = "7.17.4"
+what = "atomic_thread_fence"
+case = "c11/atomics.c"
+
+[[row]]
+id = "c11/utf8-strings"
+standard = "c11"
+clause = "6.4.5"
+what = "u8 string literals"
+case = "c11/unicode_literals.c"
+
+[[row]]
+id = "c11/utf16-utf32-strings"
+standard = "c11"
+clause = "6.4.5"
+what = "u and U string literals and concatenation with a plain one"
+case = "c11/unicode_literals.c"
+
+[[row]]
+id = "c11/utf16-utf32-characters"
+standard = "c11"
+clause = "6.4.4.4"
+what = "u and U character constants"
+case = "c11/unicode_literals.c"
+
+[[row]]
+id = "c11/uchar"
+standard = "c11"
+clause = "7.28"
+what = "char16_t and char32_t from <uchar.h>"
+case = "c11/unicode_literals.c"
+
+[[row]]
+id = "c11/utf-macros"
+standard = "c11"
+clause = "6.10.8.2"
+what = "__STDC_UTF_16__ and __STDC_UTF_32__"
+case = "c11/unicode_literals.c"
+
+[[row]]
+id = "c11/stdc-version"
+standard = "c11"
+clause = "6.10.8.1"
+what = "__STDC_VERSION__ is 201112L"
+case = "c11/library_macros.c"
+
+[[row]]
+id = "c11/feature-macros"
+standard = "c11"
+clause = "6.10.8.3"
+what = "__STDC_NO_VLA__ and __STDC_NO_COMPLEX__"
+case = "c11/library_macros.c"
+
+[[row]]
+id = "c11/cmplx"
+standard = "c11"
+clause = "7.3.9.3"
+what = "the CMPLX macros"
+case = "c11/library_macros.c"
+
+[[row]]
+id = "c11/float-characteristics"
+standard = "c11"
+clause = "5.2.4.2.2"
+what = "FLT_DECIMAL_DIG, FLT_HAS_SUBNORM and DBL_TRUE_MIN"
+case = "c11/library_macros.c"
+
+[[row]]
+id = "c11/quick-exit"
+standard = "c11"
+clause = "7.22.4.7"
+what = "quick_exit and at_quick_exit"
+case = "c11/library_macros.c"
+
+[[row]]
+id = "c11/timespec-get"
+standard = "c11"
+clause = "7.27.2.5"
+what = "timespec_get"
+case = "c11/library_macros.c"
+
+[[row]]
+id = "c17/stdc-version"
+standard = "c17"
+clause = "6.10.8.1"
+what = "__STDC_VERSION__ is 201710L"
+case = "c17/version.c"
+
+[[row]]
+id = "c17/atomic-var-init"
+standard = "c17"
+clause = "7.17.2.1"
+what = "ATOMIC_VAR_INIT, deprecated but still there"
+case = "c17/version.c"
+
+[[row]]
+id = "c23/bool-keyword"
+standard = "c23"
+clause = "6.4.1"
+what = "bool, true and false as keywords"
+case = "c23/keywords.c"
+
+[[row]]
+id = "c23/bool-in-if"
+standard = "c23"
+clause = "6.10.1"
+what = "true and false in #if"
+case = "c23/keywords.c"
+
+[[row]]
+id = "c23/nullptr"
+standard = "c23"
+clause = "6.4.4.6"
+what = "nullptr and nullptr_t"
+case = "c23/keywords.c"
+
+[[row]]
+id = "c23/plain-keywords"
+standard = "c23"
+clause = "6.4.1"
+what = "alignas, alignof, static_assert and thread_local as keywords"
+case = "c23/keywords.c"
+
+[[row]]
+id = "c23/static-assert-no-message"
+standard = "c23"
+clause = "6.7.11"
+what = "static_assert with no message"
+case = "c23/keywords.c"
+
+[[row]]
+id = "c23/binary-constants"
+standard = "c23"
+clause = "6.4.4.1"
+what = "binary integer constants"
+case = "c23/constants.c"
+
+[[row]]
+id = "c23/digit-separators"
+standard = "c23"
+clause = "6.4.4"
+what = "digit separators in integer and floating constants"
+case = "c23/constants.c"
+
+[[row]]
+id = "c23/utf8-characters"
+standard = "c23"
+clause = "6.4.4.5"
+what = "u8 character constants and char8_t"
+case = "c23/constants.c"
+
+[[row]]
+id = "c23/bit-int-constants"
+standard = "c23"
+clause = "6.4.4.1"
+what = "the wb and uwb suffixes"
+case = "c23/constants.c"
+
+[[row]]
+id = "c23/typeof"
+standard = "c23"
+clause = "6.7.3.6"
+what = "typeof of an expression and of a type name"
+case = "c23/type_inference.c"
+
+[[row]]
+id = "c23/typeof-unqual"
+standard = "c23"
+clause = "6.7.3.6"
+what = "typeof_unqual dropping qualifiers"
+case = "c23/type_inference.c"
+
+[[row]]
+id = "c23/auto"
+standard = "c23"
+clause = "6.7.10"
+what = "auto taking the type of an initializer"
+case = "c23/type_inference.c"
+
+[[row]]
+id = "c23/constexpr"
+standard = "c23"
+clause = "6.7.2"
+what = "constexpr objects used as constant expressions"
+case = "c23/constexpr_init.c"
+
+[[row]]
+id = "c23/empty-initializer"
+standard = "c23"
+clause = "6.7.11"
+what = "= {} for scalars, arrays, structures and variable length arrays"
+case = "c23/constexpr_init.c"
+
+[[row]]
+id = "c23/attribute-syntax"
+standard = "c23"
+clause = "6.7.13"
+what = "the [[attribute]] syntax and vendor prefixed attributes"
+case = "c23/attributes.c"
+
+[[row]]
+id = "c23/nodiscard"
+standard = "c23"
+clause = "6.7.13.3"
+what = "nodiscard"
+case = "c23/attributes.c"
+
+[[row]]
+id = "c23/maybe-unused"
+standard = "c23"
+clause = "6.7.13.4"
+what = "maybe_unused"
+case = "c23/attributes.c"
+
+[[row]]
+id = "c23/deprecated"
+standard = "c23"
+clause = "6.7.13.5"
+what = "deprecated with a message"
+case = "c23/attributes.c"
+
+[[row]]
+id = "c23/fallthrough"
+standard = "c23"
+clause = "6.7.13.6"
+what = "fallthrough in a switch"
+case = "c23/attributes.c"
+
+[[row]]
+id = "c23/noreturn-attribute"
+standard = "c23"
+clause = "6.7.13.7"
+what = "noreturn as an attribute"
+case = "c23/attributes.c"
+
+[[row]]
+id = "c23/unsequenced-reproducible"
+standard = "c23"
+clause = "6.7.13.8"
+what = "unsequenced and reproducible"
+case = "c23/attributes.c"
+
+[[row]]
+id = "c23/has-c-attribute"
+standard = "c23"
+clause = "6.10.2"
+what = "__has_c_attribute"
+case = "c23/attributes.c"
+
+[[row]]
+id = "c23/elifdef"
+standard = "c23"
+clause = "6.10.2"
+what = "#elifdef and #elifndef"
+case = "c23/preprocessor.c"
+
+[[row]]
+id = "c23/has-include"
+standard = "c23"
+clause = "6.10.2"
+what = "__has_include"
+case = "c23/preprocessor.c"
+
+[[row]]
+id = "c23/va-opt"
+standard = "c23"
+clause = "6.10.5.1"
+what = "__VA_OPT__ and a variadic macro given no variable arguments"
+case = "c23/preprocessor.c"
+
+[[row]]
+id = "c23/embed"
+standard = "c23"
+clause = "6.10.4"
+what = "#embed with a limit"
+case = "c23/preprocessor.c"
+
+[[row]]
+id = "c23/has-embed"
+standard = "c23"
+clause = "6.10.2"
+what = "__has_embed"
+case = "c23/preprocessor.c"
+
+[[row]]
+id = "c23/stdc-version"
+standard = "c23"
+clause = "6.10.10.2"
+what = "__STDC_VERSION__ is 202311L"
+case = "c23/preprocessor.c"
+
+[[row]]
+id = "c23/labels-anywhere"
+standard = "c23"
+clause = "6.8.2"
+what = "a label before a declaration and at the end of a block"
+case = "c23/declarations.c"
+
+[[row]]
+id = "c23/unnamed-parameters"
+standard = "c23"
+clause = "6.9.2"
+what = "an unnamed parameter in a function definition"
+case = "c23/declarations.c"
+
+[[row]]
+id = "c23/variadic-no-named"
+standard = "c23"
+clause = "6.7.7.4"
+what = "a variadic function with no named parameter and va_start with one argument"
+case = "c23/declarations.c"
+
+[[row]]
+id = "c23/empty-parentheses"
+standard = "c23"
+clause = "6.7.7.4"
+what = "a function defined with () taking no arguments"
+case = "c23/declarations.c"
+
+[[row]]
+id = "c23/enum-fixed-type"
+standard = "c23"
+clause = "6.7.3.3"
+what = "an enumeration with a fixed underlying type"
+case = "c23/declarations.c"
+
+[[row]]
+id = "c23/enum-wide"
+standard = "c23"
+clause = "6.7.3.3"
+what = "an enumerator that does not fit in int"
+case = "c23/declarations.c"
+
+[[row]]
+id = "c23/tag-compatibility"
+standard = "c23"
+clause = "6.7.3.4"
+what = "a structure tag redeclared with the same members"
+case = "c23/declarations.c"
+
+[[row]]
+id = "c23/bit-int"
+standard = "c23"
+clause = "6.2.5"
+what = "signed and unsigned _BitInt of any width"
+case = "c23/bit_int.c"
+
+[[row]]
+id = "c23/bit-int-conversions"
+standard = "c23"
+clause = "6.3.1.1"
+what = "_BitInt arithmetic without integer promotion"
+case = "c23/bit_int.c"
+
+[[row]]
+id = "c23/bitint-maxwidth"
+standard = "c23"
+clause = "5.2.4.2.1"
+what = "BITINT_MAXWIDTH"
+case = "c23/bit_int.c"
+
+[[row]]
+id = "c23/stdckdint"
+standard = "c23"
+clause = "7.20"
+what = "ckd_add, ckd_sub and ckd_mul"
+case = "c23/library.c"
+
+[[row]]
+id = "c23/stdbit"
+standard = "c23"
+clause = "7.18"
+what = "the bit utilities of <stdbit.h>"
+case = "c23/library.c"
+
+[[row]]
+id = "c23/memccpy-strdup"
+standard = "c23"
+clause = "7.26.2"
+what = "memccpy, strdup and strndup"
+case = "c23/library.c"
+
+[[row]]
+id = "c23/width-macros"
+standard = "c23"
+clause = "5.2.4.2.1"
+what = "INT_WIDTH, LLONG_WIDTH and UINT64_WIDTH"
+case = "c23/library.c"
