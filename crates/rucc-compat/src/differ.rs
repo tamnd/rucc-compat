@@ -749,6 +749,8 @@ pub fn cases(repo: &Path, corpus: &Corpus, scratch: &Path) -> Result<Found, Erro
             UnitKind::KernelUnits => crate::kernel::unit_cases(&tree, corpus, unit, &mut found)?,
             // Probes are not files to preprocess. `kernel::run` asks them on its own.
             UnitKind::KernelProbes => {}
+            // Not preprocessed either. `asm::run` makes these into assembler input on its own.
+            UnitKind::KernelAsm => {}
         }
         found.elsewhere.extend(other.cases.into_iter().map(|case| case.name));
     }
