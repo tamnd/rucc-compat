@@ -46,8 +46,12 @@ use crate::work;
 /// dialect, so a program doing it has one right answer and the screen would be reporting the
 /// sanitizer's opinion of ISO C rather than a program without one. A shift by the width or more
 /// is still checked, since GNU C leaves that undefined as well.
-pub const SANITIZE: &[&str] =
-    &["-fsanitize=address,undefined", "-fno-sanitize-recover=all", "-fno-omit-frame-pointer"];
+pub const SANITIZE: &[&str] = &[
+    "-fsanitize=address,undefined",
+    "-fno-sanitize-recover=all",
+    "-fno-sanitize=shift-base",
+    "-fno-omit-frame-pointer",
+];
 
 /// What the programs are run with, through `env`, since the harness hands a run no environment of
 /// its own.
