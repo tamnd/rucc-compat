@@ -1944,7 +1944,6 @@ standard = "gnu"
 clause = "Common Function Attributes"
 what = "the weakref attribute"
 case = "gnu/weakref.c"
-issue = "tamnd/rucc#2479"
 feature = "weakref"
 
 [[row]]
