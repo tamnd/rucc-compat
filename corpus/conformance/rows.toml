@@ -1,0 +1,830 @@
+# The rows of the conformance corpus, one per construct of the language.
+#
+# A row names the standard that brought the construct in, the clause of C17 that describes it,
+# since that is one numbering for all of them, and the case that exercises it or the issue that
+# will make one pass. `rucc-compat rows conformance` checks every row against the cases and every
+# case against the rows. A case may stand behind several rows, since a program about operators
+# is a program about all of them.
+#
+# Not here, and on purpose: #error and every constraint a program must be refused for. Those are
+# about what a compiler says rather than what a program does, and they go in the accept and
+# reject corpus.
+
+[[row]]
+id = "c89/program-termination"
+standard = "c89"
+clause = "5.1.2.2.3"
+what = "returning from main gives the exit status"
+case = "c89/functions.c"
+
+[[row]]
+id = "c89/trigraphs"
+standard = "c89"
+clause = "5.2.1.1"
+what = "the nine trigraph sequences"
+case = "c89/trigraphs.c"
+
+[[row]]
+id = "c89/line-splicing"
+standard = "c89"
+clause = "5.1.1.2"
+what = "a backslash and a newline joining two lines"
+case = "c89/character_constants.c"
+
+[[row]]
+id = "c89/comments"
+standard = "c89"
+clause = "6.4.9"
+what = "block comments, which are one space and do not nest"
+case = "c89/comments.c"
+
+[[row]]
+id = "c89/integer-constants"
+standard = "c89"
+clause = "6.4.4.1"
+what = "decimal, octal and hexadecimal integer constants"
+case = "c89/integer_constants.c"
+
+[[row]]
+id = "c89/integer-suffixes"
+standard = "c89"
+clause = "6.4.4.1"
+what = "the u and l suffixes"
+case = "c89/integer_constants.c"
+
+[[row]]
+id = "c89/integer-constant-type"
+standard = "c89"
+clause = "6.4.4.1"
+what = "the type an unsuffixed constant gets from its value and base"
+case = "c89/integer_constants.c"
+
+[[row]]
+id = "c89/floating-constants"
+standard = "c89"
+clause = "6.4.4.2"
+what = "floating constants with and without a fraction or an exponent"
+case = "c89/floating_constants.c"
+
+[[row]]
+id = "c89/floating-suffixes"
+standard = "c89"
+clause = "6.4.4.2"
+what = "the f and l suffixes on a floating constant"
+case = "c89/floating_constants.c"
+
+[[row]]
+id = "c89/character-constants"
+standard = "c89"
+clause = "6.4.4.4"
+what = "character constants and their type, int"
+case = "c89/character_constants.c"
+
+[[row]]
+id = "c89/escape-sequences"
+standard = "c89"
+clause = "6.4.4.4"
+what = "simple, octal and hexadecimal escape sequences"
+case = "c89/character_constants.c"
+
+[[row]]
+id = "c89/string-literals"
+standard = "c89"
+clause = "6.4.5"
+what = "string literals, their size and their elements"
+case = "c89/character_constants.c"
+
+[[row]]
+id = "c89/string-concatenation"
+standard = "c89"
+clause = "6.4.5"
+what = "adjacent string literals joined into one"
+case = "c89/character_constants.c"
+
+[[row]]
+id = "c89/basic-types"
+standard = "c89"
+clause = "6.2.5"
+what = "the character, integer and floating types"
+case = "c89/basic_types.c"
+
+[[row]]
+id = "c89/type-specifiers"
+standard = "c89"
+clause = "6.7.2"
+what = "every spelling of the basic types in any order"
+case = "c89/basic_types.c"
+
+[[row]]
+id = "c89/limits"
+standard = "c89"
+clause = "5.2.4.2"
+what = "the ranges in limits.h and float.h"
+case = "c89/basic_types.c"
+
+[[row]]
+id = "c89/integer-promotions"
+standard = "c89"
+clause = "6.3.1.1"
+what = "types narrower than int promoted in arithmetic"
+case = "c89/conversions.c"
+
+[[row]]
+id = "c89/signed-unsigned-conversion"
+standard = "c89"
+clause = "6.3.1.3"
+what = "conversion between signed and unsigned integer types"
+case = "c89/conversions.c"
+
+[[row]]
+id = "c89/floating-integer-conversion"
+standard = "c89"
+clause = "6.3.1.4"
+what = "conversion between real floating and integer types"
+case = "c89/conversions.c"
+
+[[row]]
+id = "c89/usual-arithmetic-conversions"
+standard = "c89"
+clause = "6.3.1.8"
+what = "the common type of mixed operands"
+case = "c89/conversions.c"
+
+[[row]]
+id = "c89/array-decay"
+standard = "c89"
+clause = "6.3.2.1"
+what = "an array becoming a pointer to its first element"
+case = "c89/pointers.c"
+
+[[row]]
+id = "c89/function-decay"
+standard = "c89"
+clause = "6.3.2.1"
+what = "a function designator becoming a pointer to the function"
+case = "c89/pointers.c"
+
+[[row]]
+id = "c89/null-pointer"
+standard = "c89"
+clause = "6.3.2.3"
+what = "the null pointer constant and comparison with it"
+case = "c89/pointers.c"
+
+[[row]]
+id = "c89/void-pointer"
+standard = "c89"
+clause = "6.3.2.3"
+what = "conversion to and from void pointers"
+case = "c89/pointers.c"
+
+[[row]]
+id = "c89/subscripting"
+standard = "c89"
+clause = "6.5.2.1"
+what = "array subscripting, including the index written first"
+case = "c89/pointers.c"
+
+[[row]]
+id = "c89/function-calls"
+standard = "c89"
+clause = "6.5.2.2"
+what = "calls through a name and through a pointer"
+case = "c89/pointers.c"
+
+[[row]]
+id = "c89/member-access"
+standard = "c89"
+clause = "6.5.2.3"
+what = "the . and -> operators"
+case = "c89/structs_unions.c"
+
+[[row]]
+id = "c89/postfix-increment"
+standard = "c89"
+clause = "6.5.2.4"
+what = "postfix ++ and --"
+case = "c89/increment.c"
+
+[[row]]
+id = "c89/prefix-increment"
+standard = "c89"
+clause = "6.5.3.1"
+what = "prefix ++ and --"
+case = "c89/increment.c"
+
+[[row]]
+id = "c89/address-indirection"
+standard = "c89"
+clause = "6.5.3.2"
+what = "the & and * operators"
+case = "c89/pointers.c"
+
+[[row]]
+id = "c89/unary-arithmetic"
+standard = "c89"
+clause = "6.5.3.3"
+what = "unary +, -, ~ and !"
+case = "c89/operators.c"
+
+[[row]]
+id = "c89/sizeof"
+standard = "c89"
+clause = "6.5.3.4"
+what = "sizeof of a type name and of an unevaluated expression"
+case = "c89/sizeof_cast.c"
+
+[[row]]
+id = "c89/casts"
+standard = "c89"
+clause = "6.5.4"
+what = "cast operators with abstract declarators"
+case = "c89/sizeof_cast.c"
+
+[[row]]
+id = "c89/multiplicative"
+standard = "c89"
+clause = "6.5.5"
+what = "*, / and %, including negative operands"
+case = "c89/operators.c"
+
+[[row]]
+id = "c89/additive"
+standard = "c89"
+clause = "6.5.6"
+what = "+ and - on arithmetic types"
+case = "c89/operators.c"
+
+[[row]]
+id = "c89/pointer-arithmetic"
+standard = "c89"
+clause = "6.5.6"
+what = "adding to a pointer and subtracting two pointers"
+case = "c89/pointers.c"
+
+[[row]]
+id = "c89/shifts"
+standard = "c89"
+clause = "6.5.7"
+what = "<< and >>"
+case = "c89/operators.c"
+
+[[row]]
+id = "c89/relational"
+standard = "c89"
+clause = "6.5.8"
+what = "<, >, <= and >= on arithmetic types and pointers"
+case = "c89/operators.c"
+
+[[row]]
+id = "c89/equality"
+standard = "c89"
+clause = "6.5.9"
+what = "== and !="
+case = "c89/operators.c"
+
+[[row]]
+id = "c89/bitwise"
+standard = "c89"
+clause = "6.5.10"
+what = "&, ^ and |"
+case = "c89/operators.c"
+
+[[row]]
+id = "c89/logical"
+standard = "c89"
+clause = "6.5.13"
+what = "&& and || and their short circuit"
+case = "c89/operators.c"
+
+[[row]]
+id = "c89/conditional"
+standard = "c89"
+clause = "6.5.15"
+what = "the ?: operator"
+case = "c89/operators.c"
+
+[[row]]
+id = "c89/assignment"
+standard = "c89"
+clause = "6.5.16"
+what = "simple and compound assignment"
+case = "c89/operators.c"
+
+[[row]]
+id = "c89/comma"
+standard = "c89"
+clause = "6.5.17"
+what = "the comma operator and its ordering"
+case = "c89/operators.c"
+
+[[row]]
+id = "c89/precedence"
+standard = "c89"
+clause = "6.5"
+what = "precedence and associativity"
+case = "c89/operators.c"
+
+[[row]]
+id = "c89/storage-classes"
+standard = "c89"
+clause = "6.7.1"
+what = "static, extern, auto and register"
+case = "c89/qualifiers_storage.c"
+
+[[row]]
+id = "c89/static-local"
+standard = "c89"
+clause = "6.2.4"
+what = "a static local keeping its value between calls"
+case = "c89/qualifiers_storage.c"
+
+[[row]]
+id = "c89/typedef"
+standard = "c89"
+clause = "6.7.8"
+what = "typedef names for objects, arrays and function pointers"
+case = "c89/qualifiers_storage.c"
+
+[[row]]
+id = "c89/qualifiers"
+standard = "c89"
+clause = "6.7.3"
+what = "const and volatile objects and pointers"
+case = "c89/qualifiers_storage.c"
+
+[[row]]
+id = "c89/structures"
+standard = "c89"
+clause = "6.7.2.1"
+what = "structures, nesting, assignment and passing by value"
+case = "c89/structs_unions.c"
+
+[[row]]
+id = "c89/unions"
+standard = "c89"
+clause = "6.7.2.1"
+what = "unions and members sharing storage"
+case = "c89/structs_unions.c"
+
+[[row]]
+id = "c89/offsetof"
+standard = "c89"
+clause = "7.19"
+what = "offsetof and the first member at the start"
+case = "c89/structs_unions.c"
+
+[[row]]
+id = "c89/bit-fields"
+standard = "c89"
+clause = "6.7.2.1"
+what = "named, unnamed and zero width bit-fields"
+case = "c89/bit_fields.c"
+
+[[row]]
+id = "c89/enumerations"
+standard = "c89"
+clause = "6.7.2.2"
+what = "enumerators with implicit, explicit and negative values"
+case = "c89/enums_tags.c"
+
+[[row]]
+id = "c89/tags"
+standard = "c89"
+clause = "6.7.2.3"
+what = "incomplete structures and self-referential types"
+case = "c89/enums_tags.c"
+
+[[row]]
+id = "c89/pointer-declarators"
+standard = "c89"
+clause = "6.7.6.1"
+what = "pointers, pointers to pointers and const pointers"
+case = "c89/pointers.c"
+
+[[row]]
+id = "c89/array-declarators"
+standard = "c89"
+clause = "6.7.6.2"
+what = "arrays of arrays and arrays sized by an initializer"
+case = "c89/arrays_initialization.c"
+
+[[row]]
+id = "c89/prototypes"
+standard = "c89"
+clause = "6.7.6.3"
+what = "function prototypes"
+case = "c89/functions.c"
+
+[[row]]
+id = "c89/old-style-definitions"
+standard = "c89"
+clause = "6.9.1"
+what = "definitions with an identifier list and parameter declarations"
+case = "c89/functions.c"
+
+[[row]]
+id = "c89/default-argument-promotions"
+standard = "c89"
+clause = "6.5.2.2"
+what = "the promotions of a call with no prototype"
+case = "c89/functions.c"
+
+[[row]]
+id = "c89/variadic-functions"
+standard = "c89"
+clause = "7.16"
+what = "functions with ... read through stdarg.h"
+case = "c89/functions.c"
+
+[[row]]
+id = "c89/recursion"
+standard = "c89"
+clause = "6.5.2.2"
+what = "direct and mutual recursion"
+case = "c89/functions.c"
+
+[[row]]
+id = "c89/function-returning-pointer"
+standard = "c89"
+clause = "6.7.6.3"
+what = "a function returning a pointer to a function"
+case = "c89/functions.c"
+
+[[row]]
+id = "c89/initialization"
+standard = "c89"
+clause = "6.7.9"
+what = "scalar, aggregate and string initializers"
+case = "c89/arrays_initialization.c"
+
+[[row]]
+id = "c89/brace-elision"
+standard = "c89"
+clause = "6.7.9"
+what = "initializers with inner braces left out"
+case = "c89/arrays_initialization.c"
+
+[[row]]
+id = "c89/zero-initialization"
+standard = "c89"
+clause = "6.7.9"
+what = "partial initializers and static objects starting at zero"
+case = "c89/arrays_initialization.c"
+
+[[row]]
+id = "c89/address-constants"
+standard = "c89"
+clause = "6.6"
+what = "static initializers that are addresses"
+case = "c89/arrays_initialization.c"
+
+[[row]]
+id = "c89/constant-expressions"
+standard = "c89"
+clause = "6.6"
+what = "constant expressions as array sizes, case labels and enumerators"
+case = "c89/enums_tags.c"
+
+[[row]]
+id = "c89/if"
+standard = "c89"
+clause = "6.8.4.1"
+what = "if and else, with else going to the nearest if"
+case = "c89/statements.c"
+
+[[row]]
+id = "c89/switch"
+standard = "c89"
+clause = "6.8.4.2"
+what = "switch with fall through, default and no match"
+case = "c89/statements.c"
+
+[[row]]
+id = "c89/iteration"
+standard = "c89"
+clause = "6.8.5"
+what = "while, do and for"
+case = "c89/statements.c"
+
+[[row]]
+id = "c89/jumps"
+standard = "c89"
+clause = "6.8.6"
+what = "goto, continue, break and return"
+case = "c89/statements.c"
+
+[[row]]
+id = "c89/null-statement"
+standard = "c89"
+clause = "6.8.3"
+what = "the null statement"
+case = "c89/statements.c"
+
+[[row]]
+id = "c89/blocks"
+standard = "c89"
+clause = "6.8.2"
+what = "blocks and declarations hiding outer ones"
+case = "c89/statements.c"
+
+[[row]]
+id = "c89/tentative-definitions"
+standard = "c89"
+clause = "6.9.2"
+what = "tentative definitions making one definition"
+case = "c89/external_definitions.c"
+
+[[row]]
+id = "c89/linkage"
+standard = "c89"
+clause = "6.2.2"
+what = "internal and external linkage across declarations"
+case = "c89/external_definitions.c"
+
+[[row]]
+id = "c89/conditional-inclusion"
+standard = "c89"
+clause = "6.10.1"
+what = "#if, #ifdef, #ifndef, #elif, #else and defined"
+case = "c89/preprocessor.c"
+
+[[row]]
+id = "c89/macros"
+standard = "c89"
+clause = "6.10.3"
+what = "object-like and function-like macros and rescanning"
+case = "c89/preprocessor.c"
+
+[[row]]
+id = "c89/stringizing"
+standard = "c89"
+clause = "6.10.3.2"
+what = "the # operator"
+case = "c89/preprocessor.c"
+
+[[row]]
+id = "c89/token-pasting"
+standard = "c89"
+clause = "6.10.3.3"
+what = "the ## operator"
+case = "c89/preprocessor.c"
+
+[[row]]
+id = "c89/undef"
+standard = "c89"
+clause = "6.10.3.5"
+what = "#undef"
+case = "c89/preprocessor.c"
+
+[[row]]
+id = "c89/line-control"
+standard = "c89"
+clause = "6.10.4"
+what = "#line"
+case = "c89/preprocessor.c"
+
+[[row]]
+id = "c89/pragma"
+standard = "c89"
+clause = "6.10.6"
+what = "an unknown #pragma being ignored"
+case = "c89/preprocessor.c"
+
+[[row]]
+id = "c89/predefined-macros"
+standard = "c89"
+clause = "6.10.8"
+what = "__LINE__, __FILE__, __DATE__, __TIME__ and __STDC__"
+case = "c89/preprocessor.c"
+
+[[row]]
+id = "c89/source-inclusion"
+standard = "c89"
+clause = "6.10.2"
+what = "#include of a standard header"
+case = "c89/preprocessor.c"
+
+[[row]]
+id = "c99/mixed-declarations"
+standard = "c99"
+clause = "6.8.2"
+what = "a declaration after a statement in a block"
+case = "c99/declarations.c"
+
+[[row]]
+id = "c99/for-declaration"
+standard = "c99"
+clause = "6.8.5.3"
+what = "a declaration in the first clause of a for loop, scoped to the loop"
+case = "c99/declarations.c"
+
+[[row]]
+id = "c99/line-comments"
+standard = "c99"
+clause = "6.4.9"
+what = "comments that run to the end of the line"
+case = "c99/declarations.c"
+
+[[row]]
+id = "c99/long-long"
+standard = "c99"
+clause = "6.2.5"
+what = "long long and unsigned long long and their LL and ULL suffixes"
+case = "c99/declarations.c"
+
+[[row]]
+id = "c99/bool"
+standard = "c99"
+clause = "6.2.5"
+what = "_Bool, conversion to it and <stdbool.h>"
+case = "c99/declarations.c"
+
+[[row]]
+id = "c99/restrict"
+standard = "c99"
+clause = "6.7.3.1"
+what = "restrict-qualified pointer parameters"
+case = "c99/declarations.c"
+
+[[row]]
+id = "c99/compound-literals"
+standard = "c99"
+clause = "6.5.2.5"
+what = "array, structure and scalar compound literals as lvalues"
+case = "c99/compound_literals.c"
+
+[[row]]
+id = "c99/designated-initializers"
+standard = "c99"
+clause = "6.7.9"
+what = "member and element designators, nested and in any order"
+case = "c99/compound_literals.c"
+
+[[row]]
+id = "c99/initializer-override"
+standard = "c99"
+clause = "6.7.9"
+what = "a designator overriding an earlier initializer and the ones after it continuing"
+case = "c99/compound_literals.c"
+
+[[row]]
+id = "c99/variable-length-arrays"
+standard = "c99"
+clause = "6.7.6.2"
+what = "arrays whose length is known at run time and sizeof of them"
+case = "c99/variable_length_arrays.c"
+
+[[row]]
+id = "c99/vla-parameters"
+standard = "c99"
+clause = "6.7.6.3"
+what = "a parameter whose length comes from an earlier parameter"
+case = "c99/variable_length_arrays.c"
+
+[[row]]
+id = "c99/vla-typedef"
+standard = "c99"
+clause = "6.7.8"
+what = "a typedef of a variable length array taking its length where it stands"
+case = "c99/variable_length_arrays.c"
+
+[[row]]
+id = "c99/static-in-array-parameter"
+standard = "c99"
+clause = "6.7.6.3"
+what = "static and qualifiers inside the brackets of an array parameter"
+case = "c99/mixed.c"
+
+[[row]]
+id = "c99/inline"
+standard = "c99"
+clause = "6.7.4"
+what = "static inline functions and an inline definition with an extern declaration"
+case = "c99/inline_functions.c"
+
+[[row]]
+id = "c99/func"
+standard = "c99"
+clause = "6.4.2.2"
+what = "the predefined identifier __func__"
+case = "c99/inline_functions.c"
+
+[[row]]
+id = "c99/flexible-array-members"
+standard = "c99"
+clause = "6.7.2.1"
+what = "a structure whose last member is an array of no length"
+case = "c99/flexible_array.c"
+
+[[row]]
+id = "c99/hex-floats"
+standard = "c99"
+clause = "6.4.4.2"
+what = "hexadecimal floating constants"
+case = "c99/hex_floats.c"
+
+[[row]]
+id = "c99/printf-a"
+standard = "c99"
+clause = "7.21.6.1"
+what = "the %a conversion"
+case = "c99/hex_floats.c"
+
+[[row]]
+id = "c99/complex"
+standard = "c99"
+clause = "6.2.5"
+what = "the _Complex types and their arithmetic"
+case = "c99/complex_numbers.c"
+
+[[row]]
+id = "c99/complex-h"
+standard = "c99"
+clause = "7.3"
+what = "I, creal, cimag and conj from <complex.h>"
+case = "c99/complex_numbers.c"
+
+[[row]]
+id = "c99/variadic-macros"
+standard = "c99"
+clause = "6.10.3"
+what = "macros taking a variable number of arguments and __VA_ARGS__"
+case = "c99/variadic_macros.c"
+
+[[row]]
+id = "c99/empty-macro-arguments"
+standard = "c99"
+clause = "6.10.3"
+what = "a macro argument with no tokens in it"
+case = "c99/variadic_macros.c"
+
+[[row]]
+id = "c99/pragma-operator"
+standard = "c99"
+clause = "6.10.9"
+what = "the _Pragma operator"
+case = "c99/variadic_macros.c"
+
+[[row]]
+id = "c99/stdc-version"
+standard = "c99"
+clause = "6.10.8.1"
+what = "__STDC_VERSION__ and __STDC_HOSTED__"
+case = "c99/variadic_macros.c"
+
+[[row]]
+id = "c99/preprocessor-intmax"
+standard = "c99"
+clause = "6.10.1"
+what = "#if arithmetic done in intmax_t and uintmax_t"
+case = "c99/variadic_macros.c"
+
+[[row]]
+id = "c99/stdint"
+standard = "c99"
+clause = "7.20"
+what = "the exact, least and fast width types and their limits"
+case = "c99/integer_types.c"
+
+[[row]]
+id = "c99/inttypes"
+standard = "c99"
+clause = "7.8"
+what = "the format macros of <inttypes.h>"
+case = "c99/integer_types.c"
+
+[[row]]
+id = "c99/division-truncation"
+standard = "c99"
+clause = "6.5.5"
+what = "integer division truncating toward zero"
+case = "c99/integer_types.c"
+
+[[row]]
+id = "c99/enum-trailing-comma"
+standard = "c99"
+clause = "6.7.2.2"
+what = "a trailing comma in an enumerator list"
+case = "c99/mixed.c"
+
+[[row]]
+id = "c99/main-returns-zero"
+standard = "c99"
+clause = "5.1.2.2.3"
+what = "reaching the end of main returning zero"
+case = "c99/mixed.c"
+
+[[row]]
+id = "c99/universal-character-names"
+standard = "c99"
+clause = "6.4.3"
+what = "a universal character name in a string literal"
+case = "c99/mixed.c"
+
+[[row]]
+id = "c99/snprintf"
+standard = "c99"
+clause = "7.21.6.5"
+what = "snprintf and the length it would have written"
+case = "c99/mixed.c"

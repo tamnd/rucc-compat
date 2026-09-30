@@ -51,6 +51,7 @@ pub mod lexer;
 pub mod measure;
 pub mod meson;
 pub mod pipeline;
+pub mod rows;
 pub mod sandbox;
 pub mod screen;
 pub mod sha256;
