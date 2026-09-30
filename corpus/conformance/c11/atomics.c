@@ -41,10 +41,11 @@ int main(void)
     _Atomic struct pair p = { 1, 2 };
     struct pair q = p;
     printf("%d %d\n", q.a, q.b);
-    atomic_store(&p, (struct pair){ 3, 4 });
-    struct pair r = atomic_exchange(&p, (struct pair){ 5, 6 });
-    struct pair want = { 5, 6 };
-    bool moved = atomic_compare_exchange_strong(&p, &want, (struct pair){ 7, 8 });
+    struct pair three = { 3, 4 }, five = { 5, 6 }, seven = { 7, 8 };
+    atomic_store(&p, three);
+    struct pair r = atomic_exchange(&p, five);
+    struct pair want = five;
+    bool moved = atomic_compare_exchange_strong(&p, &want, seven);
     struct pair now = atomic_load(&p);
     printf("%d %d %d %d %d\n", r.a, r.b, moved, now.a, now.b);
     atomic_thread_fence(memory_order_seq_cst);
