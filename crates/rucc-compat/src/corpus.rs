@@ -1811,6 +1811,32 @@ mod tests {
     }
 
     #[test]
+    fn an_untrustworthy_entry_speaks_at_the_levels_it_names() {
+        let fake = Fake::new("untrustworthy-opt");
+        let text = format!(
+            "oracle = \"self-check\"\n{INSTALLED}\n[[untrustworthy]]\ncases = [\"standard/a.h\", \"standard/b.h\"]\nwhy = \"signed integer overflow\"\nopt = [\"0\"]\n"
+        );
+        fake.corpus("sys", &text);
+        let corpus = load(&fake.root, "sys").unwrap();
+        assert_eq!(corpus.untrustworthy.len(), 2);
+        assert!(corpus.untrustworthy_at("standard/b.h", Some("0")).is_some());
+        assert!(corpus.untrustworthy_at("standard/b.h", Some("2")).is_none());
+    }
+
+    /// The screen runs the reference's build of each program, so an entry in a corpus with no
+    /// oracle is one the screen never reaches, and it would sit there saying something nobody
+    /// checks.
+    #[test]
+    fn an_untrustworthy_entry_needs_an_oracle() {
+        let fake = Fake::new("untrustworthy-no-oracle");
+        let text =
+            format!("{INSTALLED}\n[[untrustworthy]]\ncase = \"standard/a.h\"\nwhy = \"x\"\n");
+        fake.corpus("sys", &text);
+        let e = load(&fake.root, "sys").unwrap_err();
+        assert!(e.message.contains("no `oracle`"), "{}", e.message);
+    }
+
+    #[test]
     fn a_settled_entry_naming_no_case_at_all_is_refused() {
         let fake = Fake::new("settled-no-case");
         let text = format!(
