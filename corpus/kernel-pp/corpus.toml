@@ -1,0 +1,38 @@
+name = "kernel-pp"
+summary = "A sample of the units of a Linux 7.2.8 build made by rk with GCC, and every unit that exports a symbol, each preprocessed with the flags kbuild compiled it with."
+
+# The kernel is built by rk, in tamnd/rucc-kernel, which runs kbuild with its output in a
+# directory of its own and every compiler call going through a shim. The shim writes one JSON
+# line per call to compile.jsonl in that directory, and rk writes build.json next to it saying
+# which version, era and compiler the build was. That directory is the corpus the way a meson
+# build directory is for postgres, and the log is the list of cases. See
+# crates/rucc-compat/src/kernel.rs.
+#
+# Nothing is vendored. Build the version named below with GCC and point the variable at the
+# output directory:
+#
+#     rk build 7.2.8 --row X64 --config defconfig --cc gcc-14 --out /tmp/rk-7.2.8
+#     RUCC_COMPAT_KERNEL=/tmp/rk-7.2.8 rucc-compat run kernel-pp
+#
+# The harness refuses a build of another version, of another era, or one made with anything but
+# GCC, since the reference is the compiler the build was made with. With the variable unset the
+# corpus does not apply here and is passed over.
+source = "build"
+builder = "rk"
+variable = "RUCC_COMPAT_KERNEL"
+version = "7.2.8"
+
+# The persona rucc is given for this era, from personas.toml in rucc-kernel. The kernel is built
+# with -nostdinc and its own -std, so this takes the place of the header paths and dialect `run`
+# otherwise reads off the reference, and rucc says it is the GCC the era was built with.
+era = "E11"
+gnuc = "14.2.0"
+
+# A build has a few thousand units and preprocessing all of them twice is most of an hour. The
+# sample is the same units every time, picked by a hash of the name. On top of it comes every
+# unit whose source says EXPORT_SYMBOL, because genksyms computes each exported symbol's CRC from
+# that file's -E output, and there a difference in the text is a module that will not load.
+[[unit]]
+name = "units"
+kind = "kernel-units"
+sample = 200

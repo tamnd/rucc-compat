@@ -337,6 +337,9 @@ pub fn compile_flags(arguments: &[String], file: &str) -> Vec<String> {
             "-o" | "-MF" | "-MQ" | "-MT" => {
                 rest.next();
             }
+            // kbuild asks for its dependency file through the preprocessor, as
+            // `-Wp,-MMD,kernel/.fork.o.d`, rather than through the driver.
+            a if a.starts_with("-Wp,-MD,") || a.starts_with("-Wp,-MMD,") => {}
             a if a == file => {}
             a if a.starts_with("-fdiagnostics-color") => {}
             _ => kept.push(arg.clone()),
@@ -489,16 +492,31 @@ pub fn cases(build: &Path, version: &str, unit: &Unit, out: &mut Found) -> Resul
     let text = fs::read_to_string(&path)
         .map_err(|e| Error { message: format!("{}: {e}", path.display()) })?;
     let entries = entries(&text, &path.display().to_string())?;
-    let source = lexical(&info.source);
-    let build_dir = lexical(build);
+    let named = names(&entries, &[info.source, build.to_path_buf()], |e| target_of(&e.output));
+    for (entry, name) in entries.iter().zip(&named) {
+        offer(entry, name, unit, out);
+    }
+    Ok(())
+}
+
+/// What each compile is called in a report: its file relative to the first of `roots` it is
+/// under, with `@` and a tag on the end of a file that is compiled more than once.
+///
+/// The tag says which compile of the file it is, which for meson is the target and for a kernel
+/// is the object. Two compiles that still come out with the same name would be a build that makes
+/// the same object twice, and those are numbered rather than refused, so a database this does
+/// not expect still runs.
+pub fn names(
+    entries: &[Entry],
+    roots: &[PathBuf],
+    tag: impl Fn(&Entry) -> Option<String>,
+) -> Vec<String> {
+    let roots: Vec<PathBuf> = roots.iter().map(|r| lexical(r)).collect();
     let named: Vec<String> = entries
         .iter()
         .map(|entry| {
             let full = lexical(&entry.directory.join(&entry.file));
-            let short = full
-                .strip_prefix(&source)
-                .or_else(|_| full.strip_prefix(&build_dir))
-                .unwrap_or(&full);
+            let short = roots.iter().find_map(|root| full.strip_prefix(root).ok()).unwrap_or(&full);
             short.to_string_lossy().replace('\\', "/")
         })
         .collect();
@@ -507,35 +525,40 @@ pub fn cases(build: &Path, version: &str, unit: &Unit, out: &mut Found) -> Resul
         *times.entry(name.as_str()).or_default() += 1;
     }
     let mut taken: HashMap<String, usize> = HashMap::new();
+    let mut out = Vec::with_capacity(named.len());
     for (entry, name) in entries.iter().zip(&named) {
         let mut name = name.clone();
         if times[name.as_str()] > 1 {
-            if let Some(target) = target_of(&entry.output) {
-                name = format!("{name}@{target}");
+            if let Some(tag) = tag(entry) {
+                name = format!("{name}@{tag}");
             }
         }
-        // Two compiles of one file into one target would be a build that makes the same object
-        // twice. Numbered rather than refused, so a database this does not expect still runs.
         let seen = taken.entry(name.clone()).or_default();
         *seen += 1;
         if *seen > 1 {
             name = format!("{name}#{seen}");
         }
-        if unit.skip.iter().any(|s| name == *s || name.starts_with(&format!("{s}/"))) {
-            out.never.push(format!("{}/{name}", unit.name));
-            continue;
-        }
-        let mut flags = compile_flags(&entry.arguments, &entry.file);
-        flags.extend(unit.flags.iter().cloned());
-        out.cases.push(Case {
-            unit: unit.name.clone(),
-            name: format!("{}/{name}", unit.name),
-            file: entry.directory.join(&entry.file),
-            dir: entry.directory.clone(),
-            flags,
-        });
+        out.push(name);
     }
-    Ok(())
+    out
+}
+
+/// One compile as a case of the unit, with the flags it was compiled with, or as a file the unit's
+/// `skip` took out.
+pub fn offer(entry: &Entry, name: &str, unit: &Unit, out: &mut Found) {
+    if unit.skip.iter().any(|s| name == *s || name.starts_with(&format!("{s}/"))) {
+        out.never.push(format!("{}/{name}", unit.name));
+        return;
+    }
+    let mut flags = compile_flags(&entry.arguments, &entry.file);
+    flags.extend(unit.flags.iter().cloned());
+    out.cases.push(Case {
+        unit: unit.name.clone(),
+        name: format!("{}/{name}", unit.name),
+        file: entry.directory.join(&entry.file),
+        dir: entry.directory.clone(),
+        flags,
+    });
 }
 
 #[cfg(test)]
@@ -578,6 +601,7 @@ mod tests {
             "-DX",
             "-O2",
             "-MD",
+            "-Wp,-MMD,a/.a.o.d",
             "-MQ",
             "a.o",
             "-MF",
@@ -612,6 +636,7 @@ mod tests {
             seconds: None,
             megabytes: None,
             arch: Vec::new(),
+            sample: None,
         }
     }
 

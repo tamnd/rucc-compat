@@ -21,6 +21,9 @@ pub mod rule {
     pub const SPACING: &str = "spacing";
     /// The line markers.
     pub const MARKERS: &str = "markers";
+    /// Whether a kernel probe was answered yes or no, which is the only thing kbuild reads from
+    /// one. Matched against the probe's question, in the form `rk probes` prints it.
+    pub const ANSWER: &str = "answer";
 }
 
 /// How to run.
@@ -245,7 +248,7 @@ pub fn run(
     let settings =
         &Settings { rucc: program(&settings.rucc), cc: program(&settings.cc), ..settings.clone() };
     // Everything that has to be the same on both sides before a difference means anything.
-    let agree = agreement(&settings.cc);
+    let agree = corpus.persona().unwrap_or_else(|| agreement(&settings.cc));
     let outcomes = work::spread(cases, work::jobs(settings.jobs), |case| {
         let status = compare(case, settings, &agree);
         let differing = status.differing_line();
@@ -743,6 +746,9 @@ pub fn cases(repo: &Path, corpus: &Corpus, scratch: &Path) -> Result<Found, Erro
                 };
                 meson::cases(&tree, version, unit, into)?;
             }
+            UnitKind::KernelUnits => crate::kernel::unit_cases(&tree, corpus, unit, &mut found)?,
+            // Probes are not files to preprocess. `kernel::run` asks them on its own.
+            UnitKind::KernelProbes => {}
         }
         found.elsewhere.extend(other.cases.into_iter().map(|case| case.name));
     }
@@ -1115,6 +1121,7 @@ mod tests {
                 seconds: None,
                 megabytes: None,
                 arch: Vec::new(),
+                sample: None,
             }],
             alongside: vec![rule],
             excluded: Vec::new(),
@@ -1360,6 +1367,7 @@ mod tests {
             seconds: None,
             megabytes: None,
             arch: Vec::new(),
+            sample: None,
         };
         let mut found = Found::default();
         sources(&root, &unit, &mut found).unwrap();
@@ -1404,6 +1412,7 @@ mod tests {
             seconds: None,
             megabytes: None,
             arch: Vec::new(),
+            sample: None,
         };
         let entry = Settled {
             case: "suite/b.c".to_owned(),
@@ -1484,6 +1493,7 @@ mod tests {
             seconds: None,
             megabytes: None,
             arch: Vec::new(),
+            sample: None,
         };
         let mut found = Found::default();
         sources(&root, &unit, &mut found).unwrap();
