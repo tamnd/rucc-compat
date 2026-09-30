@@ -1859,7 +1859,8 @@ id = "gnu/attribute/target_clones"
 standard = "gnu"
 clause = "Common Function Attributes"
 what = "the target_clones attribute"
-case = "gnu/function_attributes.c"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2496"
 feature = "target_clones"
 
 [[row]]
@@ -2040,7 +2041,8 @@ id = "gnu/attribute/sentinel"
 standard = "gnu"
 clause = "Common Function Attributes"
 what = "the sentinel attribute"
-case = "gnu/function_attributes.c"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2497"
 feature = "sentinel"
 
 [[row]]
@@ -2096,7 +2098,8 @@ id = "gnu/attribute/designated_init"
 standard = "gnu"
 clause = "Common Type Attributes"
 what = "the designated_init attribute"
-case = "gnu/type_attributes.c"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2497"
 feature = "designated_init"
 
 [[row]]
@@ -2128,7 +2131,8 @@ id = "gnu/attribute/copy"
 standard = "gnu"
 clause = "Common Function Attributes"
 what = "the copy attribute"
-case = "gnu/function_attributes.c"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2498"
 feature = "copy"
 
 [[row]]
@@ -2136,7 +2140,8 @@ id = "gnu/attribute/alloc_size"
 standard = "gnu"
 clause = "Common Function Attributes"
 what = "the alloc_size attribute"
-case = "gnu/function_attributes.c"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2499"
 feature = "alloc_size"
 
 [[row]]
