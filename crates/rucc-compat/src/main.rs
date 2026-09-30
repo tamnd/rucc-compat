@@ -9,7 +9,7 @@ use rucc_compat::coverage::{self, Marks, Verdict};
 use rucc_compat::differ::{self, Settings};
 use rucc_compat::exec::{self, Route};
 use rucc_compat::{fetch, kernel, repo_root};
-use rucc_compat::{measure, pipeline};
+use rucc_compat::{measure, pipeline, screen};
 
 const USAGE: &str = "\
 rucc-compat, the compatibility harness for rucc
@@ -20,6 +20,7 @@ usage:
   rucc-compat run [corpus...] [options]
   rucc-compat check [corpus...] [options]
   rucc-compat exec [corpus...] [options]
+  rucc-compat screen [corpus...] [options]
   rucc-compat measure [corpus...] [options]
   rucc-compat coverage [file or directory...] [--report] [--floor PERCENT] [--unreached]
 
@@ -29,16 +30,17 @@ commands:
   run              preprocess with rucc and with cc and report the differences
   check            take a corpus through rucc alone: tast, ir, and the ir round trip
   exec             build the programs, run them, and say whether they were right
+  screen           build the programs with cc under sanitizers and list the ones they catch
   measure          time the bounded files through rucc and fail over a time or memory bound
   coverage         union what exec recorded and say which lowering rules nothing fired
 
 options:
   --rucc PATH      the compiler under test, or $RUCC, or `rucc`
-  --cc PATH        run, exec and measure: the reference compiler, or $CC, or `cc`
+  --cc PATH        run, exec, screen and measure: the reference compiler, or $CC, or `cc`
   --no-reference   measure only: time rucc on its own
   --markers        run only: compare line markers as well as tokens
   --path NAME      exec only: build this way, one of assembly, object, driver, repeatable
-  --opt LEVEL      exec and measure: the level to pass both compilers after -O
+  --opt LEVEL      exec, screen and measure: the level to pass the compilers after -O
   --machine NAME   exec and measure: what to call this machine in the report
   --target TRIPLE  exec only: build for this target, passed to rucc as --target
   --runner CMD     exec only: run the programs through CMD, such as wine64
@@ -77,6 +79,13 @@ corpus with no bounded unit is passed over.
 
 `exec` runs a corpus only when its manifest names an oracle, since without one there is
 nothing to decide a run by. A corpus with no oracle is reported as such and passed over.
+
+`screen` builds each program of a corpus with an oracle once more with the reference, under
+`-fsanitize=address,undefined`, and runs it. rucc is not run. A program the sanitizers catch
+has no one right answer, so a pass or a failure on it proves less than one elsewhere, and each
+has to be written down as an `[[untrustworthy]]` entry in its manifest. It fails on a flagged
+case with no entry and on an entry whose case now runs clean, the same two rules the
+exclusions are held to.
 
 `--target` builds for another system, and only rucc is told: a gcc builds for one target, so
 `--cc` names one that builds for this one, such as `x86_64-w64-mingw32-gcc`. `--runner` runs
@@ -133,6 +142,7 @@ fn run() -> Result<ExitCode, String> {
         "run" => run_them(&repo, &all, rest),
         "check" => check_them(&repo, &all, rest),
         "exec" => exec_them(&repo, &all, rest),
+        "screen" => screen_them(&repo, &all, rest),
         "measure" => measure_them(&repo, &all, rest),
         "coverage" => coverage_of(&repo, rest),
         other => Err(format!("`{other}` is not a command, try --help")),
@@ -535,6 +545,89 @@ fn exec_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, S
         fs::write(&path, fired.listing()).map_err(|e| format!("{}: {e}", path.display()))?;
         println!("{}", fired.summary());
         println!("  wrote {}", path.display());
+    }
+    Ok(if failures == 0 { ExitCode::SUCCESS } else { ExitCode::FAILURE })
+}
+
+fn screen_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, String> {
+    let mut settings = exec::Settings { cc: from_env("CC", "cc"), ..exec::Settings::default() };
+    let mut report = false;
+    let mut names = Vec::new();
+    let mut at = 0;
+    while at < args.len() {
+        let arg = args[at].as_str();
+        match arg {
+            "--report" => report = true,
+            "--cc" => settings.cc = PathBuf::from(value(args, &mut at, arg)?),
+            "--unit" => settings.unit = Some(value(args, &mut at, arg)?),
+            "--opt" => settings.opt = Some(value(args, &mut at, arg)?),
+            "--machine" => settings.machine = Some(value(args, &mut at, arg)?),
+            "--only" => settings.only.push(value(args, &mut at, arg)?),
+            "--timeout" => {
+                let text = value(args, &mut at, arg)?;
+                let seconds = text.parse().map_err(|_| format!("`{text}` is not a number"))?;
+                settings.timeout = Some(seconds);
+            }
+            "--jobs" => {
+                let text = value(args, &mut at, arg)?;
+                let jobs = text.parse().map_err(|_| format!("`{text}` is not a number"))?;
+                settings.jobs = Some(jobs);
+            }
+            "--limit" => {
+                let text = value(args, &mut at, arg)?;
+                let limit = text.parse().map_err(|_| format!("`{text}` is not a number"))?;
+                settings.limit = Some(limit);
+            }
+            other if other.starts_with('-') => {
+                return Err(format!("`{other}` is not an option of screen"));
+            }
+            other => names.push(other.to_owned()),
+        }
+        at += 1;
+    }
+    let wanted = chosen(all, &names)?;
+    // Its own directory, and the level in it, for the reason `exec` has one per level.
+    let scratch =
+        repo.join("target").join("screen").join(settings.opt.as_deref().unwrap_or("default"));
+    let mut failures = 0;
+    for corpus in wanted {
+        if corpus.oracle.is_none() {
+            println!("{}: no oracle, nothing to screen", corpus.name);
+            continue;
+        }
+        if !corpus.applies() {
+            println!("{}: not this machine, skipped", corpus.name);
+            continue;
+        }
+        if !corpus.is_fetched(repo) {
+            eprintln!("{}", corpus.not_ready(repo));
+            failures += 1;
+            continue;
+        }
+        let scratch = scratch.join(&corpus.name);
+        let done = screen::run(repo, corpus, &settings, &scratch).map_err(|e| e.to_string())?;
+        println!("{}", done.summary());
+        for outcome in done.outcomes.iter().filter(|o| o.is_unlisted()) {
+            println!(
+                "  flagged and not in the manifest: {}: {}",
+                outcome.case,
+                outcome.verdict.why()
+            );
+        }
+        for outcome in done.outcomes.iter().filter(|o| o.is_stale()) {
+            println!("  clean now, take the entry out: {}", outcome.case);
+        }
+        for entry in &done.unmatched {
+            println!("  untrustworthy but not a case of this corpus: {}", entry.case);
+        }
+        if report {
+            let dir = repo.join("results");
+            fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+            let path = dir.join(screen::result_file(&corpus.name, settings.opt.as_deref()));
+            fs::write(&path, screen::markdown(&done)).map_err(|e| e.to_string())?;
+            println!("  wrote {}", path.display());
+        }
+        failures += done.failures();
     }
     Ok(if failures == 0 { ExitCode::SUCCESS } else { ExitCode::FAILURE })
 }

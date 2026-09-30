@@ -444,3 +444,41 @@ issue = "tamnd/rucc#2145"
 why = "the decimal float types are not there for Windows targets"
 outcome = "did not build"
 when = ["windows"]
+
+# The programs whose answer under gcc cannot be held against rucc, because they do something C
+# leaves undefined and `rucc-compat screen` caught them at it with gcc 16.2.0 at `-O0`. Every
+# oracle trusts the reference somewhere, and a program gcc passes by the accident of where it put
+# things or what it folded is a program with no one right answer. None of these is an exclusion,
+# since nothing about rucc is wrong in any of them, and `exec` still runs them. The entry is the
+# record that a pass here proves less than a pass elsewhere does. A left shift into the sign bit is
+# not on the list, because GNU C defines it and the screen leaves it alone.
+[[untrustworthy]]
+case = "execute/20101011-1.c"
+why = "divides by zero on purpose and expects the SIGFPE the hardware raises, which ISO C does not promise"
+
+[[untrustworthy]]
+cases = [
+  "execute/arith-rand.c",
+  "execute/arith-rand-ll.c",
+]
+why = "takes the absolute value of INT_MIN in the check itself, which overflows"
+
+[[untrustworthy]]
+case = "execute/builtin-prefetch-2.c"
+why = "takes the address of a member through a null pointer to hand it to `__builtin_prefetch`"
+
+[[untrustworthy]]
+case = "execute/loop-3b.c"
+why = "multiplies an int by four past INT_MAX in a loop the test is about"
+
+[[untrustworthy]]
+case = "execute/pr44555.c"
+why = "expects `&a->b` through a null `a` to compare equal to null"
+
+[[untrustworthy]]
+case = "execute/pr55875.c"
+why = "the sanitizer checks `a[251]` before the call on the right of the store exits, so it objects to a store that never happens, and the answer does not depend on it"
+
+[[untrustworthy]]
+case = "execute/strlen-4.c"
+why = "indexes past the end of one row of a two dimensional array to reach the next, which gcc folds as the test expects"

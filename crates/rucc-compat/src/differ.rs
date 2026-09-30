@@ -1129,6 +1129,7 @@ mod tests {
             oracle: None,
             timeout: TIMEOUT,
             exec_excluded: Vec::new(),
+            untrustworthy: Vec::new(),
             levels: Vec::new(),
         }
     }

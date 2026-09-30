@@ -120,3 +120,16 @@ skip = [
 # than 500 and GCC 16 fails its own build of it on that assertion. `exec` runs the reference
 # against the same oracle before it runs us, so a program neither compiler passes is reported as
 # skipped and needs no entry that could go stale.
+
+# The programs whose answer under gcc cannot be held against rucc, because they do something C
+# leaves undefined and `rucc-compat screen` caught them at it with gcc 16.2.0 at `-O0`. Both are
+# chibicc's own tests leaning on where chibicc lays things out, and gcc passes them because it lays
+# them out the same way. `exec` still runs them, and the entry is the record that a pass here
+# proves less than a pass elsewhere does.
+[[untrustworthy]]
+case = "test/initializer.c"
+why = "`&g17-3` steps back three whole arrays, so `strcmp(g22+3, ...)` reads whatever global sits eighteen bytes before `g17`"
+
+[[untrustworthy]]
+case = "test/pointer.c"
+why = "`*(&x+1)` expects the next local declared to be the next int up the stack"

@@ -784,7 +784,12 @@ pub fn check(
 /// carriage return and a newline, and the answers a corpus records were written on Unix. Both
 /// compilers' programs do it, so it says nothing about either, and it is taken back out here
 /// rather than taught to every oracle.
-fn launch(exe: &Path, dir: &Path, limits: &Limits, settings: &Settings) -> Result<Ran, String> {
+pub(crate) fn launch(
+    exe: &Path,
+    dir: &Path,
+    limits: &Limits,
+    settings: &Settings,
+) -> Result<Ran, String> {
     let mut ran = match settings.runner.split_first() {
         None => sandbox::run(exe, &[] as &[&str], dir, limits),
         Some((runner, rest)) => {
@@ -825,7 +830,7 @@ fn reference_failed(verdict: &Status) -> String {
 
 /// What one case is built from: the files that are compiled and the libraries they are linked
 /// against.
-struct Inputs {
+pub(crate) struct Inputs {
     /// The case itself and whatever its unit and its directory link with every case.
     files: Vec<PathBuf>,
     /// What its unit's `libs` names, which goes on the link after every file, since a library is
@@ -835,7 +840,7 @@ struct Inputs {
 
 /// What goes into one case, which is the case itself, whatever its unit links with every case,
 /// and the libraries the unit names.
-fn inputs(case: &Case, corpus: &Corpus) -> Inputs {
+pub(crate) fn inputs(case: &Case, corpus: &Corpus) -> Inputs {
     let mut files = vec![case.file.clone()];
     let mut libs = Vec::new();
     if let Some(unit) = corpus.units.iter().find(|u| u.name == case.unit) {
@@ -859,7 +864,7 @@ fn inputs(case: &Case, corpus: &Corpus) -> Inputs {
 ///
 /// With what the compiler, the assembler or the linker said, which is a result and not a fault:
 /// the caller turns it into an outcome that says which of the two compilers refused it.
-fn build(
+pub(crate) fn build(
     compiler: &Path,
     mine: bool,
     route: Route,
@@ -1089,7 +1094,7 @@ pub fn differing(want: &str, got: &str) -> String {
 }
 
 /// One line of output, short enough for a table cell.
-fn cut(line: &str) -> String {
+pub(crate) fn cut(line: &str) -> String {
     const KEEP: usize = 60;
     match line.chars().count() > KEEP {
         false => line.to_owned(),
