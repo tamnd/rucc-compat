@@ -4,6 +4,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
+use rucc_compat::asm;
 use rucc_compat::corpus::{self, Builder, Corpus, Source, UnitKind};
 use rucc_compat::coverage::{self, Marks, Verdict};
 use rucc_compat::differ::{self, Settings};
@@ -22,6 +23,7 @@ usage:
   rucc-compat exec [corpus...] [options]
   rucc-compat screen [corpus...] [options]
   rucc-compat measure [corpus...] [options]
+  rucc-compat asm [corpus...] [options]
   rucc-compat coverage [file or directory...] [--report] [--floor PERCENT] [--unreached]
 
 commands:
@@ -32,17 +34,19 @@ commands:
   exec             build the programs, run them, and say whether they were right
   screen           build the programs with cc under sanitizers and list the ones they catch
   measure          time the bounded files through rucc and fail over a time or memory bound
+  asm              assemble what the reference made of a kernel's units with both assemblers
   coverage         union what exec recorded and say which lowering rules nothing fired
 
 options:
   --rucc PATH      the compiler under test, or $RUCC, or `rucc`
-  --cc PATH        run, exec, screen and measure: the reference compiler, or $CC, or `cc`
+  --cc PATH        run, exec, screen, measure and asm: the reference compiler, or $CC, or `cc`
+  --as CMD         asm only: the reference assembler and its first words, default `as`
   --no-reference   measure only: time rucc on its own
   --markers        run only: compare line markers as well as tokens
   --path NAME      exec only: build this way, one of assembly, object, driver, repeatable
   --opt LEVEL      exec, screen and measure: the level to pass the compilers after -O
   --machine NAME   exec and measure: what to call this machine in the report
-  --target TRIPLE  exec only: build for this target, passed to rucc as --target
+  --target TRIPLE  exec and asm: build for this target, passed to rucc as --target
   --runner CMD     exec only: run the programs through CMD, such as wine64
   --timeout N      exec only: seconds per run, over what the manifest asks for
   --rule-coverage FILE
@@ -92,6 +96,15 @@ exclusions are held to.
 the programs of both compilers through a command, such as `wine64` or `qemu-aarch64`. With a
 target, an execution exclusion's `when` is about the system the target names rather than the
 machine, and the results and the `--failed` record go to files of their own.
+
+`asm` reads a corpus with a `kernel-asm` unit, which is a kernel build rk made with GCC. The
+reference makes assembler input of every unit, `-E` for a `.S` file and `-S` for a C file, with
+the flags kbuild used, and the reference assembler and rucc each assemble it. The two objects
+are compared section by section, and a failure is grouped by the first way they differ or by
+what rucc said. `--as` takes the assembler as words, such as `llvm-mc -filetype=obj -triple
+x86_64-linux-gnu` on a machine with no gas, and off x86-64 Linux rucc needs `--target
+x86_64-linux-gnu` as well. With `--report` the hashes of the texts go to
+`results/<corpus>-inputs.sha256`, and the run says how many changed since the last one.
 
 `--rule-coverage` writes one file holding the union over every corpus the command ran, in the
 format the compiler's own `-Zrule-coverage` writes, so that `coverage` can be given several of
@@ -145,6 +158,7 @@ fn run() -> Result<ExitCode, String> {
         "screen" => screen_them(&repo, &all, rest),
         "measure" => measure_them(&repo, &all, rest),
         "coverage" => coverage_of(&repo, rest),
+        "asm" => asm_them(&repo, &all, rest),
         other => Err(format!("`{other}` is not a command, try --help")),
     }
 }
@@ -279,6 +293,10 @@ fn run_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, St
             failures += 1;
             continue;
         }
+        if corpus.units.iter().all(|u| u.kind == UnitKind::KernelAsm) {
+            println!("{}: assembler input, which only `asm` reads, skipped", corpus.name);
+            continue;
+        }
         let scratch = scratch.join(&corpus.name);
         if corpus.is_kernel() {
             if let Some(note) = kernel::other_reference(&corpus.tree(repo), &settings.cc) {
@@ -316,6 +334,99 @@ fn run_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, St
             fs::write(&path, differ::markdown(&done, &settings, &register))
                 .map_err(|e| e.to_string())?;
             println!("  wrote {}", path.display());
+        }
+        failures += done.failures();
+    }
+    Ok(if failures == 0 { ExitCode::SUCCESS } else { ExitCode::FAILURE })
+}
+
+fn asm_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, String> {
+    let mut settings = asm::Settings {
+        rucc: from_env("RUCC", "rucc"),
+        cc: from_env("CC", "cc"),
+        ..asm::Settings::default()
+    };
+    let mut report = false;
+    let mut names = Vec::new();
+    let mut at = 0;
+    while at < args.len() {
+        let arg = args[at].as_str();
+        match arg {
+            "--report" => report = true,
+            "--rucc" => settings.rucc = PathBuf::from(value(args, &mut at, arg)?),
+            "--cc" => settings.cc = PathBuf::from(value(args, &mut at, arg)?),
+            "--as" => {
+                settings.assembler =
+                    value(args, &mut at, arg)?.split_whitespace().map(str::to_owned).collect();
+            }
+            "--target" => settings.target = Some(value(args, &mut at, arg)?),
+            "--unit" => settings.unit = Some(value(args, &mut at, arg)?),
+            "--failed" => settings.failed = true,
+            "--only" => settings.only.push(value(args, &mut at, arg)?),
+            "--jobs" => {
+                let text = value(args, &mut at, arg)?;
+                let jobs = text.parse().map_err(|_| format!("`{text}` is not a number"))?;
+                settings.jobs = Some(jobs);
+            }
+            "--limit" => {
+                let text = value(args, &mut at, arg)?;
+                let limit = text.parse().map_err(|_| format!("`{text}` is not a number"))?;
+                settings.limit = Some(limit);
+            }
+            other if other.starts_with('-') => {
+                return Err(format!("`{other}` is not an option of asm"));
+            }
+            other => names.push(other.to_owned()),
+        }
+        at += 1;
+    }
+    let named = !names.is_empty();
+    let wanted = chosen(all, &names)?;
+    let register = corpus::register(repo).map_err(|e| e.to_string())?;
+    let scratch = repo.join("target").join("asm");
+    let mut failures = 0;
+    for corpus in wanted {
+        if !corpus.units.iter().any(|u| u.kind == UnitKind::KernelAsm) {
+            if named {
+                println!("{}: no `kernel-asm` unit, skipped", corpus.name);
+            }
+            continue;
+        }
+        if !corpus.applies() {
+            println!("{}: not this machine, skipped", corpus.name);
+            continue;
+        }
+        if !corpus.is_fetched(repo) {
+            eprintln!("{}", corpus.not_ready(repo));
+            failures += 1;
+            continue;
+        }
+        if let Some(note) = kernel::other_reference(&corpus.tree(repo), &settings.cc) {
+            println!("{}: {note}", corpus.name);
+        }
+        let done = asm::run(repo, corpus, &settings, &register, &scratch.join(&corpus.name))
+            .map_err(|e| e.to_string())?;
+        println!("{}", done.summary());
+        for (bucket, list) in done.buckets() {
+            println!("  {} {bucket}", list.len());
+        }
+        if report {
+            let dir = repo.join("results");
+            fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+            let path = dir.join(format!("{}.md", corpus.name));
+            fs::write(&path, asm::markdown(&done, &settings, &register))
+                .map_err(|e| e.to_string())?;
+            println!("  wrote {}", path.display());
+            let hashes = dir.join(format!("{}-inputs.sha256", corpus.name));
+            let manifest = done.manifest();
+            if let Ok(old) = fs::read_to_string(&hashes) {
+                let (changed, added, gone) = asm::drift(&old, &manifest);
+                println!(
+                    "  inputs since the last report: {changed} changed, {added} new, {gone} gone"
+                );
+            }
+            fs::write(&hashes, manifest).map_err(|e| e.to_string())?;
+            println!("  wrote {}", hashes.display());
         }
         failures += done.failures();
     }

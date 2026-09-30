@@ -1,0 +1,30 @@
+name = "kernel-asm"
+summary = "Every .S unit and every C unit of a Linux 7.2.8 build made by rk with GCC, turned into assembler input by GCC with the flags kbuild used, and assembled by gas and by rucc."
+
+# The assembler corpus of the kernel plan, section 07.6 in tamnd/rucc-kernel. A `.S` unit is
+# taken as GCC's -E output and a C unit as GCC's -S output, which is the kernel's inline asm
+# exactly as GCC expanded it, with every directive GCC writes around it. Both assemblers get
+# the same text and the two objects are compared section by section: names, types, flags,
+# sizes, bytes, symbols and relocations. See crates/rucc-compat/src/asm.rs.
+#
+# The texts are the kernel's and a whole build of them is several gigabytes, so nothing is
+# kept. `asm --report` writes the sha256 of every text to results/kernel-asm-inputs.sha256,
+# which is how two runs can be shown to have had the same input.
+#
+#     rk build 7.2.8 --row X64 --config defconfig --cc gcc-14 --out /tmp/rk-7.2.8
+#     RUCC_COMPAT_KERNEL=/tmp/rk-7.2.8 rucc-compat asm kernel-asm --cc gcc-14 --report
+#
+# A difference that is understood goes in divergences.toml under the rule `object`, where
+# `matches` looks in the case name and the first difference. With the variable unset the corpus
+# does not apply here and is passed over.
+source = "build"
+builder = "rk"
+variable = "RUCC_COMPAT_KERNEL"
+version = "7.2.8"
+era = "E11"
+gnuc = "14.2.0"
+
+# Every unit, no sample. The exit criterion of K2 is all of them.
+[[unit]]
+name = "units"
+kind = "kernel-asm"

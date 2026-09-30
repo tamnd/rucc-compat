@@ -6,12 +6,13 @@
 # rule names the comparison it suppresses and the rules live in the harness, so an entry
 # cannot quietly widen itself. The rules are `token-text`, `spacing` and `markers`, and
 # `answer` for a kernel probe that rucc and GCC answer differently, where `matches` looks in
-# the probe's question as `rk probes` prints it.
+# the probe's question as `rk probes` prints it. The rule `object` is for a kernel-asm case whose
+# objects differ, where `matches` looks in the case name and the first difference.
 #
 # An entry may also say where it applies, with `corpus`, `unit` and `matches`, and every one
 # it states has to hold. A `token-text` entry has to state at least one of them, because an
 # unscoped one would silence the rule that decides whether the output still compiles to the
-# same program, in every corpus at once. So does an `answer` entry, for the same reason.
+# same program, in every corpus at once. So do `answer` and `object` entries, for the same reason.
 #
 # Every entry is a promise to remove the entry. When the issue closes, the entry goes with it
 # and the run gets stricter on its own.

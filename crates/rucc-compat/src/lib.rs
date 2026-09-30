@@ -38,9 +38,11 @@
 
 use std::path::{Path, PathBuf};
 
+pub mod asm;
 pub mod corpus;
 pub mod coverage;
 pub mod differ;
+pub mod elf;
 pub mod exec;
 pub mod fetch;
 pub mod kernel;

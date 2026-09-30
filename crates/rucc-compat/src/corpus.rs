@@ -226,13 +226,22 @@ pub enum UnitKind {
     /// The probes of a kernel rk built, which are the questions kbuild asked the compiler. These
     /// are not preprocessed: `run` asks each one again of both compilers and compares the answers.
     KernelProbes,
+    /// The C and assembly units of a kernel rk built, turned into assembler input by the
+    /// reference and assembled by both assemblers. Only `asm` reads these. See [`crate::asm`].
+    KernelAsm,
 }
 
 impl UnitKind {
     /// Whether the cases come out of a build directory rather than a tree.
     #[must_use]
     pub fn is_from_build(self) -> bool {
-        matches!(self, UnitKind::CompileCommands | UnitKind::KernelUnits | UnitKind::KernelProbes)
+        matches!(
+            self,
+            UnitKind::CompileCommands
+                | UnitKind::KernelUnits
+                | UnitKind::KernelProbes
+                | UnitKind::KernelAsm
+        )
     }
 }
 
@@ -1151,10 +1160,11 @@ fn unit(fields: &Fields, whose: &str) -> Result<Unit, Error> {
         "compile-commands" => UnitKind::CompileCommands,
         "kernel-units" => UnitKind::KernelUnits,
         "kernel-probes" => UnitKind::KernelProbes,
+        "kernel-asm" => UnitKind::KernelAsm,
         other => {
             return Err(Error {
                 message: format!(
-                    "{whose}: unit `kind` is `{other}`, which is not `source`, `headers`, `compile-commands`, `kernel-units` or `kernel-probes`"
+                    "{whose}: unit `kind` is `{other}`, which is not `source`, `headers`, `compile-commands`, `kernel-units`, `kernel-probes` or `kernel-asm`"
                 ),
             });
         }
@@ -1190,10 +1200,10 @@ fn unit(fields: &Fields, whose: &str) -> Result<Unit, Error> {
     let megabytes = bound("megabytes")?;
     let arch = arches(fields.list("arch"), whose)?;
     let sample = bound("sample")?.map(|n| usize::try_from(n).unwrap_or(usize::MAX));
-    if sample.is_some() && kind != UnitKind::KernelUnits {
+    if sample.is_some() && !matches!(kind, UnitKind::KernelUnits | UnitKind::KernelAsm) {
         return Err(Error {
             message: format!(
-                "{whose}: unit `{name}` has a `sample`, which only `kernel-units` takes"
+                "{whose}: unit `{name}` has a `sample`, which only `kernel-units` and `kernel-asm` take"
             ),
         });
     }
@@ -1338,7 +1348,7 @@ pub fn register(repo: &Path) -> Result<Register, Error> {
         // program, everywhere, and the run would go green while finding nothing.
         // The same goes for a kernel probe's answer. An unscoped one would accept every flag
         // rucc says no to, which is every flag kbuild would quietly build without.
-        if (entry.rule == "token-text" || entry.rule == "answer") && !entry.is_scoped() {
+        if matches!(entry.rule.as_str(), "token-text" | "answer" | "object") && !entry.is_scoped() {
             return Err(Error {
                 message: format!(
                     "divergences.toml: `{}` suppresses `{}` everywhere. Give it a `corpus`, a `unit` or a `matches`.",
@@ -1482,6 +1492,11 @@ mod tests {
             KERNEL.replace("kind = \"kernel-units\"\nsample = 200", "kind = \"kernel-probes\"");
         fake.corpus("k", &probes);
         assert_eq!(load(&fake.root, "k").unwrap().units[0].kind, UnitKind::KernelProbes);
+        let asm = KERNEL.replace("kind = \"kernel-units\"", "kind = \"kernel-asm\"");
+        fake.corpus("k", &asm);
+        let corpus = load(&fake.root, "k").unwrap();
+        assert_eq!(corpus.units[0].kind, UnitKind::KernelAsm);
+        assert_eq!(corpus.units[0].sample, Some(200), "kernel-asm takes a sample too");
         // Cargo sets this for every test it runs, and a crate directory has no compile log.
         fake.corpus("k", &KERNEL.replace("RUCC_COMPAT_NOBODY_SETS_THIS", "CARGO_MANIFEST_DIR"));
         let corpus = load(&fake.root, "k").unwrap();
@@ -2107,6 +2122,14 @@ mod tests {
             let text = format!("{ENTRY}rule = \"token-text\"\n{scope}\n");
             assert!(register_from("scoped", &text).is_ok(), "{scope} should be enough");
         }
+    }
+
+    #[test]
+    fn an_unscoped_object_entry_would_pass_every_object_and_is_refused() {
+        let text = format!("{ENTRY}rule = \"object\"\n");
+        assert!(register_from("object", &text).unwrap_err().message.contains("everywhere"));
+        let text = format!("{ENTRY}rule = \"object\"\ncorpus = \"kernel-asm\"\n");
+        assert!(register_from("object-scoped", &text).is_ok());
     }
 
     #[test]
