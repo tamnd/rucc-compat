@@ -48,3 +48,13 @@ name = "c23"
 kind = "source"
 dir = "c23"
 flags = ["-std=c23", "-pedantic-errors"]
+
+# The GNU extensions, measured in GCC's default dialect. Each case stands behind the rows of the
+# features it uses, and `rucc-compat rows conformance --matrix` holds those rows to rucc's GNU
+# matrix, so a feature the matrix lists without a row is a failure of the check.
+[[unit]]
+name = "gnu"
+kind = "source"
+dir = "gnu"
+flags = ["-std=gnu23"]
+libs = ["-lm"]
