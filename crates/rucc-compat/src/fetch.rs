@@ -180,6 +180,7 @@ mod tests {
             timeout: crate::corpus::TIMEOUT,
             exec_excluded: Vec::new(),
             untrustworthy: Vec::new(),
+            arguments: Vec::new(),
             levels: Vec::new(),
         }
     }

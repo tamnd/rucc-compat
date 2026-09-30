@@ -1132,6 +1132,7 @@ mod tests {
             timeout: TIMEOUT,
             exec_excluded: Vec::new(),
             untrustworthy: Vec::new(),
+            arguments: Vec::new(),
             levels: Vec::new(),
         }
     }
