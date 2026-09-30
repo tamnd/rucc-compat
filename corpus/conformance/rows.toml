@@ -604,3 +604,227 @@ standard = "c89"
 clause = "6.10.2"
 what = "#include of a standard header"
 case = "c89/preprocessor.c"
+
+[[row]]
+id = "c99/mixed-declarations"
+standard = "c99"
+clause = "6.8.2"
+what = "a declaration after a statement in a block"
+case = "c99/declarations.c"
+
+[[row]]
+id = "c99/for-declaration"
+standard = "c99"
+clause = "6.8.5.3"
+what = "a declaration in the first clause of a for loop, scoped to the loop"
+case = "c99/declarations.c"
+
+[[row]]
+id = "c99/line-comments"
+standard = "c99"
+clause = "6.4.9"
+what = "comments that run to the end of the line"
+case = "c99/declarations.c"
+
+[[row]]
+id = "c99/long-long"
+standard = "c99"
+clause = "6.2.5"
+what = "long long and unsigned long long and their LL and ULL suffixes"
+case = "c99/declarations.c"
+
+[[row]]
+id = "c99/bool"
+standard = "c99"
+clause = "6.2.5"
+what = "_Bool, conversion to it and <stdbool.h>"
+case = "c99/declarations.c"
+
+[[row]]
+id = "c99/restrict"
+standard = "c99"
+clause = "6.7.3.1"
+what = "restrict-qualified pointer parameters"
+case = "c99/declarations.c"
+
+[[row]]
+id = "c99/compound-literals"
+standard = "c99"
+clause = "6.5.2.5"
+what = "array, structure and scalar compound literals as lvalues"
+case = "c99/compound_literals.c"
+
+[[row]]
+id = "c99/designated-initializers"
+standard = "c99"
+clause = "6.7.9"
+what = "member and element designators, nested and in any order"
+case = "c99/compound_literals.c"
+
+[[row]]
+id = "c99/initializer-override"
+standard = "c99"
+clause = "6.7.9"
+what = "a designator overriding an earlier initializer and the ones after it continuing"
+case = "c99/compound_literals.c"
+
+[[row]]
+id = "c99/variable-length-arrays"
+standard = "c99"
+clause = "6.7.6.2"
+what = "arrays whose length is known at run time and sizeof of them"
+case = "c99/variable_length_arrays.c"
+
+[[row]]
+id = "c99/vla-parameters"
+standard = "c99"
+clause = "6.7.6.3"
+what = "a parameter whose length comes from an earlier parameter"
+case = "c99/variable_length_arrays.c"
+
+[[row]]
+id = "c99/vla-typedef"
+standard = "c99"
+clause = "6.7.8"
+what = "a typedef of a variable length array taking its length where it stands"
+case = "c99/variable_length_arrays.c"
+
+[[row]]
+id = "c99/static-in-array-parameter"
+standard = "c99"
+clause = "6.7.6.3"
+what = "static and qualifiers inside the brackets of an array parameter"
+case = "c99/mixed.c"
+
+[[row]]
+id = "c99/inline"
+standard = "c99"
+clause = "6.7.4"
+what = "static inline functions and an inline definition with an extern declaration"
+case = "c99/inline_functions.c"
+
+[[row]]
+id = "c99/func"
+standard = "c99"
+clause = "6.4.2.2"
+what = "the predefined identifier __func__"
+case = "c99/inline_functions.c"
+
+[[row]]
+id = "c99/flexible-array-members"
+standard = "c99"
+clause = "6.7.2.1"
+what = "a structure whose last member is an array of no length"
+case = "c99/flexible_array.c"
+
+[[row]]
+id = "c99/hex-floats"
+standard = "c99"
+clause = "6.4.4.2"
+what = "hexadecimal floating constants"
+case = "c99/hex_floats.c"
+
+[[row]]
+id = "c99/printf-a"
+standard = "c99"
+clause = "7.21.6.1"
+what = "the %a conversion"
+case = "c99/hex_floats.c"
+
+[[row]]
+id = "c99/complex"
+standard = "c99"
+clause = "6.2.5"
+what = "the _Complex types and their arithmetic"
+case = "c99/complex_numbers.c"
+
+[[row]]
+id = "c99/complex-h"
+standard = "c99"
+clause = "7.3"
+what = "I, creal, cimag and conj from <complex.h>"
+case = "c99/complex_numbers.c"
+
+[[row]]
+id = "c99/variadic-macros"
+standard = "c99"
+clause = "6.10.3"
+what = "macros taking a variable number of arguments and __VA_ARGS__"
+case = "c99/variadic_macros.c"
+
+[[row]]
+id = "c99/empty-macro-arguments"
+standard = "c99"
+clause = "6.10.3"
+what = "a macro argument with no tokens in it"
+case = "c99/variadic_macros.c"
+
+[[row]]
+id = "c99/pragma-operator"
+standard = "c99"
+clause = "6.10.9"
+what = "the _Pragma operator"
+case = "c99/variadic_macros.c"
+
+[[row]]
+id = "c99/stdc-version"
+standard = "c99"
+clause = "6.10.8.1"
+what = "__STDC_VERSION__ and __STDC_HOSTED__"
+case = "c99/variadic_macros.c"
+
+[[row]]
+id = "c99/preprocessor-intmax"
+standard = "c99"
+clause = "6.10.1"
+what = "#if arithmetic done in intmax_t and uintmax_t"
+case = "c99/variadic_macros.c"
+
+[[row]]
+id = "c99/stdint"
+standard = "c99"
+clause = "7.20"
+what = "the exact, least and fast width types and their limits"
+case = "c99/integer_types.c"
+
+[[row]]
+id = "c99/inttypes"
+standard = "c99"
+clause = "7.8"
+what = "the format macros of <inttypes.h>"
+case = "c99/integer_types.c"
+
+[[row]]
+id = "c99/division-truncation"
+standard = "c99"
+clause = "6.5.5"
+what = "integer division truncating toward zero"
+case = "c99/integer_types.c"
+
+[[row]]
+id = "c99/enum-trailing-comma"
+standard = "c99"
+clause = "6.7.2.2"
+what = "a trailing comma in an enumerator list"
+case = "c99/mixed.c"
+
+[[row]]
+id = "c99/main-returns-zero"
+standard = "c99"
+clause = "5.1.2.2.3"
+what = "reaching the end of main returning zero"
+case = "c99/mixed.c"
+
+[[row]]
+id = "c99/universal-character-names"
+standard = "c99"
+clause = "6.4.3"
+what = "a universal character name in a string literal"
+case = "c99/mixed.c"
+
+[[row]]
+id = "c99/snprintf"
+standard = "c99"
+clause = "7.21.6.5"
+what = "snprintf and the length it would have written"
+case = "c99/mixed.c"

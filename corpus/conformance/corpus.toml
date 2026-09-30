@@ -24,3 +24,9 @@ name = "c89"
 kind = "source"
 dir = "c89"
 flags = ["-std=c89", "-pedantic-errors"]
+
+[[unit]]
+name = "c99"
+kind = "source"
+dir = "c99"
+flags = ["-std=c99", "-pedantic-errors"]
