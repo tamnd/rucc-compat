@@ -3,8 +3,9 @@
 //! The differential in [`crate::differ`] asks whether rucc preprocesses a file the way the
 //! reference compiler does. This asks a different question, one no reference compiler can
 //! answer: whether rucc gets the file through its own front end, its own lowering and its own
-//! verifier, and whether the IR it wrote reads back as the IR it wrote. That is three runs of
-//! the compiler over each case.
+//! verifier, whether the IR it wrote reads back as the IR it wrote, and whether building the same
+//! file twice gives the same object. That is three runs of the compiler over each case and then
+//! four builds.
 //!
 //! Each case goes through:
 //!
@@ -12,11 +13,21 @@
 //! 2. `--emit=ir`, which is lowering, and which runs the verifier on the way out.
 //! 3. `--emit=ir` again over the IR from step 2, which parses the IR back in and verifies it
 //!    a second time, and the two texts have to be the same byte for byte.
+//! 4. `-c` twice with the case's own flags and twice more with `-O2` added, and each pair of
+//!    objects has to be the same byte for byte.
 //!
 //! The round trip is the step worth explaining. A printer and a parser that disagree can each
 //! look right on its own, and a text that does not survive being read back is a text that
 //! cannot be trusted as the record of what the compiler decided. Comparing the second print
 //! against the first is the cheapest way to find that out, and it costs one more run.
+//!
+//! The builds are there because a compiler that writes a different object for the same input
+//! is one whose failures cannot be reproduced and whose output cannot be cached or compared, and
+//! the usual cause, walking a hash table in whatever order it happens to be in, is invisible to
+//! every other check here. `-O2` is the second pair because that is where the passes that keep
+//! tables of their own are. A case that fails to build both times has nothing to say here, since
+//! whether it builds is `exec`'s question, but one that builds once and not the other time is
+//! the same failure as two objects that differ.
 
 use std::fmt::Write as _;
 use std::fs;
@@ -100,6 +111,8 @@ pub enum Step {
     Reread,
     /// Printing what was read back, which did not match what was printed the first time.
     RoundTrip,
+    /// Building the object twice, which did not give the same bytes both times.
+    Twice,
 }
 
 impl Step {
@@ -111,6 +124,7 @@ impl Step {
             Step::Ir => "ir",
             Step::Reread => "reread",
             Step::RoundTrip => "round-trip",
+            Step::Twice => "twice",
         }
     }
 }
@@ -118,7 +132,7 @@ impl Step {
 /// What happened to one case.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Status {
-    /// All three runs got through and the two IR texts are the same.
+    /// All three runs got through, the two IR texts are the same, and so is each pair of objects.
     Passed,
     /// One of them did not.
     Failed {
@@ -307,7 +321,7 @@ pub fn run(
     Ok(Report { corpus: corpus.name.clone(), outcomes, unmatched, settled })
 }
 
-/// Takes one case through the three runs.
+/// Takes one case through the three runs and the four builds.
 #[must_use]
 pub fn check(case: &Case, rucc: &Path, scratch: &Path) -> Status {
     if let Err(why) = emit(rucc, case, "tast", &case.file) {
@@ -336,7 +350,55 @@ pub fn check(case: &Case, rucc: &Path, scratch: &Path) -> Status {
     if first != again {
         return Status::Failed { step: Step::RoundTrip, why: difference(&first, &again) };
     }
+    let object = scratch.join(format!("{}.o", stem(&case.name)));
+    for extra in [None, Some("-O2")] {
+        if let Err(why) = twice(rucc, case, extra, &object) {
+            return Status::Failed { step: Step::Twice, why };
+        }
+    }
     Status::Passed
+}
+
+/// Builds the case's object twice with the same flags and says where the two differ.
+///
+/// Both builds write the same file, so an object that records the name it was written to cannot
+/// make two builds look different when they are not.
+fn twice(rucc: &Path, case: &Case, extra: Option<&str>, object: &Path) -> Result<(), String> {
+    let first = build(rucc, case, extra, object);
+    let again = build(rucc, case, extra, object);
+    let flags = extra.unwrap_or("its own flags");
+    match (first, again) {
+        (Ok(first), Ok(again)) if first == again => Ok(()),
+        (Ok(first), Ok(again)) => Err(format!("at {flags}, {}", bytes_differ(&first, &again))),
+        (Err(_), Err(_)) => Ok(()),
+        (Ok(_), Err(why)) | (Err(why), Ok(_)) => {
+            Err(format!("at {flags}, one build of two failed: {why}"))
+        }
+    }
+}
+
+/// One build of the object, read back.
+fn build(rucc: &Path, case: &Case, extra: Option<&str>, object: &Path) -> Result<Vec<u8>, String> {
+    let _ = fs::remove_file(object);
+    let mut command = Command::new(rucc);
+    command.arg("-c").args(&case.flags).args(extra).arg("-o").arg(object);
+    let output = command.arg(named(&case.file, &case.dir)).current_dir(&case.dir).output();
+    let output = match output {
+        Ok(output) => output,
+        Err(e) => return Err(format!("could not run {}: {e}", rucc.display())),
+    };
+    if !output.status.success() {
+        return Err(said(&output.stderr));
+    }
+    fs::read(object).map_err(|e| format!("{}: {e}", object.display()))
+}
+
+/// Where two objects stopped agreeing, as one line somebody can read in a table.
+fn bytes_differ(first: &[u8], again: &[u8]) -> String {
+    match first.iter().zip(again).position(|(a, b)| a != b) {
+        Some(at) => format!("the objects differ from byte {at} on"),
+        None => format!("one object is {} bytes and the other {}", first.len(), again.len()),
+    }
 }
 
 /// Runs rucc once, asking for one of the intermediate forms on standard output.
@@ -625,6 +687,13 @@ In file included from t.c:1:1:
         // A scratch file is not under the tree and keeps the only name that finds it.
         let elsewhere = PathBuf::from("/tmp/pipeline/a.ir");
         assert_eq!(named(&elsewhere, &tree), elsewhere);
+    }
+
+    #[test]
+    fn two_objects_that_differ_say_where_and_two_of_different_lengths_say_by_how_much() {
+        assert_eq!(bytes_differ(b"abcd", b"abXd"), "the objects differ from byte 2 on");
+        assert_eq!(bytes_differ(b"abc", b"abcd"), "one object is 3 bytes and the other 4");
+        assert_eq!(Step::Twice.word(), "twice");
     }
 
     #[test]
