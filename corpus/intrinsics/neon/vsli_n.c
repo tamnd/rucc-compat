@@ -48,6 +48,19 @@ static void t_vsli_n_s32(void)
     SUM("vsli_n_s32", sum);
 }
 
+static void t_vsli_n_s64(void)
+{
+    uint64_t sum = 0;
+    for (int r = 0; r < ROUNDS; r++) {
+        ARG(int64x1_t, a0, 0, 0);
+        ARG(int64x1_t, a1, 1, 0);
+        KEEP(int64x1_t, vsli_n_s64(a0, a1, 0));
+        KEEP(int64x1_t, vsli_n_s64(a0, a1, 31));
+        KEEP(int64x1_t, vsli_n_s64(a0, a1, 63));
+    }
+    SUM("vsli_n_s64", sum);
+}
+
 static void t_vsli_n_u8(void)
 {
     uint64_t sum = 0;
@@ -85,6 +98,19 @@ static void t_vsli_n_u32(void)
         KEEP(uint32x2_t, vsli_n_u32(a0, a1, 31));
     }
     SUM("vsli_n_u32", sum);
+}
+
+static void t_vsli_n_u64(void)
+{
+    uint64_t sum = 0;
+    for (int r = 0; r < ROUNDS; r++) {
+        ARG(uint64x1_t, a0, 0, 0);
+        ARG(uint64x1_t, a1, 1, 0);
+        KEEP(uint64x1_t, vsli_n_u64(a0, a1, 0));
+        KEEP(uint64x1_t, vsli_n_u64(a0, a1, 31));
+        KEEP(uint64x1_t, vsli_n_u64(a0, a1, 63));
+    }
+    SUM("vsli_n_u64", sum);
 }
 
 static void t_vsliq_n_s8(void)
@@ -126,6 +152,19 @@ static void t_vsliq_n_s32(void)
     SUM("vsliq_n_s32", sum);
 }
 
+static void t_vsliq_n_s64(void)
+{
+    uint64_t sum = 0;
+    for (int r = 0; r < ROUNDS; r++) {
+        ARG(int64x2_t, a0, 0, 0);
+        ARG(int64x2_t, a1, 1, 0);
+        KEEP(int64x2_t, vsliq_n_s64(a0, a1, 0));
+        KEEP(int64x2_t, vsliq_n_s64(a0, a1, 31));
+        KEEP(int64x2_t, vsliq_n_s64(a0, a1, 63));
+    }
+    SUM("vsliq_n_s64", sum);
+}
+
 static void t_vsliq_n_u8(void)
 {
     uint64_t sum = 0;
@@ -165,19 +204,36 @@ static void t_vsliq_n_u32(void)
     SUM("vsliq_n_u32", sum);
 }
 
+static void t_vsliq_n_u64(void)
+{
+    uint64_t sum = 0;
+    for (int r = 0; r < ROUNDS; r++) {
+        ARG(uint64x2_t, a0, 0, 0);
+        ARG(uint64x2_t, a1, 1, 0);
+        KEEP(uint64x2_t, vsliq_n_u64(a0, a1, 0));
+        KEEP(uint64x2_t, vsliq_n_u64(a0, a1, 31));
+        KEEP(uint64x2_t, vsliq_n_u64(a0, a1, 63));
+    }
+    SUM("vsliq_n_u64", sum);
+}
+
 int main(void)
 {
     t_vsli_n_s8();
     t_vsli_n_s16();
     t_vsli_n_s32();
+    t_vsli_n_s64();
     t_vsli_n_u8();
     t_vsli_n_u16();
     t_vsli_n_u32();
+    t_vsli_n_u64();
     t_vsliq_n_s8();
     t_vsliq_n_s16();
     t_vsliq_n_s32();
+    t_vsliq_n_s64();
     t_vsliq_n_u8();
     t_vsliq_n_u16();
     t_vsliq_n_u32();
+    t_vsliq_n_u64();
     return 0;
 }
