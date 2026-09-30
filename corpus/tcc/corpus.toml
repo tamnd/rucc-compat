@@ -28,6 +28,9 @@ dir = "tests/tests2"
 # a function of no arguments. GCC 16 refuses those programs under its own default of gnu23 as
 # well, so the dialect is named here rather than left to whatever each compiler defaults to.
 flags = ["-std=gnu17"]
+# libm on every link, as tcc's own test makefile links it. `22_floating_point.c` and
+# `24_math_library.c` call `sin` and `cos` on constants, which gcc folds and rucc emits calls for.
+libs = ["-lm"]
 skip = [
   # Assignment to an array, which is a tcc extension. The reference compiler refuses this
   # file too, so refusing it is not a gap and there is nothing here for an exclusion to point
