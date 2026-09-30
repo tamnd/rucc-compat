@@ -1,10 +1,12 @@
 # The rows of the conformance corpus, one per construct of the language.
 #
-# A row names the standard that brought the construct in, the clause of C17 that describes it,
-# since that is one numbering for all of them, and the case that exercises it or the issue that
-# will make one pass. `rucc-compat rows conformance` checks every row against the cases and every
-# case against the rows. A case may stand behind several rows, since a program about operators
-# is a program about all of them.
+# A row names the standard that brought the construct in, the clause that describes it, and the case
+# that exercises it or the issue that will make one pass. The clause is C17's, since that is one
+# numbering for everything up to it, and C23's for what C23 brought in, which C17 has no clause for.
+# A GNU row names the node of GCC's manual instead, and the feature of rucc's GNU matrix it is
+# about, so that every feature the matrix lists has a row. `rucc-compat rows conformance` checks
+# every row against the cases and every case against the rows. A case may stand behind several rows,
+# since a program about operators is a program about all of them.
 #
 # Not here, and on purpose: #error and every constraint a program must be refused for. Those are
 # about what a compiler says rather than what a program does, and they go in the accept and
@@ -828,3 +830,3774 @@ standard = "c99"
 clause = "7.21.6.5"
 what = "snprintf and the length it would have written"
 case = "c99/mixed.c"
+
+[[row]]
+id = "c11/alignas"
+standard = "c11"
+clause = "6.7.5"
+what = "_Alignas on objects and members, given a type or a constant"
+case = "c11/alignment.c"
+
+[[row]]
+id = "c11/alignof"
+standard = "c11"
+clause = "6.5.3.4"
+what = "_Alignof of a type"
+case = "c11/alignment.c"
+
+[[row]]
+id = "c11/stdalign"
+standard = "c11"
+clause = "7.15"
+what = "alignas and alignof from <stdalign.h> and their feature macros"
+case = "c11/alignment.c"
+
+[[row]]
+id = "c11/max-align-t"
+standard = "c11"
+clause = "7.19"
+what = "max_align_t"
+case = "c11/alignment.c"
+
+[[row]]
+id = "c11/aligned-alloc"
+standard = "c11"
+clause = "7.22.3.1"
+what = "aligned_alloc"
+case = "c11/alignment.c"
+
+[[row]]
+id = "c11/static-assert"
+standard = "c11"
+clause = "6.7.10"
+what = "_Static_assert at file scope, in a block and in a structure"
+case = "c11/static_assert_generic.c"
+
+[[row]]
+id = "c11/static-assert-macro"
+standard = "c11"
+clause = "7.2"
+what = "static_assert from <assert.h>"
+case = "c11/static_assert_generic.c"
+
+[[row]]
+id = "c11/generic-selection"
+standard = "c11"
+clause = "6.5.1.1"
+what = "_Generic choosing on the type after lvalue conversion"
+case = "c11/static_assert_generic.c"
+
+[[row]]
+id = "c11/generic-default"
+standard = "c11"
+clause = "6.5.1.1"
+what = "a default association and a selection yielding a function designator"
+case = "c11/static_assert_generic.c"
+
+[[row]]
+id = "c11/anonymous-structures"
+standard = "c11"
+clause = "6.7.2.1"
+what = "anonymous structures and unions and their members"
+case = "c11/anonymous_members.c"
+
+[[row]]
+id = "c11/anonymous-initialization"
+standard = "c11"
+clause = "6.7.9"
+what = "designators naming a member of an anonymous structure or union"
+case = "c11/anonymous_members.c"
+
+[[row]]
+id = "c11/noreturn"
+standard = "c11"
+clause = "6.7.4"
+what = "_Noreturn function specifier"
+case = "c11/noreturn_thread_local.c"
+
+[[row]]
+id = "c11/stdnoreturn"
+standard = "c11"
+clause = "7.23"
+what = "noreturn from <stdnoreturn.h>"
+case = "c11/noreturn_thread_local.c"
+
+[[row]]
+id = "c11/thread-local"
+standard = "c11"
+clause = "6.7.1"
+what = "_Thread_local objects, one per thread"
+case = "c11/noreturn_thread_local.c"
+
+[[row]]
+id = "c11/threads"
+standard = "c11"
+clause = "7.26"
+what = "thrd_create and thrd_join from <threads.h>"
+case = "c11/noreturn_thread_local.c"
+
+[[row]]
+id = "c11/atomic-qualifier"
+standard = "c11"
+clause = "6.7.3"
+what = "the _Atomic qualifier and _Atomic(type) specifier"
+case = "c11/atomics.c"
+
+[[row]]
+id = "c11/atomic-compound-assignment"
+standard = "c11"
+clause = "6.5.16.2"
+what = "compound assignment and increment on an atomic object"
+case = "c11/atomics.c"
+
+[[row]]
+id = "c11/stdatomic"
+standard = "c11"
+clause = "7.17"
+what = "load, store, exchange, compare and exchange and the fetch operations, on a structure too"
+case = "c11/atomics.c"
+
+[[row]]
+id = "c11/atomic-flag"
+standard = "c11"
+clause = "7.17.8"
+what = "atomic_flag, test and set, and clear"
+case = "c11/atomics.c"
+
+[[row]]
+id = "c11/atomic-lock-free"
+standard = "c11"
+clause = "7.17.5"
+what = "the lock free macros and atomic_is_lock_free"
+case = "c11/atomics.c"
+
+[[row]]
+id = "c11/atomic-fence"
+standard = "c11"
+clause = "7.17.4"
+what = "atomic_thread_fence"
+case = "c11/atomics.c"
+
+[[row]]
+id = "c11/utf8-strings"
+standard = "c11"
+clause = "6.4.5"
+what = "u8 string literals"
+case = "c11/unicode_literals.c"
+
+[[row]]
+id = "c11/utf16-utf32-strings"
+standard = "c11"
+clause = "6.4.5"
+what = "u and U string literals and concatenation with a plain one"
+case = "c11/unicode_literals.c"
+
+[[row]]
+id = "c11/utf16-utf32-characters"
+standard = "c11"
+clause = "6.4.4.4"
+what = "u and U character constants"
+case = "c11/unicode_literals.c"
+
+[[row]]
+id = "c11/uchar"
+standard = "c11"
+clause = "7.28"
+what = "char16_t and char32_t from <uchar.h>"
+case = "c11/unicode_literals.c"
+
+[[row]]
+id = "c11/utf-macros"
+standard = "c11"
+clause = "6.10.8.2"
+what = "__STDC_UTF_16__ and __STDC_UTF_32__"
+case = "c11/unicode_literals.c"
+
+[[row]]
+id = "c11/stdc-version"
+standard = "c11"
+clause = "6.10.8.1"
+what = "__STDC_VERSION__ is 201112L"
+case = "c11/library_macros.c"
+
+[[row]]
+id = "c11/feature-macros"
+standard = "c11"
+clause = "6.10.8.3"
+what = "__STDC_NO_VLA__ and __STDC_NO_COMPLEX__"
+case = "c11/library_macros.c"
+
+[[row]]
+id = "c11/cmplx"
+standard = "c11"
+clause = "7.3.9.3"
+what = "the CMPLX macros"
+case = "c11/library_macros.c"
+
+[[row]]
+id = "c11/float-characteristics"
+standard = "c11"
+clause = "5.2.4.2.2"
+what = "FLT_DECIMAL_DIG, FLT_HAS_SUBNORM and DBL_TRUE_MIN"
+case = "c11/library_macros.c"
+
+[[row]]
+id = "c11/quick-exit"
+standard = "c11"
+clause = "7.22.4.7"
+what = "quick_exit and at_quick_exit"
+case = "c11/library_macros.c"
+
+[[row]]
+id = "c11/timespec-get"
+standard = "c11"
+clause = "7.27.2.5"
+what = "timespec_get"
+case = "c11/library_macros.c"
+
+[[row]]
+id = "c17/stdc-version"
+standard = "c17"
+clause = "6.10.8.1"
+what = "__STDC_VERSION__ is 201710L"
+case = "c17/version.c"
+
+[[row]]
+id = "c17/atomic-var-init"
+standard = "c17"
+clause = "7.17.2.1"
+what = "ATOMIC_VAR_INIT, deprecated but still there"
+case = "c17/version.c"
+
+[[row]]
+id = "c23/bool-keyword"
+standard = "c23"
+clause = "6.4.1"
+what = "bool, true and false as keywords"
+case = "c23/keywords.c"
+
+[[row]]
+id = "c23/bool-in-if"
+standard = "c23"
+clause = "6.10.1"
+what = "true and false in #if"
+case = "c23/keywords.c"
+
+[[row]]
+id = "c23/nullptr"
+standard = "c23"
+clause = "6.4.4.6"
+what = "nullptr and nullptr_t"
+case = "c23/keywords.c"
+
+[[row]]
+id = "c23/plain-keywords"
+standard = "c23"
+clause = "6.4.1"
+what = "alignas, alignof, static_assert and thread_local as keywords"
+case = "c23/keywords.c"
+
+[[row]]
+id = "c23/static-assert-no-message"
+standard = "c23"
+clause = "6.7.11"
+what = "static_assert with no message"
+case = "c23/keywords.c"
+
+[[row]]
+id = "c23/binary-constants"
+standard = "c23"
+clause = "6.4.4.1"
+what = "binary integer constants"
+case = "c23/constants.c"
+
+[[row]]
+id = "c23/digit-separators"
+standard = "c23"
+clause = "6.4.4"
+what = "digit separators in integer and floating constants"
+case = "c23/constants.c"
+
+[[row]]
+id = "c23/utf8-characters"
+standard = "c23"
+clause = "6.4.4.5"
+what = "u8 character constants and char8_t"
+case = "c23/constants.c"
+
+[[row]]
+id = "c23/bit-int-constants"
+standard = "c23"
+clause = "6.4.4.1"
+what = "the wb and uwb suffixes"
+case = "c23/constants.c"
+
+[[row]]
+id = "c23/typeof"
+standard = "c23"
+clause = "6.7.3.6"
+what = "typeof of an expression and of a type name"
+case = "c23/type_inference.c"
+
+[[row]]
+id = "c23/typeof-unqual"
+standard = "c23"
+clause = "6.7.3.6"
+what = "typeof_unqual dropping qualifiers"
+case = "c23/type_inference.c"
+
+[[row]]
+id = "c23/auto"
+standard = "c23"
+clause = "6.7.10"
+what = "auto taking the type of an initializer"
+case = "c23/type_inference.c"
+
+[[row]]
+id = "c23/constexpr"
+standard = "c23"
+clause = "6.7.2"
+what = "constexpr objects used as constant expressions"
+case = "c23/constexpr_init.c"
+
+[[row]]
+id = "c23/empty-initializer"
+standard = "c23"
+clause = "6.7.11"
+what = "= {} for scalars, arrays, structures and variable length arrays"
+case = "c23/constexpr_init.c"
+
+[[row]]
+id = "c23/attribute-syntax"
+standard = "c23"
+clause = "6.7.13"
+what = "the [[attribute]] syntax and vendor prefixed attributes"
+case = "c23/attributes.c"
+
+[[row]]
+id = "c23/nodiscard"
+standard = "c23"
+clause = "6.7.13.3"
+what = "nodiscard"
+case = "c23/attributes.c"
+
+[[row]]
+id = "c23/maybe-unused"
+standard = "c23"
+clause = "6.7.13.4"
+what = "maybe_unused"
+case = "c23/attributes.c"
+
+[[row]]
+id = "c23/deprecated"
+standard = "c23"
+clause = "6.7.13.5"
+what = "deprecated with a message"
+case = "c23/attributes.c"
+
+[[row]]
+id = "c23/fallthrough"
+standard = "c23"
+clause = "6.7.13.6"
+what = "fallthrough in a switch"
+case = "c23/attributes.c"
+
+[[row]]
+id = "c23/noreturn-attribute"
+standard = "c23"
+clause = "6.7.13.7"
+what = "noreturn as an attribute"
+case = "c23/attributes.c"
+
+[[row]]
+id = "c23/unsequenced-reproducible"
+standard = "c23"
+clause = "6.7.13.8"
+what = "unsequenced and reproducible"
+case = "c23/attributes.c"
+
+[[row]]
+id = "c23/has-c-attribute"
+standard = "c23"
+clause = "6.10.2"
+what = "__has_c_attribute"
+case = "c23/attributes.c"
+
+[[row]]
+id = "c23/elifdef"
+standard = "c23"
+clause = "6.10.2"
+what = "#elifdef and #elifndef"
+case = "c23/preprocessor.c"
+
+[[row]]
+id = "c23/has-include"
+standard = "c23"
+clause = "6.10.2"
+what = "__has_include"
+case = "c23/preprocessor.c"
+
+[[row]]
+id = "c23/va-opt"
+standard = "c23"
+clause = "6.10.5.1"
+what = "__VA_OPT__ and a variadic macro given no variable arguments"
+case = "c23/preprocessor.c"
+
+[[row]]
+id = "c23/embed"
+standard = "c23"
+clause = "6.10.4"
+what = "#embed with a limit"
+case = "c23/preprocessor.c"
+
+[[row]]
+id = "c23/has-embed"
+standard = "c23"
+clause = "6.10.2"
+what = "__has_embed"
+case = "c23/preprocessor.c"
+
+[[row]]
+id = "c23/stdc-version"
+standard = "c23"
+clause = "6.10.10.2"
+what = "__STDC_VERSION__ is 202311L"
+case = "c23/preprocessor.c"
+
+[[row]]
+id = "c23/labels-anywhere"
+standard = "c23"
+clause = "6.8.2"
+what = "a label before a declaration and at the end of a block"
+case = "c23/declarations.c"
+
+[[row]]
+id = "c23/unnamed-parameters"
+standard = "c23"
+clause = "6.9.2"
+what = "an unnamed parameter in a function definition"
+case = "c23/declarations.c"
+
+[[row]]
+id = "c23/variadic-no-named"
+standard = "c23"
+clause = "6.7.7.4"
+what = "a variadic function with no named parameter and va_start with one argument"
+case = "c23/declarations.c"
+
+[[row]]
+id = "c23/empty-parentheses"
+standard = "c23"
+clause = "6.7.7.4"
+what = "a function defined with () taking no arguments"
+case = "c23/declarations.c"
+
+[[row]]
+id = "c23/enum-fixed-type"
+standard = "c23"
+clause = "6.7.3.3"
+what = "an enumeration with a fixed underlying type"
+case = "c23/declarations.c"
+
+[[row]]
+id = "c23/enum-wide"
+standard = "c23"
+clause = "6.7.3.3"
+what = "an enumerator that does not fit in int"
+case = "c23/declarations.c"
+
+[[row]]
+id = "c23/tag-compatibility"
+standard = "c23"
+clause = "6.7.3.4"
+what = "a structure tag redeclared with the same members"
+case = "c23/declarations.c"
+
+[[row]]
+id = "c23/bit-int"
+standard = "c23"
+clause = "6.2.5"
+what = "signed and unsigned _BitInt of any width"
+case = "c23/bit_int.c"
+
+[[row]]
+id = "c23/bit-int-conversions"
+standard = "c23"
+clause = "6.3.1.1"
+what = "_BitInt arithmetic without integer promotion"
+case = "c23/bit_int.c"
+
+[[row]]
+id = "c23/bitint-maxwidth"
+standard = "c23"
+clause = "5.2.4.2.1"
+what = "BITINT_MAXWIDTH"
+case = "c23/bit_int.c"
+
+[[row]]
+id = "c23/stdckdint"
+standard = "c23"
+clause = "7.20"
+what = "ckd_add, ckd_sub and ckd_mul"
+case = "c23/library.c"
+
+[[row]]
+id = "c23/stdbit"
+standard = "c23"
+clause = "7.18"
+what = "the bit utilities of <stdbit.h>"
+case = "c23/library.c"
+
+[[row]]
+id = "c23/memccpy-strdup"
+standard = "c23"
+clause = "7.26.2"
+what = "memccpy, strdup and strndup"
+case = "c23/library.c"
+
+[[row]]
+id = "c23/width-macros"
+standard = "c23"
+clause = "5.2.4.2.1"
+what = "INT_WIDTH, LLONG_WIDTH and UINT64_WIDTH"
+case = "c23/library.c"
+
+[[row]]
+id = "gnu/feature/__has_include"
+standard = "gnu"
+clause = "cpp Conditional Syntax"
+what = "__has_include tells whether a header can be found"
+case = "gnu/preprocessor.c"
+feature = "__has_include"
+
+[[row]]
+id = "gnu/feature/__has_include_next"
+standard = "gnu"
+clause = "cpp Conditional Syntax"
+what = "__has_include_next asks the same of the rest of the search path"
+case = "gnu/preprocessor.c"
+feature = "__has_include_next"
+
+[[row]]
+id = "gnu/feature/__has_embed"
+standard = "gnu"
+clause = "cpp Conditional Syntax"
+what = "__has_embed tells whether a resource can be embedded"
+case = "gnu/preprocessor.c"
+feature = "__has_embed"
+
+[[row]]
+id = "gnu/feature/__has_attribute"
+standard = "gnu"
+clause = "cpp Conditional Syntax"
+what = "__has_attribute answers for GNU attributes"
+case = "gnu/preprocessor.c"
+feature = "__has_attribute"
+
+[[row]]
+id = "gnu/feature/__has_c_attribute"
+standard = "gnu"
+clause = "cpp Conditional Syntax"
+what = "__has_c_attribute answers for the standard attributes"
+case = "gnu/preprocessor.c"
+feature = "__has_c_attribute"
+
+[[row]]
+id = "gnu/feature/__has_builtin"
+standard = "gnu"
+clause = "cpp Conditional Syntax"
+what = "__has_builtin answers for builtins"
+case = "gnu/preprocessor.c"
+feature = "__has_builtin"
+
+[[row]]
+id = "gnu/feature/__has_feature"
+standard = "gnu"
+clause = "cpp Conditional Syntax"
+what = "__has_feature is defined and answers no to a name it does not know"
+case = "gnu/preprocessor.c"
+feature = "__has_feature"
+
+[[row]]
+id = "gnu/feature/__has_extension"
+standard = "gnu"
+clause = "cpp Conditional Syntax"
+what = "__has_extension is defined and answers no to a name it does not know"
+case = "gnu/preprocessor.c"
+feature = "__has_extension"
+
+[[row]]
+id = "gnu/feature/pragma_once"
+standard = "gnu"
+clause = "cpp Conditional Syntax"
+what = "#pragma once includes a header once"
+case = "gnu/preprocessor.c"
+feature = "pragma_once"
+
+[[row]]
+id = "gnu/extension/include_next"
+standard = "gnu"
+clause = "cpp Wrapper Headers"
+what = "#include_next goes on to the next header of the same name"
+case = "gnu/preprocessor.c"
+feature = "include_next"
+
+[[row]]
+id = "gnu/feature/variadic_macros"
+standard = "gnu"
+clause = "cpp Conditional Syntax"
+what = "__VA_ARGS__ in a variadic macro"
+case = "gnu/preprocessor.c"
+feature = "variadic_macros"
+
+[[row]]
+id = "gnu/extension/gnu_variadic_macros"
+standard = "gnu"
+clause = "Variadic Macros"
+what = "named variadic parameters and the comma swallowed by ##__VA_ARGS__"
+case = "gnu/preprocessor.c"
+feature = "gnu_variadic_macros"
+
+[[row]]
+id = "gnu/feature/pragma_operator"
+standard = "gnu"
+clause = "cpp Conditional Syntax"
+what = "_Pragma in a macro expansion"
+case = "gnu/preprocessor.c"
+feature = "pragma_operator"
+
+[[row]]
+id = "gnu/extension/counter_macro"
+standard = "gnu"
+clause = "cpp Common Predefined Macros"
+what = "__COUNTER__ counts up once per use"
+case = "gnu/preprocessor.c"
+feature = "counter_macro"
+
+[[row]]
+id = "gnu/extension/base_file_macro"
+standard = "gnu"
+clause = "cpp Common Predefined Macros"
+what = "__BASE_FILE__ names the main source file"
+case = "gnu/preprocessor.c"
+feature = "base_file_macro"
+
+[[row]]
+id = "gnu/extension/include_level_macro"
+standard = "gnu"
+clause = "cpp Common Predefined Macros"
+what = "__INCLUDE_LEVEL__ is the depth of the current include"
+case = "gnu/preprocessor.c"
+feature = "include_level_macro"
+
+[[row]]
+id = "gnu/extension/file_name_macro"
+standard = "gnu"
+clause = "cpp Common Predefined Macros"
+what = "__FILE_NAME__ is the file name without its directory"
+case = "gnu/preprocessor.c"
+feature = "file_name_macro"
+
+[[row]]
+id = "gnu/feature/embed"
+standard = "gnu"
+clause = "cpp Conditional Syntax"
+what = "#embed with a limit"
+case = "gnu/preprocessor.c"
+feature = "embed"
+
+[[row]]
+id = "gnu/extension/asm_labels"
+standard = "gnu"
+clause = "C Extensions"
+what = "an asm label renames the symbol of a declaration"
+case = "gnu/extensions.c"
+feature = "asm_labels"
+
+[[row]]
+id = "gnu/extension/statement_expressions"
+standard = "gnu"
+clause = "C Extensions"
+what = "a compound statement in parentheses is an expression"
+case = "gnu/extensions.c"
+feature = "statement_expressions"
+
+[[row]]
+id = "gnu/extension/typeof"
+standard = "gnu"
+clause = "C Extensions"
+what = "typeof, __typeof__ and typeof_unqual"
+case = "gnu/extensions.c"
+feature = "typeof"
+
+[[row]]
+id = "gnu/extension/labels_as_values"
+standard = "gnu"
+clause = "C Extensions"
+what = "&&label and goto *pointer"
+case = "gnu/extensions.c"
+feature = "labels_as_values"
+
+[[row]]
+id = "gnu/extension/case_ranges"
+standard = "gnu"
+clause = "C Extensions"
+what = "case low ... high"
+case = "gnu/extensions.c"
+feature = "case_ranges"
+
+[[row]]
+id = "gnu/extension/binary_conditional"
+standard = "gnu"
+clause = "C Extensions"
+what = "x ?: y evaluates x once"
+case = "gnu/extensions.c"
+feature = "binary_conditional"
+
+[[row]]
+id = "gnu/extension/zero_length_arrays"
+standard = "gnu"
+clause = "C Extensions"
+what = "a zero-length array at the end of a struct"
+case = "gnu/extensions.c"
+feature = "zero_length_arrays"
+
+[[row]]
+id = "gnu/extension/void_pointer_arithmetic"
+standard = "gnu"
+clause = "C Extensions"
+what = "arithmetic on void pointers and sizeof(void)"
+case = "gnu/extensions.c"
+feature = "void_pointer_arithmetic"
+
+[[row]]
+id = "gnu/extension/designated_initializer_ranges"
+standard = "gnu"
+clause = "C Extensions"
+what = "[first ... last] = value in an initializer"
+case = "gnu/extensions.c"
+feature = "designated_initializer_ranges"
+
+[[row]]
+id = "gnu/extension/cast_to_union"
+standard = "gnu"
+clause = "C Extensions"
+what = "a cast to a union type"
+case = "gnu/extensions.c"
+feature = "cast_to_union"
+
+[[row]]
+id = "gnu/extension/extension_keyword"
+standard = "gnu"
+clause = "C Extensions"
+what = "__extension__ before a declaration and an expression"
+case = "gnu/extensions.c"
+feature = "extension_keyword"
+
+[[row]]
+id = "gnu/extension/nested_functions"
+standard = "gnu"
+clause = "Nested Functions"
+what = "a function defined inside another, called and passed by address"
+case = "gnu/nested_functions.c"
+issue = "tamnd/rucc#2486"
+feature = "nested_functions"
+
+[[row]]
+id = "gnu/attribute/aligned"
+standard = "gnu"
+clause = "Common Type Attributes"
+what = "the aligned attribute"
+case = "gnu/type_attributes.c"
+feature = "aligned"
+
+[[row]]
+id = "gnu/attribute/packed"
+standard = "gnu"
+clause = "Common Type Attributes"
+what = "the packed attribute"
+case = "gnu/type_attributes.c"
+feature = "packed"
+
+[[row]]
+id = "gnu/attribute/scalar_storage_order"
+standard = "gnu"
+clause = "Common Type Attributes"
+what = "the scalar_storage_order attribute"
+case = "gnu/type_attributes.c"
+feature = "scalar_storage_order"
+
+[[row]]
+id = "gnu/attribute/section"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the section attribute"
+case = "gnu/linkage_attributes.c"
+feature = "section"
+
+[[row]]
+id = "gnu/attribute/no_sanitize"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the no_sanitize attribute"
+case = "gnu/function_attributes.c"
+feature = "no_sanitize"
+
+[[row]]
+id = "gnu/attribute/naked"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the naked attribute"
+case = "gnu/function_attributes.c"
+feature = "naked"
+
+[[row]]
+id = "gnu/attribute/ms_abi"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the ms_abi attribute"
+case = "gnu/function_attributes.c"
+feature = "ms_abi"
+
+[[row]]
+id = "gnu/attribute/sysv_abi"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the sysv_abi attribute"
+case = "gnu/function_attributes.c"
+feature = "sysv_abi"
+
+[[row]]
+id = "gnu/attribute/mode"
+standard = "gnu"
+clause = "Common Type Attributes"
+what = "the mode attribute"
+case = "gnu/type_attributes.c"
+feature = "mode"
+
+[[row]]
+id = "gnu/attribute/transparent_union"
+standard = "gnu"
+clause = "Common Type Attributes"
+what = "the transparent_union attribute"
+case = "gnu/type_attributes.c"
+feature = "transparent_union"
+
+[[row]]
+id = "gnu/attribute/noreturn"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the noreturn attribute"
+case = "gnu/function_attributes.c"
+feature = "noreturn"
+
+[[row]]
+id = "gnu/attribute/always_inline"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the always_inline attribute"
+case = "gnu/function_attributes.c"
+feature = "always_inline"
+
+[[row]]
+id = "gnu/attribute/gnu_inline"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the gnu_inline attribute"
+case = "gnu/function_attributes.c"
+feature = "gnu_inline"
+
+[[row]]
+id = "gnu/attribute/noinline"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the noinline attribute"
+case = "gnu/function_attributes.c"
+feature = "noinline"
+
+[[row]]
+id = "gnu/attribute/noclone"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the noclone attribute"
+case = "gnu/function_attributes.c"
+feature = "noclone"
+
+[[row]]
+id = "gnu/attribute/flatten"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the flatten attribute"
+case = "gnu/function_attributes.c"
+feature = "flatten"
+
+[[row]]
+id = "gnu/attribute/hot"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the hot attribute"
+case = "gnu/function_attributes.c"
+feature = "hot"
+
+[[row]]
+id = "gnu/attribute/cold"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the cold attribute"
+case = "gnu/function_attributes.c"
+feature = "cold"
+
+[[row]]
+id = "gnu/attribute/pure"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the pure attribute"
+case = "gnu/function_attributes.c"
+feature = "pure"
+
+[[row]]
+id = "gnu/attribute/const"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the const attribute"
+case = "gnu/function_attributes.c"
+feature = "const"
+
+[[row]]
+id = "gnu/attribute/malloc"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the malloc attribute"
+case = "gnu/function_attributes.c"
+feature = "malloc"
+
+[[row]]
+id = "gnu/attribute/returns_twice"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the returns_twice attribute"
+case = "gnu/function_attributes.c"
+feature = "returns_twice"
+
+[[row]]
+id = "gnu/attribute/no_instrument_function"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the no_instrument_function attribute"
+case = "gnu/function_attributes.c"
+feature = "no_instrument_function"
+
+[[row]]
+id = "gnu/attribute/no_profile_instrument_function"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the no_profile_instrument_function attribute"
+case = "gnu/function_attributes.c"
+feature = "no_profile_instrument_function"
+
+[[row]]
+id = "gnu/attribute/no_stack_protector"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the no_stack_protector attribute"
+case = "gnu/function_attributes.c"
+feature = "no_stack_protector"
+
+[[row]]
+id = "gnu/attribute/function_return"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the function_return attribute"
+case = "gnu/function_attributes.c"
+feature = "function_return"
+
+[[row]]
+id = "gnu/attribute/indirect_branch"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the indirect_branch attribute"
+case = "gnu/function_attributes.c"
+feature = "indirect_branch"
+
+[[row]]
+id = "gnu/attribute/stack_protect"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the stack_protect attribute"
+case = "gnu/function_attributes.c"
+feature = "stack_protect"
+
+[[row]]
+id = "gnu/attribute/zero_call_used_regs"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the zero_call_used_regs attribute"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2335"
+feature = "zero_call_used_regs"
+
+[[row]]
+id = "gnu/attribute/no_caller_saved_registers"
+standard = "gnu"
+clause = "x86 Function Attributes"
+what = "the no_caller_saved_registers attribute"
+case = "gnu/interrupt_handlers.c"
+issue = "tamnd/rucc#2480"
+feature = "no_caller_saved_registers"
+
+[[row]]
+id = "gnu/attribute/target"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the target attribute"
+case = "gnu/function_attributes.c"
+feature = "target"
+
+[[row]]
+id = "gnu/attribute/target_clones"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the target_clones attribute"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2496"
+feature = "target_clones"
+
+[[row]]
+id = "gnu/attribute/optimize"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the optimize attribute"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2484"
+feature = "optimize"
+
+[[row]]
+id = "gnu/attribute/interrupt"
+standard = "gnu"
+clause = "x86 Function Attributes"
+what = "the interrupt attribute"
+case = "gnu/interrupt_handlers.c"
+issue = "tamnd/rucc#2480"
+feature = "interrupt"
+
+[[row]]
+id = "gnu/attribute/used"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the used attribute"
+case = "gnu/function_attributes.c"
+feature = "used"
+
+[[row]]
+id = "gnu/attribute/unused"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the unused attribute"
+case = "gnu/function_attributes.c"
+feature = "unused"
+
+[[row]]
+id = "gnu/attribute/externally_visible"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the externally_visible attribute"
+case = "gnu/function_attributes.c"
+feature = "externally_visible"
+
+[[row]]
+id = "gnu/attribute/retain"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the retain attribute"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2483"
+feature = "retain"
+
+[[row]]
+id = "gnu/attribute/visibility"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the visibility attribute"
+case = "gnu/linkage_attributes.c"
+feature = "visibility"
+
+[[row]]
+id = "gnu/attribute/weak"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the weak attribute"
+case = "gnu/linkage_attributes.c"
+feature = "weak"
+
+[[row]]
+id = "gnu/attribute/alias"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the alias attribute"
+case = "gnu/linkage_attributes.c"
+feature = "alias"
+
+[[row]]
+id = "gnu/attribute/weakref"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the weakref attribute"
+case = "gnu/weakref.c"
+feature = "weakref"
+
+[[row]]
+id = "gnu/attribute/cleanup"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the cleanup attribute"
+case = "gnu/linkage_attributes.c"
+feature = "cleanup"
+
+[[row]]
+id = "gnu/attribute/constructor"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the constructor attribute"
+case = "gnu/linkage_attributes.c"
+feature = "constructor"
+
+[[row]]
+id = "gnu/attribute/destructor"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the destructor attribute"
+case = "gnu/linkage_attributes.c"
+feature = "destructor"
+
+[[row]]
+id = "gnu/attribute/deprecated"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the deprecated attribute"
+case = "gnu/function_attributes.c"
+feature = "deprecated"
+
+[[row]]
+id = "gnu/attribute/warning"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the warning attribute"
+case = "gnu/function_attributes.c"
+feature = "warning"
+
+[[row]]
+id = "gnu/attribute/error"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the error attribute"
+case = "gnu/function_attributes.c"
+feature = "error"
+
+[[row]]
+id = "gnu/attribute/format"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the format attribute"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2482"
+feature = "format"
+
+[[row]]
+id = "gnu/attribute/format_arg"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the format_arg attribute"
+case = "gnu/function_attributes.c"
+feature = "format_arg"
+
+[[row]]
+id = "gnu/attribute/nonnull"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the nonnull attribute"
+case = "gnu/function_attributes.c"
+feature = "nonnull"
+
+[[row]]
+id = "gnu/attribute/returns_nonnull"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the returns_nonnull attribute"
+case = "gnu/function_attributes.c"
+feature = "returns_nonnull"
+
+[[row]]
+id = "gnu/attribute/warn_unused_result"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the warn_unused_result attribute"
+case = "gnu/function_attributes.c"
+feature = "warn_unused_result"
+
+[[row]]
+id = "gnu/attribute/sentinel"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the sentinel attribute"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2497"
+feature = "sentinel"
+
+[[row]]
+id = "gnu/attribute/access"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the access attribute"
+case = "gnu/function_attributes.c"
+feature = "access"
+
+[[row]]
+id = "gnu/attribute/counted_by"
+standard = "gnu"
+clause = "Common Type Attributes"
+what = "the counted_by attribute"
+case = "gnu/type_attributes.c"
+feature = "counted_by"
+
+[[row]]
+id = "gnu/attribute/fallthrough"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the fallthrough attribute"
+case = "gnu/function_attributes.c"
+feature = "fallthrough"
+
+[[row]]
+id = "gnu/attribute/assume_aligned"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the assume_aligned attribute"
+case = "gnu/function_attributes.c"
+feature = "assume_aligned"
+
+[[row]]
+id = "gnu/attribute/vector_size"
+standard = "gnu"
+clause = "Common Type Attributes"
+what = "the vector_size attribute"
+case = "gnu/type_attributes.c"
+feature = "vector_size"
+
+[[row]]
+id = "gnu/attribute/may_alias"
+standard = "gnu"
+clause = "Common Type Attributes"
+what = "the may_alias attribute"
+case = "gnu/type_attributes.c"
+feature = "may_alias"
+
+[[row]]
+id = "gnu/attribute/designated_init"
+standard = "gnu"
+clause = "Common Type Attributes"
+what = "the designated_init attribute"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2497"
+feature = "designated_init"
+
+[[row]]
+id = "gnu/attribute/nocommon"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the nocommon attribute"
+case = "gnu/linkage_attributes.c"
+feature = "nocommon"
+
+[[row]]
+id = "gnu/attribute/nonstring"
+standard = "gnu"
+clause = "Common Type Attributes"
+what = "the nonstring attribute"
+case = "gnu/type_attributes.c"
+feature = "nonstring"
+
+[[row]]
+id = "gnu/attribute/uninitialized"
+standard = "gnu"
+clause = "Common Type Attributes"
+what = "the uninitialized attribute"
+case = "gnu/type_attributes.c"
+feature = "uninitialized"
+
+[[row]]
+id = "gnu/attribute/copy"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the copy attribute"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2498"
+feature = "copy"
+
+[[row]]
+id = "gnu/attribute/alloc_size"
+standard = "gnu"
+clause = "Common Function Attributes"
+what = "the alloc_size attribute"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2499"
+feature = "alloc_size"
+
+[[row]]
+id = "gnu/attribute/cdecl"
+standard = "gnu"
+clause = "x86 Function Attributes"
+what = "the cdecl attribute"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2481"
+feature = "cdecl"
+
+[[row]]
+id = "gnu/attribute/stdcall"
+standard = "gnu"
+clause = "x86 Function Attributes"
+what = "the stdcall attribute"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2481"
+feature = "stdcall"
+
+[[row]]
+id = "gnu/attribute/fastcall"
+standard = "gnu"
+clause = "x86 Function Attributes"
+what = "the fastcall attribute"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2481"
+feature = "fastcall"
+
+[[row]]
+id = "gnu/attribute/thiscall"
+standard = "gnu"
+clause = "x86 Function Attributes"
+what = "the thiscall attribute"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2481"
+feature = "thiscall"
+
+[[row]]
+id = "gnu/attribute/regparm"
+standard = "gnu"
+clause = "x86 Function Attributes"
+what = "the regparm attribute"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2481"
+feature = "regparm"
+
+[[row]]
+id = "gnu/attribute/vectorcall"
+standard = "gnu"
+clause = "x86 Function Attributes"
+what = "the vectorcall attribute"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2481"
+feature = "vectorcall"
+
+[[row]]
+id = "gnu/attribute/ms_struct"
+standard = "gnu"
+clause = "x86 Function Attributes"
+what = "the ms_struct attribute"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2481"
+feature = "ms_struct"
+
+[[row]]
+id = "gnu/attribute/gcc_struct"
+standard = "gnu"
+clause = "x86 Function Attributes"
+what = "the gcc_struct attribute"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2481"
+feature = "gcc_struct"
+
+[[row]]
+id = "gnu/attribute/dllimport"
+standard = "gnu"
+clause = "x86 Function Attributes"
+what = "the dllimport attribute"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2481"
+feature = "dllimport"
+
+[[row]]
+id = "gnu/attribute/dllexport"
+standard = "gnu"
+clause = "x86 Function Attributes"
+what = "the dllexport attribute"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2481"
+feature = "dllexport"
+
+[[row]]
+id = "gnu/attribute/selectany"
+standard = "gnu"
+clause = "x86 Function Attributes"
+what = "the selectany attribute"
+case = "gnu/attribute_answers.c"
+issue = "tamnd/rucc#2481"
+feature = "selectany"
+
+[[row]]
+id = "gnu/c-attribute/deprecated"
+standard = "gnu"
+clause = "Attribute Syntax"
+what = "the [[deprecated]] attribute"
+case = "gnu/c_attributes.c"
+feature = "deprecated"
+
+[[row]]
+id = "gnu/c-attribute/fallthrough"
+standard = "gnu"
+clause = "Attribute Syntax"
+what = "the [[fallthrough]] attribute"
+case = "gnu/c_attributes.c"
+feature = "fallthrough"
+
+[[row]]
+id = "gnu/c-attribute/maybe_unused"
+standard = "gnu"
+clause = "Attribute Syntax"
+what = "the [[maybe_unused]] attribute"
+case = "gnu/c_attributes.c"
+feature = "maybe_unused"
+
+[[row]]
+id = "gnu/c-attribute/nodiscard"
+standard = "gnu"
+clause = "Attribute Syntax"
+what = "the [[nodiscard]] attribute"
+case = "gnu/c_attributes.c"
+feature = "nodiscard"
+
+[[row]]
+id = "gnu/c-attribute/noreturn"
+standard = "gnu"
+clause = "Attribute Syntax"
+what = "the [[noreturn]] attribute"
+case = "gnu/c_attributes.c"
+feature = "noreturn"
+
+[[row]]
+id = "gnu/c-attribute/unsequenced"
+standard = "gnu"
+clause = "Attribute Syntax"
+what = "the [[unsequenced]] attribute"
+case = "gnu/c_attributes.c"
+feature = "unsequenced"
+
+[[row]]
+id = "gnu/c-attribute/reproducible"
+standard = "gnu"
+clause = "Attribute Syntax"
+what = "the [[reproducible]] attribute"
+case = "gnu/c_attributes.c"
+feature = "reproducible"
+
+[[row]]
+id = "gnu/builtin/__builtin_constant_p"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_constant_p"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_constant_p"
+
+[[row]]
+id = "gnu/builtin/__builtin_expect"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_expect"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_expect"
+
+[[row]]
+id = "gnu/builtin/__builtin_expect_with_probability"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_expect_with_probability"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_expect_with_probability"
+
+[[row]]
+id = "gnu/builtin/__builtin_unreachable"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_unreachable"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_unreachable"
+
+[[row]]
+id = "gnu/builtin/__builtin_trap"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_trap"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_trap"
+
+[[row]]
+id = "gnu/builtin/__builtin_types_compatible_p"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_types_compatible_p"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_types_compatible_p"
+
+[[row]]
+id = "gnu/builtin/__builtin_has_attribute"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_has_attribute"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_has_attribute"
+
+[[row]]
+id = "gnu/builtin/__builtin_counted_by_ref"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_counted_by_ref"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_counted_by_ref"
+
+[[row]]
+id = "gnu/builtin/__builtin_choose_expr"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_choose_expr"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_choose_expr"
+
+[[row]]
+id = "gnu/builtin/__builtin_offsetof"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_offsetof"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_offsetof"
+
+[[row]]
+id = "gnu/builtin/__builtin_classify_type"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_classify_type"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_classify_type"
+
+[[row]]
+id = "gnu/builtin/__builtin_add_overflow"
+standard = "gnu"
+clause = "Integer Overflow Builtins"
+what = "__builtin_add_overflow"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_add_overflow"
+
+[[row]]
+id = "gnu/builtin/__builtin_sub_overflow"
+standard = "gnu"
+clause = "Integer Overflow Builtins"
+what = "__builtin_sub_overflow"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_sub_overflow"
+
+[[row]]
+id = "gnu/builtin/__builtin_mul_overflow"
+standard = "gnu"
+clause = "Integer Overflow Builtins"
+what = "__builtin_mul_overflow"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_mul_overflow"
+
+[[row]]
+id = "gnu/builtin/__builtin_clz"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_clz"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_clz"
+
+[[row]]
+id = "gnu/builtin/__builtin_ctz"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_ctz"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_ctz"
+
+[[row]]
+id = "gnu/builtin/__builtin_popcount"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_popcount"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_popcount"
+
+[[row]]
+id = "gnu/builtin/__builtin_parity"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_parity"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_parity"
+
+[[row]]
+id = "gnu/builtin/__builtin_ffs"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_ffs"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_ffs"
+
+[[row]]
+id = "gnu/builtin/__builtin_bswap16"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_bswap16"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_bswap16"
+
+[[row]]
+id = "gnu/builtin/__builtin_bswap32"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_bswap32"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_bswap32"
+
+[[row]]
+id = "gnu/builtin/__builtin_bswap64"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_bswap64"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_bswap64"
+
+[[row]]
+id = "gnu/builtin/__builtin_object_size"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_object_size"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_object_size"
+
+[[row]]
+id = "gnu/builtin/__builtin_dynamic_object_size"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_dynamic_object_size"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_dynamic_object_size"
+
+[[row]]
+id = "gnu/builtin/__builtin_assume_aligned"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_assume_aligned"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_assume_aligned"
+
+[[row]]
+id = "gnu/builtin/__builtin_prefetch"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_prefetch"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_prefetch"
+
+[[row]]
+id = "gnu/builtin/__builtin_return_address"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_return_address"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_return_address"
+
+[[row]]
+id = "gnu/builtin/__builtin_extract_return_addr"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_extract_return_addr"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_extract_return_addr"
+
+[[row]]
+id = "gnu/builtin/__builtin_frob_return_addr"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_frob_return_addr"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_frob_return_addr"
+
+[[row]]
+id = "gnu/builtin/__builtin_frame_address"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_frame_address"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_frame_address"
+
+[[row]]
+id = "gnu/builtin/__builtin_thread_pointer"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_thread_pointer"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_thread_pointer"
+
+[[row]]
+id = "gnu/builtin/__builtin_sponentry"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_sponentry"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_sponentry"
+
+[[row]]
+id = "gnu/builtin/__builtin_cpu_init"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_cpu_init"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_cpu_init"
+
+[[row]]
+id = "gnu/builtin/__builtin_cpu_supports"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_cpu_supports"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_cpu_supports"
+
+[[row]]
+id = "gnu/builtin/__builtin_cpu_is"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_cpu_is"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_cpu_is"
+
+[[row]]
+id = "gnu/builtin/__builtin_alloca"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_alloca"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_alloca"
+
+[[row]]
+id = "gnu/builtin/__builtin_setjmp"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_setjmp"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_setjmp"
+
+[[row]]
+id = "gnu/builtin/__builtin_longjmp"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_longjmp"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_longjmp"
+
+[[row]]
+id = "gnu/builtin/__builtin_va_list"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_va_list"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_va_list"
+
+[[row]]
+id = "gnu/builtin/__builtin_va_start"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_va_start"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_va_start"
+
+[[row]]
+id = "gnu/builtin/__builtin_va_arg"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_va_arg"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_va_arg"
+
+[[row]]
+id = "gnu/builtin/__builtin_va_end"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_va_end"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_va_end"
+
+[[row]]
+id = "gnu/builtin/__builtin_va_copy"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_va_copy"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_va_copy"
+
+[[row]]
+id = "gnu/builtin/__builtin_va_arg_pack"
+standard = "gnu"
+clause = "Constructing Calls"
+what = "__builtin_va_arg_pack"
+case = "gnu/apply_builtins.c"
+issue = "tamnd/rucc#2485"
+feature = "__builtin_va_arg_pack"
+
+[[row]]
+id = "gnu/builtin/__builtin_va_arg_pack_len"
+standard = "gnu"
+clause = "Constructing Calls"
+what = "__builtin_va_arg_pack_len"
+case = "gnu/apply_builtins.c"
+issue = "tamnd/rucc#2485"
+feature = "__builtin_va_arg_pack_len"
+
+[[row]]
+id = "gnu/builtin/__builtin_abort"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_abort"
+case = "gnu/library_builtins.c"
+feature = "__builtin_abort"
+
+[[row]]
+id = "gnu/builtin/__builtin_exit"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_exit"
+case = "gnu/library_builtins.c"
+feature = "__builtin_exit"
+
+[[row]]
+id = "gnu/builtin/__builtin_malloc"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_malloc"
+case = "gnu/library_builtins.c"
+feature = "__builtin_malloc"
+
+[[row]]
+id = "gnu/builtin/__builtin_calloc"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_calloc"
+case = "gnu/library_builtins.c"
+feature = "__builtin_calloc"
+
+[[row]]
+id = "gnu/builtin/__builtin_realloc"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_realloc"
+case = "gnu/library_builtins.c"
+feature = "__builtin_realloc"
+
+[[row]]
+id = "gnu/builtin/__builtin_free"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_free"
+case = "gnu/library_builtins.c"
+feature = "__builtin_free"
+
+[[row]]
+id = "gnu/builtin/__builtin_abs"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_abs"
+case = "gnu/library_builtins.c"
+feature = "__builtin_abs"
+
+[[row]]
+id = "gnu/builtin/__builtin_labs"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_labs"
+case = "gnu/library_builtins.c"
+feature = "__builtin_labs"
+
+[[row]]
+id = "gnu/builtin/__builtin_llabs"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_llabs"
+case = "gnu/library_builtins.c"
+feature = "__builtin_llabs"
+
+[[row]]
+id = "gnu/builtin/__builtin_memcpy"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_memcpy"
+case = "gnu/library_builtins.c"
+feature = "__builtin_memcpy"
+
+[[row]]
+id = "gnu/builtin/__builtin_memset"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_memset"
+case = "gnu/library_builtins.c"
+feature = "__builtin_memset"
+
+[[row]]
+id = "gnu/builtin/__builtin_memcmp"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_memcmp"
+case = "gnu/library_builtins.c"
+feature = "__builtin_memcmp"
+
+[[row]]
+id = "gnu/builtin/__builtin_memmove"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_memmove"
+case = "gnu/library_builtins.c"
+feature = "__builtin_memmove"
+
+[[row]]
+id = "gnu/builtin/__builtin_memchr"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_memchr"
+case = "gnu/library_builtins.c"
+feature = "__builtin_memchr"
+
+[[row]]
+id = "gnu/builtin/__builtin_mempcpy"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_mempcpy"
+case = "gnu/library_builtins.c"
+feature = "__builtin_mempcpy"
+
+[[row]]
+id = "gnu/builtin/__builtin_bcopy"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_bcopy"
+case = "gnu/library_builtins.c"
+feature = "__builtin_bcopy"
+
+[[row]]
+id = "gnu/builtin/__builtin_bzero"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_bzero"
+case = "gnu/library_builtins.c"
+feature = "__builtin_bzero"
+
+[[row]]
+id = "gnu/builtin/__builtin_index"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_index"
+case = "gnu/library_builtins.c"
+feature = "__builtin_index"
+
+[[row]]
+id = "gnu/builtin/__builtin_rindex"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_rindex"
+case = "gnu/library_builtins.c"
+feature = "__builtin_rindex"
+
+[[row]]
+id = "gnu/builtin/__builtin_strlen"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_strlen"
+case = "gnu/library_builtins.c"
+feature = "__builtin_strlen"
+
+[[row]]
+id = "gnu/builtin/__builtin_strcmp"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_strcmp"
+case = "gnu/library_builtins.c"
+feature = "__builtin_strcmp"
+
+[[row]]
+id = "gnu/builtin/__builtin_strncmp"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_strncmp"
+case = "gnu/library_builtins.c"
+feature = "__builtin_strncmp"
+
+[[row]]
+id = "gnu/builtin/__builtin_strcpy"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_strcpy"
+case = "gnu/library_builtins.c"
+feature = "__builtin_strcpy"
+
+[[row]]
+id = "gnu/builtin/__builtin_strncpy"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_strncpy"
+case = "gnu/library_builtins.c"
+feature = "__builtin_strncpy"
+
+[[row]]
+id = "gnu/builtin/__builtin_strcat"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_strcat"
+case = "gnu/library_builtins.c"
+feature = "__builtin_strcat"
+
+[[row]]
+id = "gnu/builtin/__builtin_strncat"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_strncat"
+case = "gnu/library_builtins.c"
+feature = "__builtin_strncat"
+
+[[row]]
+id = "gnu/builtin/__builtin_strchr"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_strchr"
+case = "gnu/library_builtins.c"
+feature = "__builtin_strchr"
+
+[[row]]
+id = "gnu/builtin/__builtin_strrchr"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_strrchr"
+case = "gnu/library_builtins.c"
+feature = "__builtin_strrchr"
+
+[[row]]
+id = "gnu/builtin/__builtin_strstr"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_strstr"
+case = "gnu/library_builtins.c"
+feature = "__builtin_strstr"
+
+[[row]]
+id = "gnu/builtin/__builtin_strspn"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_strspn"
+case = "gnu/library_builtins.c"
+feature = "__builtin_strspn"
+
+[[row]]
+id = "gnu/builtin/__builtin_strcspn"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_strcspn"
+case = "gnu/library_builtins.c"
+feature = "__builtin_strcspn"
+
+[[row]]
+id = "gnu/builtin/__builtin_strpbrk"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_strpbrk"
+case = "gnu/library_builtins.c"
+feature = "__builtin_strpbrk"
+
+[[row]]
+id = "gnu/builtin/__builtin_strdup"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_strdup"
+case = "gnu/library_builtins.c"
+feature = "__builtin_strdup"
+
+[[row]]
+id = "gnu/builtin/__builtin_strndup"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_strndup"
+case = "gnu/library_builtins.c"
+feature = "__builtin_strndup"
+
+[[row]]
+id = "gnu/builtin/__builtin_stpcpy"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_stpcpy"
+case = "gnu/library_builtins.c"
+feature = "__builtin_stpcpy"
+
+[[row]]
+id = "gnu/builtin/__builtin_stpncpy"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_stpncpy"
+case = "gnu/library_builtins.c"
+feature = "__builtin_stpncpy"
+
+[[row]]
+id = "gnu/builtin/__builtin_printf"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_printf"
+case = "gnu/library_builtins.c"
+feature = "__builtin_printf"
+
+[[row]]
+id = "gnu/builtin/__builtin_sprintf"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_sprintf"
+case = "gnu/library_builtins.c"
+feature = "__builtin_sprintf"
+
+[[row]]
+id = "gnu/builtin/__builtin_snprintf"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_snprintf"
+case = "gnu/library_builtins.c"
+feature = "__builtin_snprintf"
+
+[[row]]
+id = "gnu/builtin/__builtin_puts"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_puts"
+case = "gnu/library_builtins.c"
+feature = "__builtin_puts"
+
+[[row]]
+id = "gnu/builtin/__builtin_putchar"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_putchar"
+case = "gnu/library_builtins.c"
+feature = "__builtin_putchar"
+
+[[row]]
+id = "gnu/builtin/__builtin_fprintf"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_fprintf"
+case = "gnu/library_builtins.c"
+feature = "__builtin_fprintf"
+
+[[row]]
+id = "gnu/builtin/__builtin_fprintf_unlocked"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_fprintf_unlocked"
+case = "gnu/library_builtins.c"
+feature = "__builtin_fprintf_unlocked"
+
+[[row]]
+id = "gnu/builtin/__builtin_vfprintf"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_vfprintf"
+case = "gnu/library_builtins.c"
+feature = "__builtin_vfprintf"
+
+[[row]]
+id = "gnu/builtin/__builtin_vprintf"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_vprintf"
+case = "gnu/library_builtins.c"
+feature = "__builtin_vprintf"
+
+[[row]]
+id = "gnu/builtin/__builtin_vsprintf"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_vsprintf"
+case = "gnu/library_builtins.c"
+feature = "__builtin_vsprintf"
+
+[[row]]
+id = "gnu/builtin/__builtin_vsnprintf"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_vsnprintf"
+case = "gnu/library_builtins.c"
+feature = "__builtin_vsnprintf"
+
+[[row]]
+id = "gnu/builtin/__builtin_printf_unlocked"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_printf_unlocked"
+case = "gnu/library_builtins.c"
+feature = "__builtin_printf_unlocked"
+
+[[row]]
+id = "gnu/builtin/__builtin_fputs"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_fputs"
+case = "gnu/library_builtins.c"
+feature = "__builtin_fputs"
+
+[[row]]
+id = "gnu/builtin/__builtin_fputs_unlocked"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_fputs_unlocked"
+case = "gnu/library_builtins.c"
+feature = "__builtin_fputs_unlocked"
+
+[[row]]
+id = "gnu/builtin/__builtin_fputc"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_fputc"
+case = "gnu/library_builtins.c"
+feature = "__builtin_fputc"
+
+[[row]]
+id = "gnu/builtin/__builtin_fputc_unlocked"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_fputc_unlocked"
+case = "gnu/library_builtins.c"
+feature = "__builtin_fputc_unlocked"
+
+[[row]]
+id = "gnu/builtin/__builtin_putc"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_putc"
+case = "gnu/library_builtins.c"
+feature = "__builtin_putc"
+
+[[row]]
+id = "gnu/builtin/__builtin_putc_unlocked"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_putc_unlocked"
+case = "gnu/library_builtins.c"
+feature = "__builtin_putc_unlocked"
+
+[[row]]
+id = "gnu/builtin/__builtin_fwrite"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_fwrite"
+case = "gnu/library_builtins.c"
+feature = "__builtin_fwrite"
+
+[[row]]
+id = "gnu/builtin/__builtin_fwrite_unlocked"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_fwrite_unlocked"
+case = "gnu/library_builtins.c"
+feature = "__builtin_fwrite_unlocked"
+
+[[row]]
+id = "gnu/builtin/__builtin_puts_unlocked"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_puts_unlocked"
+case = "gnu/library_builtins.c"
+feature = "__builtin_puts_unlocked"
+
+[[row]]
+id = "gnu/builtin/__builtin_putchar_unlocked"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_putchar_unlocked"
+case = "gnu/library_builtins.c"
+feature = "__builtin_putchar_unlocked"
+
+[[row]]
+id = "gnu/builtin/__builtin_clzl"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_clzl"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_clzl"
+
+[[row]]
+id = "gnu/builtin/__builtin_clzll"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_clzll"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_clzll"
+
+[[row]]
+id = "gnu/builtin/__builtin_ctzl"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_ctzl"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_ctzl"
+
+[[row]]
+id = "gnu/builtin/__builtin_ctzll"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_ctzll"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_ctzll"
+
+[[row]]
+id = "gnu/builtin/__builtin_popcountl"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_popcountl"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_popcountl"
+
+[[row]]
+id = "gnu/builtin/__builtin_popcountll"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_popcountll"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_popcountll"
+
+[[row]]
+id = "gnu/builtin/__builtin_parityl"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_parityl"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_parityl"
+
+[[row]]
+id = "gnu/builtin/__builtin_parityll"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_parityll"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_parityll"
+
+[[row]]
+id = "gnu/builtin/__builtin_ffsl"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_ffsl"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_ffsl"
+
+[[row]]
+id = "gnu/builtin/__builtin_ffsll"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_ffsll"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_ffsll"
+
+[[row]]
+id = "gnu/builtin/__builtin___memcpy_chk"
+standard = "gnu"
+clause = "Object Size Checking"
+what = "__builtin___memcpy_chk"
+case = "gnu/library_builtins.c"
+feature = "__builtin___memcpy_chk"
+
+[[row]]
+id = "gnu/builtin/__builtin___memmove_chk"
+standard = "gnu"
+clause = "Object Size Checking"
+what = "__builtin___memmove_chk"
+case = "gnu/library_builtins.c"
+feature = "__builtin___memmove_chk"
+
+[[row]]
+id = "gnu/builtin/__builtin___mempcpy_chk"
+standard = "gnu"
+clause = "Object Size Checking"
+what = "__builtin___mempcpy_chk"
+case = "gnu/library_builtins.c"
+feature = "__builtin___mempcpy_chk"
+
+[[row]]
+id = "gnu/builtin/__builtin___memset_chk"
+standard = "gnu"
+clause = "Object Size Checking"
+what = "__builtin___memset_chk"
+case = "gnu/library_builtins.c"
+feature = "__builtin___memset_chk"
+
+[[row]]
+id = "gnu/builtin/__builtin___strcpy_chk"
+standard = "gnu"
+clause = "Object Size Checking"
+what = "__builtin___strcpy_chk"
+case = "gnu/library_builtins.c"
+feature = "__builtin___strcpy_chk"
+
+[[row]]
+id = "gnu/builtin/__builtin___stpcpy_chk"
+standard = "gnu"
+clause = "Object Size Checking"
+what = "__builtin___stpcpy_chk"
+case = "gnu/library_builtins.c"
+feature = "__builtin___stpcpy_chk"
+
+[[row]]
+id = "gnu/builtin/__builtin___strcat_chk"
+standard = "gnu"
+clause = "Object Size Checking"
+what = "__builtin___strcat_chk"
+case = "gnu/library_builtins.c"
+feature = "__builtin___strcat_chk"
+
+[[row]]
+id = "gnu/builtin/__builtin___strncpy_chk"
+standard = "gnu"
+clause = "Object Size Checking"
+what = "__builtin___strncpy_chk"
+case = "gnu/library_builtins.c"
+feature = "__builtin___strncpy_chk"
+
+[[row]]
+id = "gnu/builtin/__builtin___stpncpy_chk"
+standard = "gnu"
+clause = "Object Size Checking"
+what = "__builtin___stpncpy_chk"
+case = "gnu/library_builtins.c"
+feature = "__builtin___stpncpy_chk"
+
+[[row]]
+id = "gnu/builtin/__builtin___strncat_chk"
+standard = "gnu"
+clause = "Object Size Checking"
+what = "__builtin___strncat_chk"
+case = "gnu/library_builtins.c"
+feature = "__builtin___strncat_chk"
+
+[[row]]
+id = "gnu/builtin/__builtin___sprintf_chk"
+standard = "gnu"
+clause = "Object Size Checking"
+what = "__builtin___sprintf_chk"
+case = "gnu/library_builtins.c"
+feature = "__builtin___sprintf_chk"
+
+[[row]]
+id = "gnu/builtin/__builtin___snprintf_chk"
+standard = "gnu"
+clause = "Object Size Checking"
+what = "__builtin___snprintf_chk"
+case = "gnu/library_builtins.c"
+feature = "__builtin___snprintf_chk"
+
+[[row]]
+id = "gnu/builtin/__builtin___vsprintf_chk"
+standard = "gnu"
+clause = "Object Size Checking"
+what = "__builtin___vsprintf_chk"
+case = "gnu/library_builtins.c"
+feature = "__builtin___vsprintf_chk"
+
+[[row]]
+id = "gnu/builtin/__builtin___vsnprintf_chk"
+standard = "gnu"
+clause = "Object Size Checking"
+what = "__builtin___vsnprintf_chk"
+case = "gnu/library_builtins.c"
+feature = "__builtin___vsnprintf_chk"
+
+[[row]]
+id = "gnu/builtin/__builtin___printf_chk"
+standard = "gnu"
+clause = "Object Size Checking"
+what = "__builtin___printf_chk"
+case = "gnu/library_builtins.c"
+feature = "__builtin___printf_chk"
+
+[[row]]
+id = "gnu/builtin/__builtin___vprintf_chk"
+standard = "gnu"
+clause = "Object Size Checking"
+what = "__builtin___vprintf_chk"
+case = "gnu/library_builtins.c"
+feature = "__builtin___vprintf_chk"
+
+[[row]]
+id = "gnu/builtin/__builtin_fabs"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_fabs"
+case = "gnu/float_builtins.c"
+feature = "__builtin_fabs"
+
+[[row]]
+id = "gnu/builtin/__builtin_fabsf"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_fabsf"
+case = "gnu/float_builtins.c"
+feature = "__builtin_fabsf"
+
+[[row]]
+id = "gnu/builtin/__builtin_fabsl"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_fabsl"
+case = "gnu/float_builtins.c"
+feature = "__builtin_fabsl"
+
+[[row]]
+id = "gnu/builtin/__builtin_copysign"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_copysign"
+case = "gnu/float_builtins.c"
+feature = "__builtin_copysign"
+
+[[row]]
+id = "gnu/builtin/__builtin_copysignf"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_copysignf"
+case = "gnu/float_builtins.c"
+feature = "__builtin_copysignf"
+
+[[row]]
+id = "gnu/builtin/__builtin_copysignl"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_copysignl"
+case = "gnu/float_builtins.c"
+feature = "__builtin_copysignl"
+
+[[row]]
+id = "gnu/builtin/__builtin_shuffle"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_shuffle"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_shuffle"
+
+[[row]]
+id = "gnu/builtin/__builtin_apply_args"
+standard = "gnu"
+clause = "Constructing Calls"
+what = "__builtin_apply_args"
+case = "gnu/apply_builtins.c"
+feature = "__builtin_apply_args"
+
+[[row]]
+id = "gnu/builtin/__builtin_apply"
+standard = "gnu"
+clause = "Constructing Calls"
+what = "__builtin_apply"
+case = "gnu/apply_builtins.c"
+feature = "__builtin_apply"
+
+[[row]]
+id = "gnu/builtin/__builtin_conjf"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_conjf"
+case = "gnu/float_builtins.c"
+feature = "__builtin_conjf"
+
+[[row]]
+id = "gnu/builtin/__builtin_conj"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_conj"
+case = "gnu/float_builtins.c"
+feature = "__builtin_conj"
+
+[[row]]
+id = "gnu/builtin/__builtin_conjl"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_conjl"
+case = "gnu/float_builtins.c"
+feature = "__builtin_conjl"
+
+[[row]]
+id = "gnu/builtin/__builtin_crealf"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_crealf"
+case = "gnu/float_builtins.c"
+feature = "__builtin_crealf"
+
+[[row]]
+id = "gnu/builtin/__builtin_creal"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_creal"
+case = "gnu/float_builtins.c"
+feature = "__builtin_creal"
+
+[[row]]
+id = "gnu/builtin/__builtin_creall"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_creall"
+case = "gnu/float_builtins.c"
+feature = "__builtin_creall"
+
+[[row]]
+id = "gnu/builtin/__builtin_cimagf"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_cimagf"
+case = "gnu/float_builtins.c"
+feature = "__builtin_cimagf"
+
+[[row]]
+id = "gnu/builtin/__builtin_cimag"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_cimag"
+case = "gnu/float_builtins.c"
+feature = "__builtin_cimag"
+
+[[row]]
+id = "gnu/builtin/__builtin_cimagl"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_cimagl"
+case = "gnu/float_builtins.c"
+feature = "__builtin_cimagl"
+
+[[row]]
+id = "gnu/builtin/__builtin_complex"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_complex builds a complex value from its two halves with no arithmetic"
+case = "gnu/float_builtins.c"
+feature = "__builtin_complex"
+
+[[row]]
+id = "gnu/builtin/__builtin_inf"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_inf"
+case = "gnu/float_builtins.c"
+feature = "__builtin_inf"
+
+[[row]]
+id = "gnu/builtin/__builtin_inff"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_inff"
+case = "gnu/float_builtins.c"
+feature = "__builtin_inff"
+
+[[row]]
+id = "gnu/builtin/__builtin_infl"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_infl"
+case = "gnu/float_builtins.c"
+feature = "__builtin_infl"
+
+[[row]]
+id = "gnu/builtin/__builtin_huge_val"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_huge_val"
+case = "gnu/float_builtins.c"
+feature = "__builtin_huge_val"
+
+[[row]]
+id = "gnu/builtin/__builtin_huge_valf"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_huge_valf"
+case = "gnu/float_builtins.c"
+feature = "__builtin_huge_valf"
+
+[[row]]
+id = "gnu/builtin/__builtin_huge_vall"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_huge_vall"
+case = "gnu/float_builtins.c"
+feature = "__builtin_huge_vall"
+
+[[row]]
+id = "gnu/builtin/__builtin_ceil"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_ceil"
+case = "gnu/float_builtins.c"
+feature = "__builtin_ceil"
+
+[[row]]
+id = "gnu/builtin/__builtin_ceilf"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_ceilf"
+case = "gnu/float_builtins.c"
+feature = "__builtin_ceilf"
+
+[[row]]
+id = "gnu/builtin/__builtin_ceill"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_ceill"
+case = "gnu/float_builtins.c"
+feature = "__builtin_ceill"
+
+[[row]]
+id = "gnu/builtin/__builtin_floor"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_floor"
+case = "gnu/float_builtins.c"
+feature = "__builtin_floor"
+
+[[row]]
+id = "gnu/builtin/__builtin_floorf"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_floorf"
+case = "gnu/float_builtins.c"
+feature = "__builtin_floorf"
+
+[[row]]
+id = "gnu/builtin/__builtin_floorl"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_floorl"
+case = "gnu/float_builtins.c"
+feature = "__builtin_floorl"
+
+[[row]]
+id = "gnu/builtin/__builtin_trunc"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_trunc"
+case = "gnu/float_builtins.c"
+feature = "__builtin_trunc"
+
+[[row]]
+id = "gnu/builtin/__builtin_truncf"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_truncf"
+case = "gnu/float_builtins.c"
+feature = "__builtin_truncf"
+
+[[row]]
+id = "gnu/builtin/__builtin_truncl"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_truncl"
+case = "gnu/float_builtins.c"
+feature = "__builtin_truncl"
+
+[[row]]
+id = "gnu/builtin/__builtin_round"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_round"
+case = "gnu/float_builtins.c"
+feature = "__builtin_round"
+
+[[row]]
+id = "gnu/builtin/__builtin_roundf"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_roundf"
+case = "gnu/float_builtins.c"
+feature = "__builtin_roundf"
+
+[[row]]
+id = "gnu/builtin/__builtin_roundl"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_roundl"
+case = "gnu/float_builtins.c"
+feature = "__builtin_roundl"
+
+[[row]]
+id = "gnu/builtin/__builtin_rint"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_rint"
+case = "gnu/float_builtins.c"
+feature = "__builtin_rint"
+
+[[row]]
+id = "gnu/builtin/__builtin_rintf"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_rintf"
+case = "gnu/float_builtins.c"
+feature = "__builtin_rintf"
+
+[[row]]
+id = "gnu/builtin/__builtin_rintl"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_rintl"
+case = "gnu/float_builtins.c"
+feature = "__builtin_rintl"
+
+[[row]]
+id = "gnu/builtin/__builtin_nearbyint"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_nearbyint"
+case = "gnu/float_builtins.c"
+feature = "__builtin_nearbyint"
+
+[[row]]
+id = "gnu/builtin/__builtin_nearbyintf"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_nearbyintf"
+case = "gnu/float_builtins.c"
+feature = "__builtin_nearbyintf"
+
+[[row]]
+id = "gnu/builtin/__builtin_nearbyintl"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_nearbyintl"
+case = "gnu/float_builtins.c"
+feature = "__builtin_nearbyintl"
+
+[[row]]
+id = "gnu/builtin/__builtin_fmax"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_fmax"
+case = "gnu/float_builtins.c"
+feature = "__builtin_fmax"
+
+[[row]]
+id = "gnu/builtin/__builtin_fmaxf"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_fmaxf"
+case = "gnu/float_builtins.c"
+feature = "__builtin_fmaxf"
+
+[[row]]
+id = "gnu/builtin/__builtin_fmaxl"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_fmaxl"
+case = "gnu/float_builtins.c"
+feature = "__builtin_fmaxl"
+
+[[row]]
+id = "gnu/builtin/__builtin_fmin"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_fmin"
+case = "gnu/float_builtins.c"
+feature = "__builtin_fmin"
+
+[[row]]
+id = "gnu/builtin/__builtin_fminf"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_fminf"
+case = "gnu/float_builtins.c"
+feature = "__builtin_fminf"
+
+[[row]]
+id = "gnu/builtin/__builtin_fminl"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_fminl"
+case = "gnu/float_builtins.c"
+feature = "__builtin_fminl"
+
+[[row]]
+id = "gnu/builtin/__builtin_nan"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_nan"
+case = "gnu/float_builtins.c"
+feature = "__builtin_nan"
+
+[[row]]
+id = "gnu/builtin/__builtin_nanf"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_nanf"
+case = "gnu/float_builtins.c"
+feature = "__builtin_nanf"
+
+[[row]]
+id = "gnu/builtin/__builtin_nanl"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_nanl"
+case = "gnu/float_builtins.c"
+feature = "__builtin_nanl"
+
+[[row]]
+id = "gnu/builtin/__builtin_nans"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_nans"
+case = "gnu/float_builtins.c"
+feature = "__builtin_nans"
+
+[[row]]
+id = "gnu/builtin/__builtin_nansf"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_nansf"
+case = "gnu/float_builtins.c"
+feature = "__builtin_nansf"
+
+[[row]]
+id = "gnu/builtin/__builtin_nansl"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_nansl"
+case = "gnu/float_builtins.c"
+feature = "__builtin_nansl"
+
+[[row]]
+id = "gnu/builtin/__builtin_isgreater"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_isgreater"
+case = "gnu/float_builtins.c"
+feature = "__builtin_isgreater"
+
+[[row]]
+id = "gnu/builtin/__builtin_isgreaterequal"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_isgreaterequal"
+case = "gnu/float_builtins.c"
+feature = "__builtin_isgreaterequal"
+
+[[row]]
+id = "gnu/builtin/__builtin_isless"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_isless"
+case = "gnu/float_builtins.c"
+feature = "__builtin_isless"
+
+[[row]]
+id = "gnu/builtin/__builtin_islessequal"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_islessequal"
+case = "gnu/float_builtins.c"
+feature = "__builtin_islessequal"
+
+[[row]]
+id = "gnu/builtin/__builtin_islessgreater"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_islessgreater"
+case = "gnu/float_builtins.c"
+feature = "__builtin_islessgreater"
+
+[[row]]
+id = "gnu/builtin/__builtin_isunordered"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_isunordered"
+case = "gnu/float_builtins.c"
+feature = "__builtin_isunordered"
+
+[[row]]
+id = "gnu/builtin/__builtin_isnan"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_isnan"
+case = "gnu/float_builtins.c"
+feature = "__builtin_isnan"
+
+[[row]]
+id = "gnu/builtin/__builtin_isnanf"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_isnanf"
+case = "gnu/float_builtins.c"
+feature = "__builtin_isnanf"
+
+[[row]]
+id = "gnu/builtin/__builtin_isnanl"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_isnanl"
+case = "gnu/float_builtins.c"
+feature = "__builtin_isnanl"
+
+[[row]]
+id = "gnu/builtin/__builtin_isinf"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_isinf"
+case = "gnu/float_builtins.c"
+feature = "__builtin_isinf"
+
+[[row]]
+id = "gnu/builtin/__builtin_isinff"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_isinff"
+case = "gnu/float_builtins.c"
+feature = "__builtin_isinff"
+
+[[row]]
+id = "gnu/builtin/__builtin_isinfl"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_isinfl"
+case = "gnu/float_builtins.c"
+feature = "__builtin_isinfl"
+
+[[row]]
+id = "gnu/builtin/__builtin_isfinite"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_isfinite"
+case = "gnu/float_builtins.c"
+feature = "__builtin_isfinite"
+
+[[row]]
+id = "gnu/builtin/__builtin_finite"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_finite"
+case = "gnu/float_builtins.c"
+feature = "__builtin_finite"
+
+[[row]]
+id = "gnu/builtin/__builtin_finitef"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_finitef"
+case = "gnu/float_builtins.c"
+feature = "__builtin_finitef"
+
+[[row]]
+id = "gnu/builtin/__builtin_finitel"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_finitel"
+case = "gnu/float_builtins.c"
+feature = "__builtin_finitel"
+
+[[row]]
+id = "gnu/builtin/__builtin_isnormal"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_isnormal"
+case = "gnu/float_builtins.c"
+feature = "__builtin_isnormal"
+
+[[row]]
+id = "gnu/builtin/__builtin_isinf_sign"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_isinf_sign"
+case = "gnu/float_builtins.c"
+feature = "__builtin_isinf_sign"
+
+[[row]]
+id = "gnu/builtin/__builtin_fpclassify"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_fpclassify"
+case = "gnu/float_builtins.c"
+feature = "__builtin_fpclassify"
+
+[[row]]
+id = "gnu/builtin/__builtin_signbit"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_signbit"
+case = "gnu/float_builtins.c"
+feature = "__builtin_signbit"
+
+[[row]]
+id = "gnu/builtin/__builtin_signbitf"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_signbitf"
+case = "gnu/float_builtins.c"
+feature = "__builtin_signbitf"
+
+[[row]]
+id = "gnu/builtin/__builtin_signbitl"
+standard = "gnu"
+clause = "Floating Point Builtins"
+what = "__builtin_signbitl"
+case = "gnu/float_builtins.c"
+feature = "__builtin_signbitl"
+
+[[row]]
+id = "gnu/builtin/__atomic_load_n"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_load_n"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_load_n"
+
+[[row]]
+id = "gnu/builtin/__atomic_load"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_load"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_load"
+
+[[row]]
+id = "gnu/builtin/__atomic_store_n"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_store_n"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_store_n"
+
+[[row]]
+id = "gnu/builtin/__atomic_store"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_store"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_store"
+
+[[row]]
+id = "gnu/builtin/__atomic_exchange_n"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_exchange_n"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_exchange_n"
+
+[[row]]
+id = "gnu/builtin/__atomic_exchange"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_exchange"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_exchange"
+
+[[row]]
+id = "gnu/builtin/__atomic_compare_exchange_n"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_compare_exchange_n"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_compare_exchange_n"
+
+[[row]]
+id = "gnu/builtin/__atomic_compare_exchange"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_compare_exchange"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_compare_exchange"
+
+[[row]]
+id = "gnu/builtin/__atomic_fetch_add"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_fetch_add"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_fetch_add"
+
+[[row]]
+id = "gnu/builtin/__atomic_fetch_sub"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_fetch_sub"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_fetch_sub"
+
+[[row]]
+id = "gnu/builtin/__atomic_fetch_and"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_fetch_and"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_fetch_and"
+
+[[row]]
+id = "gnu/builtin/__atomic_fetch_or"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_fetch_or"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_fetch_or"
+
+[[row]]
+id = "gnu/builtin/__atomic_fetch_xor"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_fetch_xor"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_fetch_xor"
+
+[[row]]
+id = "gnu/builtin/__atomic_fetch_nand"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_fetch_nand"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_fetch_nand"
+
+[[row]]
+id = "gnu/builtin/__atomic_add_fetch"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_add_fetch"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_add_fetch"
+
+[[row]]
+id = "gnu/builtin/__atomic_sub_fetch"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_sub_fetch"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_sub_fetch"
+
+[[row]]
+id = "gnu/builtin/__atomic_and_fetch"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_and_fetch"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_and_fetch"
+
+[[row]]
+id = "gnu/builtin/__atomic_or_fetch"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_or_fetch"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_or_fetch"
+
+[[row]]
+id = "gnu/builtin/__atomic_xor_fetch"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_xor_fetch"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_xor_fetch"
+
+[[row]]
+id = "gnu/builtin/__atomic_nand_fetch"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_nand_fetch"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_nand_fetch"
+
+[[row]]
+id = "gnu/builtin/__atomic_test_and_set"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_test_and_set"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_test_and_set"
+
+[[row]]
+id = "gnu/builtin/__atomic_clear"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_clear"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_clear"
+
+[[row]]
+id = "gnu/builtin/__atomic_thread_fence"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_thread_fence"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_thread_fence"
+
+[[row]]
+id = "gnu/builtin/__atomic_signal_fence"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_signal_fence"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_signal_fence"
+
+[[row]]
+id = "gnu/builtin/__atomic_always_lock_free"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_always_lock_free"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_always_lock_free"
+
+[[row]]
+id = "gnu/builtin/__atomic_is_lock_free"
+standard = "gnu"
+clause = "__atomic Builtins"
+what = "__atomic_is_lock_free"
+case = "gnu/atomic_builtins.c"
+feature = "__atomic_is_lock_free"
+
+[[row]]
+id = "gnu/builtin/__sync_synchronize"
+standard = "gnu"
+clause = "__sync Builtins"
+what = "__sync_synchronize"
+case = "gnu/atomic_builtins.c"
+feature = "__sync_synchronize"
+
+[[row]]
+id = "gnu/builtin/__builtin_ia32_sfence"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_ia32_sfence"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_ia32_sfence"
+
+[[row]]
+id = "gnu/builtin/__builtin_ia32_lfence"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_ia32_lfence"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_ia32_lfence"
+
+[[row]]
+id = "gnu/builtin/__builtin_ia32_mfence"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_ia32_mfence"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_ia32_mfence"
+
+[[row]]
+id = "gnu/builtin/__builtin_ia32_rdtsc"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_ia32_rdtsc"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_ia32_rdtsc"
+
+[[row]]
+id = "gnu/builtin/__builtin_ia32_rdtscp"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_ia32_rdtscp"
+case = "gnu/compiler_builtins.c"
+feature = "__builtin_ia32_rdtscp"
+
+[[row]]
+id = "gnu/builtin/__sync_fetch_and_add"
+standard = "gnu"
+clause = "__sync Builtins"
+what = "__sync_fetch_and_add"
+case = "gnu/atomic_builtins.c"
+feature = "__sync_fetch_and_add"
+
+[[row]]
+id = "gnu/builtin/__sync_fetch_and_sub"
+standard = "gnu"
+clause = "__sync Builtins"
+what = "__sync_fetch_and_sub"
+case = "gnu/atomic_builtins.c"
+feature = "__sync_fetch_and_sub"
+
+[[row]]
+id = "gnu/builtin/__sync_fetch_and_or"
+standard = "gnu"
+clause = "__sync Builtins"
+what = "__sync_fetch_and_or"
+case = "gnu/atomic_builtins.c"
+feature = "__sync_fetch_and_or"
+
+[[row]]
+id = "gnu/builtin/__sync_fetch_and_and"
+standard = "gnu"
+clause = "__sync Builtins"
+what = "__sync_fetch_and_and"
+case = "gnu/atomic_builtins.c"
+feature = "__sync_fetch_and_and"
+
+[[row]]
+id = "gnu/builtin/__sync_fetch_and_xor"
+standard = "gnu"
+clause = "__sync Builtins"
+what = "__sync_fetch_and_xor"
+case = "gnu/atomic_builtins.c"
+feature = "__sync_fetch_and_xor"
+
+[[row]]
+id = "gnu/builtin/__sync_fetch_and_nand"
+standard = "gnu"
+clause = "__sync Builtins"
+what = "__sync_fetch_and_nand"
+case = "gnu/atomic_builtins.c"
+feature = "__sync_fetch_and_nand"
+
+[[row]]
+id = "gnu/builtin/__sync_add_and_fetch"
+standard = "gnu"
+clause = "__sync Builtins"
+what = "__sync_add_and_fetch"
+case = "gnu/atomic_builtins.c"
+feature = "__sync_add_and_fetch"
+
+[[row]]
+id = "gnu/builtin/__sync_sub_and_fetch"
+standard = "gnu"
+clause = "__sync Builtins"
+what = "__sync_sub_and_fetch"
+case = "gnu/atomic_builtins.c"
+feature = "__sync_sub_and_fetch"
+
+[[row]]
+id = "gnu/builtin/__sync_or_and_fetch"
+standard = "gnu"
+clause = "__sync Builtins"
+what = "__sync_or_and_fetch"
+case = "gnu/atomic_builtins.c"
+feature = "__sync_or_and_fetch"
+
+[[row]]
+id = "gnu/builtin/__sync_and_and_fetch"
+standard = "gnu"
+clause = "__sync Builtins"
+what = "__sync_and_and_fetch"
+case = "gnu/atomic_builtins.c"
+feature = "__sync_and_and_fetch"
+
+[[row]]
+id = "gnu/builtin/__sync_xor_and_fetch"
+standard = "gnu"
+clause = "__sync Builtins"
+what = "__sync_xor_and_fetch"
+case = "gnu/atomic_builtins.c"
+feature = "__sync_xor_and_fetch"
+
+[[row]]
+id = "gnu/builtin/__sync_nand_and_fetch"
+standard = "gnu"
+clause = "__sync Builtins"
+what = "__sync_nand_and_fetch"
+case = "gnu/atomic_builtins.c"
+feature = "__sync_nand_and_fetch"
+
+[[row]]
+id = "gnu/builtin/__sync_bool_compare_and_swap"
+standard = "gnu"
+clause = "__sync Builtins"
+what = "__sync_bool_compare_and_swap"
+case = "gnu/atomic_builtins.c"
+feature = "__sync_bool_compare_and_swap"
+
+[[row]]
+id = "gnu/builtin/__sync_val_compare_and_swap"
+standard = "gnu"
+clause = "__sync Builtins"
+what = "__sync_val_compare_and_swap"
+case = "gnu/atomic_builtins.c"
+feature = "__sync_val_compare_and_swap"
+
+[[row]]
+id = "gnu/builtin/__sync_lock_test_and_set"
+standard = "gnu"
+clause = "__sync Builtins"
+what = "__sync_lock_test_and_set"
+case = "gnu/atomic_builtins.c"
+feature = "__sync_lock_test_and_set"
+
+[[row]]
+id = "gnu/builtin/__sync_lock_release"
+standard = "gnu"
+clause = "__sync Builtins"
+what = "__sync_lock_release"
+case = "gnu/atomic_builtins.c"
+feature = "__sync_lock_release"
+
+[[row]]
+id = "gnu/builtin/__builtin_clrsb"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_clrsb"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_clrsb"
+
+[[row]]
+id = "gnu/builtin/__builtin_clrsbl"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_clrsbl"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_clrsbl"
+
+[[row]]
+id = "gnu/builtin/__builtin_clrsbll"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_clrsbll"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_clrsbll"
+
+[[row]]
+id = "gnu/builtin/__builtin_imaxabs"
+standard = "gnu"
+clause = "Library Builtins"
+what = "__builtin_imaxabs"
+case = "gnu/library_builtins.c"
+feature = "__builtin_imaxabs"
+
+[[row]]
+id = "gnu/builtin/__builtin_uabs"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_uabs"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_uabs"
+
+[[row]]
+id = "gnu/builtin/__builtin_ulabs"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_ulabs"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_ulabs"
+
+[[row]]
+id = "gnu/builtin/__builtin_ullabs"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_ullabs"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_ullabs"
+
+[[row]]
+id = "gnu/builtin/__builtin_umaxabs"
+standard = "gnu"
+clause = "Bit Operation Builtins"
+what = "__builtin_umaxabs"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_umaxabs"
+
+[[row]]
+id = "gnu/builtin/__builtin_add_overflow_p"
+standard = "gnu"
+clause = "Integer Overflow Builtins"
+what = "__builtin_add_overflow_p"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_add_overflow_p"
+
+[[row]]
+id = "gnu/builtin/__builtin_sub_overflow_p"
+standard = "gnu"
+clause = "Integer Overflow Builtins"
+what = "__builtin_sub_overflow_p"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_sub_overflow_p"
+
+[[row]]
+id = "gnu/builtin/__builtin_mul_overflow_p"
+standard = "gnu"
+clause = "Integer Overflow Builtins"
+what = "__builtin_mul_overflow_p"
+case = "gnu/bit_builtins.c"
+feature = "__builtin_mul_overflow_p"
+
+[[row]]
+id = "gnu/builtin/__builtin_infd32"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_infd32"
+case = "gnu/decimal_builtins.c"
+feature = "__builtin_infd32"
+
+[[row]]
+id = "gnu/builtin/__builtin_nand32"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_nand32"
+case = "gnu/decimal_builtins.c"
+feature = "__builtin_nand32"
+
+[[row]]
+id = "gnu/builtin/__builtin_nansd32"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_nansd32"
+case = "gnu/decimal_builtins.c"
+feature = "__builtin_nansd32"
+
+[[row]]
+id = "gnu/builtin/__builtin_infd64"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_infd64"
+case = "gnu/decimal_builtins.c"
+feature = "__builtin_infd64"
+
+[[row]]
+id = "gnu/builtin/__builtin_nand64"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_nand64"
+case = "gnu/decimal_builtins.c"
+feature = "__builtin_nand64"
+
+[[row]]
+id = "gnu/builtin/__builtin_nansd64"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_nansd64"
+case = "gnu/decimal_builtins.c"
+feature = "__builtin_nansd64"
+
+[[row]]
+id = "gnu/builtin/__builtin_infd128"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_infd128"
+case = "gnu/decimal_builtins.c"
+feature = "__builtin_infd128"
+
+[[row]]
+id = "gnu/builtin/__builtin_nand128"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_nand128"
+case = "gnu/decimal_builtins.c"
+feature = "__builtin_nand128"
+
+[[row]]
+id = "gnu/builtin/__builtin_nansd128"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_nansd128"
+case = "gnu/decimal_builtins.c"
+feature = "__builtin_nansd128"
+
+[[row]]
+id = "gnu/builtin/__builtin_isnand32"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_isnand32"
+case = "gnu/decimal_builtins.c"
+feature = "__builtin_isnand32"
+
+[[row]]
+id = "gnu/builtin/__builtin_isnand64"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_isnand64"
+case = "gnu/decimal_builtins.c"
+feature = "__builtin_isnand64"
+
+[[row]]
+id = "gnu/builtin/__builtin_isnand128"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_isnand128"
+case = "gnu/decimal_builtins.c"
+feature = "__builtin_isnand128"
+
+[[row]]
+id = "gnu/builtin/__builtin_isinfd32"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_isinfd32"
+case = "gnu/decimal_builtins.c"
+feature = "__builtin_isinfd32"
+
+[[row]]
+id = "gnu/builtin/__builtin_isinfd64"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_isinfd64"
+case = "gnu/decimal_builtins.c"
+feature = "__builtin_isinfd64"
+
+[[row]]
+id = "gnu/builtin/__builtin_isinfd128"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_isinfd128"
+case = "gnu/decimal_builtins.c"
+feature = "__builtin_isinfd128"
+
+[[row]]
+id = "gnu/builtin/__builtin_finited32"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_finited32"
+case = "gnu/decimal_builtins.c"
+feature = "__builtin_finited32"
+
+[[row]]
+id = "gnu/builtin/__builtin_finited64"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_finited64"
+case = "gnu/decimal_builtins.c"
+feature = "__builtin_finited64"
+
+[[row]]
+id = "gnu/builtin/__builtin_finited128"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_finited128"
+case = "gnu/decimal_builtins.c"
+feature = "__builtin_finited128"
+
+[[row]]
+id = "gnu/builtin/__builtin_signbitd32"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_signbitd32"
+case = "gnu/decimal_builtins.c"
+feature = "__builtin_signbitd32"
+
+[[row]]
+id = "gnu/builtin/__builtin_signbitd64"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_signbitd64"
+case = "gnu/decimal_builtins.c"
+feature = "__builtin_signbitd64"
+
+[[row]]
+id = "gnu/builtin/__builtin_signbitd128"
+standard = "gnu"
+clause = "Other Builtins"
+what = "__builtin_signbitd128"
+case = "gnu/decimal_builtins.c"
+feature = "__builtin_signbitd128"
+
+[[row]]
+id = "gnu/x86-conventions-dropped"
+standard = "gnu"
+clause = "x86 Function Attributes"
+what = "the 32-bit conventions and the Windows linkage attributes build as if absent on an x86-64 ELF target"
+case = "gnu/calling_conventions.c"
+
+[[row]]
+id = "gnu/ms-struct-layout"
+standard = "gnu"
+clause = "x86 Type Attributes"
+what = "ms_struct and gcc_struct pick the bit-field layout of one record"
+case = "gnu/ms_layout.c"
