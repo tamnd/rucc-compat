@@ -399,9 +399,6 @@ jobs:
           ./target/release/rucc-compat exec intrinsics \
             --rucc rucc/target/release/rucc --cc ${{ steps.reference.outputs.cc }} \
             --opt ${{ matrix.opt }} --machine github-${{ matrix.runner }} --report
-      - name: probe
-        if: always() && runner.arch == 'ARM64'
-        run: sh probe/probe.sh ${{ matrix.opt }} ${{ steps.reference.outputs.cc }} $PWD/rucc/target/release/rucc
       - name: keep the report
         if: always()
         uses: actions/upload-artifact@v4.6.2

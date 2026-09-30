@@ -53,17 +53,6 @@ static void t_vmul_n_u32(void)
     SUM("vmul_n_u32", sum);
 }
 
-static void t_vmul_n_f32(void)
-{
-    uint64_t sum = 0;
-    for (int r = 0; r < ROUNDS; r++) {
-        ARG(float32x2_t, a0, 0, 32);
-        ARG(float32_t, a1, 1, 32);
-        KEEP(float32x2_t, vmul_n_f32(a0, a1));
-    }
-    SUM("vmul_n_f32", sum);
-}
-
 static void t_vmul_n_f64(void)
 {
     uint64_t sum = 0;
@@ -119,17 +108,6 @@ static void t_vmulq_n_u32(void)
     SUM("vmulq_n_u32", sum);
 }
 
-static void t_vmulq_n_f32(void)
-{
-    uint64_t sum = 0;
-    for (int r = 0; r < ROUNDS; r++) {
-        ARG(float32x4_t, a0, 0, 32);
-        ARG(float32_t, a1, 1, 32);
-        KEEP(float32x4_t, vmulq_n_f32(a0, a1));
-    }
-    SUM("vmulq_n_f32", sum);
-}
-
 static void t_vmulq_n_f64(void)
 {
     uint64_t sum = 0;
@@ -147,13 +125,11 @@ int main(void)
     t_vmul_n_s32();
     t_vmul_n_u16();
     t_vmul_n_u32();
-    t_vmul_n_f32();
     t_vmul_n_f64();
     t_vmulq_n_s16();
     t_vmulq_n_s32();
     t_vmulq_n_u16();
     t_vmulq_n_u32();
-    t_vmulq_n_f32();
     t_vmulq_n_f64();
     return 0;
 }

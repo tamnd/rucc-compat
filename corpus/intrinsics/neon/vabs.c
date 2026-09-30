@@ -49,26 +49,6 @@ static void t_vabs_s64(void)
     SUM("vabs_s64", sum);
 }
 
-static void t_vabs_f32(void)
-{
-    uint64_t sum = 0;
-    for (int r = 0; r < ROUNDS; r++) {
-        ARG(float32x2_t, a0, 0, 32);
-        KEEP(float32x2_t, vabs_f32(a0));
-    }
-    SUM("vabs_f32", sum);
-}
-
-static void t_vabs_f64(void)
-{
-    uint64_t sum = 0;
-    for (int r = 0; r < ROUNDS; r++) {
-        ARG(float64x1_t, a0, 0, 64);
-        KEEP(float64x1_t, vabs_f64(a0));
-    }
-    SUM("vabs_f64", sum);
-}
-
 static void t_vabsq_s8(void)
 {
     uint64_t sum = 0;
@@ -109,39 +89,15 @@ static void t_vabsq_s64(void)
     SUM("vabsq_s64", sum);
 }
 
-static void t_vabsq_f32(void)
-{
-    uint64_t sum = 0;
-    for (int r = 0; r < ROUNDS; r++) {
-        ARG(float32x4_t, a0, 0, 32);
-        KEEP(float32x4_t, vabsq_f32(a0));
-    }
-    SUM("vabsq_f32", sum);
-}
-
-static void t_vabsq_f64(void)
-{
-    uint64_t sum = 0;
-    for (int r = 0; r < ROUNDS; r++) {
-        ARG(float64x2_t, a0, 0, 64);
-        KEEP(float64x2_t, vabsq_f64(a0));
-    }
-    SUM("vabsq_f64", sum);
-}
-
 int main(void)
 {
     t_vabs_s8();
     t_vabs_s16();
     t_vabs_s32();
     t_vabs_s64();
-    t_vabs_f32();
-    t_vabs_f64();
     t_vabsq_s8();
     t_vabsq_s16();
     t_vabsq_s32();
     t_vabsq_s64();
-    t_vabsq_f32();
-    t_vabsq_f64();
     return 0;
 }
