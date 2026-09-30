@@ -81,14 +81,15 @@ pub enum Source {
     /// attribute rucc claims does what GCC documents. They are ours, so they carry this
     /// repository's license, have nothing to fetch and have no hash to check.
     Local,
-    /// A project somebody has configured with meson, found through an environment variable
-    /// naming its build directory.
+    /// A project somebody has already built, found through an environment variable naming its
+    /// build directory.
     ///
     /// For a project whose compiles cannot be written down in a manifest, which is every project
-    /// of any size: the build directory records each compile with its flags in
+    /// of any size: a meson build directory records each compile with its flags in
     /// `compile_commands.json`, and a unit of kind `compile-commands` takes its cases from there.
-    /// Nothing is vendored, because the build has to be configured on the machine that runs it,
-    /// and a corpus whose variable is not set is not this machine.
+    /// A kernel built by rk records the same thing, and more, in `compile.jsonl`. Nothing is
+    /// vendored, because the build has to be made on the machine that runs it, and a corpus whose
+    /// variable is not set is not this machine.
     Build(Build),
 }
 
@@ -100,6 +101,33 @@ pub struct Build {
     /// The version of the project the manifest is about, which the build directory has to be a
     /// build of. An exclusion list written against one release says nothing about another.
     pub version: String,
+    /// What made the build directory, which decides what is in it.
+    pub builder: Builder,
+}
+
+/// What made a build directory.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Builder {
+    /// meson, which leaves `compile_commands.json` and `meson-info` behind.
+    Meson,
+    /// rk, the kernel harness in tamnd/rucc-kernel, which builds a pinned kernel through a
+    /// compiler shim and leaves `compile.jsonl` and `build.json` in kbuild's output directory.
+    /// See [`crate::kernel`].
+    Rk(Persona),
+}
+
+/// The GCC rucc claims to be for a kernel of one era.
+///
+/// Written in the manifest rather than read from the build, because the build rk makes with GCC
+/// has no persona in it: `build.json` names the era and leaves the persona empty, since the
+/// reference is the GCC it would be claiming to be. The era is checked against the build so the
+/// two cannot drift apart.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Persona {
+    /// The era's name in rk's `personas.toml`, as in `E11`.
+    pub era: String,
+    /// The version rucc is given as `-fgnuc-version`, as in `14.2.0`.
+    pub gnuc: String,
 }
 
 impl Build {
@@ -192,6 +220,20 @@ pub enum UnitKind {
     /// Every compile in the `compile_commands.json` of a [`Source::Build`] corpus, each with the
     /// flags the build used. See [`crate::meson`].
     CompileCommands,
+    /// The C and assembly units of a kernel rk built, or a sample of them, each with the flags
+    /// kbuild used. See [`crate::kernel`].
+    KernelUnits,
+    /// The probes of a kernel rk built, which are the questions kbuild asked the compiler. These
+    /// are not preprocessed: `run` asks each one again of both compilers and compares the answers.
+    KernelProbes,
+}
+
+impl UnitKind {
+    /// Whether the cases come out of a build directory rather than a tree.
+    #[must_use]
+    pub fn is_from_build(self) -> bool {
+        matches!(self, UnitKind::CompileCommands | UnitKind::KernelUnits | UnitKind::KernelProbes)
+    }
 }
 
 /// One case the pipeline check is not expected to get through yet.
@@ -358,6 +400,9 @@ pub struct Unit {
     /// unit that is not about this machine is walked, so an exclusion naming one of its cases is
     /// still known to name a case, and is never offered to either compiler.
     pub arch: Vec<String>,
+    /// How many units a `kernel-units` unit takes, chosen by a hash of their names, before it adds
+    /// every unit that exports a symbol. `None` takes every unit.
+    pub sample: Option<usize>,
 }
 
 impl Unit {
@@ -577,14 +622,43 @@ impl Corpus {
         arch && probe && build && self.units.iter().any(Unit::applies)
     }
 
+    /// The persona rucc is given in place of what [`crate::differ::agreement`] reads off the
+    /// reference, for a corpus that says which one.
+    ///
+    /// A kernel is the case. It is built with `-nostdinc` and its own `-std`, so the reference's
+    /// header directories and dialect are not part of the question, and the version rucc claims
+    /// is the era's rather than whichever GCC this machine has.
+    #[must_use]
+    pub fn persona(&self) -> Option<Vec<String>> {
+        match &self.source {
+            Source::Build(Build { builder: Builder::Rk(p), .. }) => {
+                Some(vec![format!("-fgnuc-version={}", p.gnuc)])
+            }
+            _ => None,
+        }
+    }
+
+    /// Whether this is a kernel rk built, which only `run` has anything to say about.
+    #[must_use]
+    pub fn is_kernel(&self) -> bool {
+        matches!(&self.source, Source::Build(Build { builder: Builder::Rk(_), .. }))
+    }
+
     /// Whether the tree is there, for [`Source::Tarball`], and whether the build directory has
-    /// a compile database in it, for [`Source::Build`].
+    /// what its builder leaves in it, for [`Source::Build`].
     #[must_use]
     pub fn is_fetched(&self, repo: &Path) -> bool {
-        match self.source {
+        match &self.source {
             Source::Installed | Source::Local => true,
             Source::Tarball(_) => self.tree(repo).is_dir(),
-            Source::Build(_) => self.tree(repo).join(crate::meson::DATABASE).is_file(),
+            Source::Build(b) => match b.builder {
+                Builder::Meson => self.tree(repo).join(crate::meson::DATABASE).is_file(),
+                Builder::Rk(_) => {
+                    let tree = self.tree(repo);
+                    tree.join(crate::kernel::LOG).is_file()
+                        && tree.join(crate::kernel::SUMMARY).is_file()
+                }
+            },
         }
     }
 
@@ -592,6 +666,13 @@ impl Corpus {
     #[must_use]
     pub fn not_ready(&self, repo: &Path) -> String {
         match &self.source {
+            Source::Build(Build { variable, builder: Builder::Rk(_), .. }) => format!(
+                "{}: {variable} names {}, which has no {} and {}. Point it at the O= directory of an `rk build`.",
+                self.name,
+                self.tree(repo).display(),
+                crate::kernel::LOG,
+                crate::kernel::SUMMARY
+            ),
             Source::Build(b) => format!(
                 "{}: {} names {}, which has no {}. Configure it with meson first.",
                 self.name,
@@ -658,6 +739,20 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
         "build" => Source::Build(Build {
             variable: root.need("variable", &whose)?.to_owned(),
             version: root.need("version", &whose)?.to_owned(),
+            builder: match root.str("builder").unwrap_or("meson") {
+                "meson" => Builder::Meson,
+                "rk" => Builder::Rk(Persona {
+                    era: root.need("era", &whose)?.to_owned(),
+                    gnuc: root.need("gnuc", &whose)?.to_owned(),
+                }),
+                other => {
+                    return Err(Error {
+                        message: format!(
+                            "{whose}: `builder` is `{other}`, which is not `meson` or `rk`"
+                        ),
+                    });
+                }
+            },
         }),
         other => {
             return Err(Error {
@@ -675,14 +770,24 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
         return Err(Error { message: format!("{whose}: a corpus with no [[unit]] runs nothing") });
     }
     // The database is in the build directory, so a unit that reads one has nothing to read in
-    // any other kind of corpus.
-    if let Some(unit) = units.iter().find(|u| u.kind == UnitKind::CompileCommands) {
-        if !matches!(source, Source::Build(_)) {
+    // any other kind of corpus, and each builder leaves its own kind of database behind.
+    for unit in units.iter().filter(|u| u.kind.is_from_build()) {
+        let fits = match (&source, unit.kind) {
+            (Source::Build(Build { builder: Builder::Meson, .. }), UnitKind::CompileCommands) => {
+                true
+            }
+            (Source::Build(Build { builder: Builder::Rk(_), .. }), kind) => {
+                kind != UnitKind::CompileCommands
+            }
+            _ => false,
+        };
+        if !fits {
+            let what = match unit.kind {
+                UnitKind::CompileCommands => "a compile database, and only a meson `build` corpus",
+                _ => "a kernel build log, and only a `build` corpus with `builder = \"rk\"`",
+            };
             return Err(Error {
-                message: format!(
-                    "{whose}: unit `{}` reads a compile database, and only a `build` corpus has one",
-                    unit.name
-                ),
+                message: format!("{whose}: unit `{}` reads {what} has one", unit.name),
             });
         }
     }
@@ -947,24 +1052,26 @@ fn unit(fields: &Fields, whose: &str) -> Result<Unit, Error> {
         "source" => UnitKind::Source,
         "headers" => UnitKind::Headers,
         "compile-commands" => UnitKind::CompileCommands,
+        "kernel-units" => UnitKind::KernelUnits,
+        "kernel-probes" => UnitKind::KernelProbes,
         other => {
             return Err(Error {
                 message: format!(
-                    "{whose}: unit `kind` is `{other}`, which is not `source`, `headers` or `compile-commands`"
+                    "{whose}: unit `kind` is `{other}`, which is not `source`, `headers`, `compile-commands`, `kernel-units` or `kernel-probes`"
                 ),
             });
         }
     };
     let files = fields.list("files");
     let dir = fields.str("dir").map(str::to_owned);
-    if kind == UnitKind::CompileCommands && (!files.is_empty() || dir.is_some()) {
+    if kind.is_from_build() && (!files.is_empty() || dir.is_some()) {
         return Err(Error {
             message: format!(
-                "{whose}: unit `{name}` takes its files from the compile database, so it has no `files` or `dir`"
+                "{whose}: unit `{name}` takes its files from the build directory, so it has no `files` or `dir`"
             ),
         });
     }
-    if files.is_empty() && dir.is_none() && kind != UnitKind::CompileCommands {
+    if files.is_empty() && dir.is_none() && !kind.is_from_build() {
         return Err(Error { message: format!("{whose}: a unit needs `files` or `dir`") });
     }
     let libs = fields.list("libs");
@@ -985,6 +1092,14 @@ fn unit(fields: &Fields, whose: &str) -> Result<Unit, Error> {
     let seconds = bound("seconds")?;
     let megabytes = bound("megabytes")?;
     let arch = arches(fields.list("arch"), whose)?;
+    let sample = bound("sample")?.map(|n| usize::try_from(n).unwrap_or(usize::MAX));
+    if sample.is_some() && kind != UnitKind::KernelUnits {
+        return Err(Error {
+            message: format!(
+                "{whose}: unit `{name}` has a `sample`, which only `kernel-units` takes"
+            ),
+        });
+    }
     if (seconds.is_some() || megabytes.is_some()) && kind == UnitKind::Headers {
         return Err(Error {
             message: format!(
@@ -1004,6 +1119,7 @@ fn unit(fields: &Fields, whose: &str) -> Result<Unit, Error> {
         seconds,
         megabytes,
         arch,
+        sample,
     })
 }
 
@@ -1123,11 +1239,13 @@ pub fn register(repo: &Path) -> Result<Register, Error> {
         // never a fair thing to say about a token difference: one line in one header would
         // silence the rule that decides whether the output still compiles to the same
         // program, everywhere, and the run would go green while finding nothing.
-        if entry.rule == "token-text" && !entry.is_scoped() {
+        // The same goes for a kernel probe's answer. An unscoped one would accept every flag
+        // rucc says no to, which is every flag kbuild would quietly build without.
+        if (entry.rule == "token-text" || entry.rule == "answer") && !entry.is_scoped() {
             return Err(Error {
                 message: format!(
-                    "divergences.toml: `{}` suppresses `token-text` everywhere. Give it a `corpus`, a `unit` or a `matches`.",
-                    entry.id
+                    "divergences.toml: `{}` suppresses `{}` everywhere. Give it a `corpus`, a `unit` or a `matches`.",
+                    entry.id, entry.rule
                 ),
             });
         }
@@ -1247,7 +1365,50 @@ mod tests {
             .replace("kind = \"headers\"\nfiles = [\"stdio.h\"]", "kind = \"compile-commands\"");
         fake.corpus("sys", &text);
         let e = load(&fake.root, "sys").unwrap_err();
-        assert!(e.message.contains("only a `build` corpus"), "{}", e.message);
+        assert!(e.message.contains("only a meson `build` corpus"), "{}", e.message);
+    }
+
+    /// A kernel corpus the way `corpus/kernel-pp` has it, with its variable unset.
+    const KERNEL: &str = "name = \"k\"\nsummary = \"a kernel\"\nsource = \"build\"\nbuilder = \"rk\"\nvariable = \"RUCC_COMPAT_NOBODY_SETS_THIS\"\nversion = \"7.2.8\"\nera = \"E11\"\ngnuc = \"14.2.0\"\n\n[[unit]]\nname = \"units\"\nkind = \"kernel-units\"\nsample = 200\n";
+
+    #[test]
+    fn a_kernel_corpus_carries_its_persona_and_its_sample() {
+        let fake = Fake::new("kernel");
+        fake.corpus("k", KERNEL);
+        let corpus = load(&fake.root, "k").unwrap();
+        assert!(corpus.is_kernel());
+        assert!(!corpus.applies(), "an unset variable is not this machine");
+        assert_eq!(corpus.units[0].kind, UnitKind::KernelUnits);
+        assert_eq!(corpus.units[0].sample, Some(200));
+        assert_eq!(corpus.persona(), Some(vec!["-fgnuc-version=14.2.0".to_owned()]));
+        let probes =
+            KERNEL.replace("kind = \"kernel-units\"\nsample = 200", "kind = \"kernel-probes\"");
+        fake.corpus("k", &probes);
+        assert_eq!(load(&fake.root, "k").unwrap().units[0].kind, UnitKind::KernelProbes);
+        // Cargo sets this for every test it runs, and a crate directory has no compile log.
+        fake.corpus("k", &KERNEL.replace("RUCC_COMPAT_NOBODY_SETS_THIS", "CARGO_MANIFEST_DIR"));
+        let corpus = load(&fake.root, "k").unwrap();
+        assert!(corpus.applies() && !corpus.is_fetched(&fake.root));
+        assert!(corpus.not_ready(&fake.root).contains("compile.jsonl"));
+    }
+
+    #[test]
+    fn a_kernel_corpus_without_its_persona_or_with_units_it_cannot_have_is_refused() {
+        let fake = Fake::new("kernel-odd");
+        let refused = |text: &str, says: &str| {
+            fake.corpus("k", text);
+            let e = load(&fake.root, "k").unwrap_err();
+            assert!(e.message.contains(says), "wanted `{says}` in: {}", e.message);
+        };
+        refused(&KERNEL.replace("gnuc = \"14.2.0\"\n", ""), "gnuc");
+        refused(&KERNEL.replace("era = \"E11\"\n", ""), "era");
+        refused(&KERNEL.replace("\"rk\"", "\"make\""), "make");
+        refused(&KERNEL.replace("sample = 200", "sample = 0"), "sample");
+        let unsampled = KERNEL.replace("\nsample = 200", "");
+        refused(&unsampled.replace("kernel-units", "compile-commands"), "meson");
+        refused(&unsampled.replace("builder = \"rk\"\n", ""), "rk");
+        let probes = KERNEL.replace("kind = \"kernel-units\"", "kind = \"kernel-probes\"");
+        refused(&probes, "sample");
     }
 
     #[test]

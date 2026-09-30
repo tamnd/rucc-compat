@@ -4,11 +4,11 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use rucc_compat::corpus::{self, Corpus, Source};
+use rucc_compat::corpus::{self, Builder, Corpus, Source, UnitKind};
 use rucc_compat::coverage::{self, Marks, Verdict};
 use rucc_compat::differ::{self, Settings};
 use rucc_compat::exec::{self, Route};
-use rucc_compat::{fetch, repo_root};
+use rucc_compat::{fetch, kernel, repo_root};
 use rucc_compat::{measure, pipeline};
 
 const USAGE: &str = "\
@@ -148,7 +148,10 @@ fn list(repo: &Path, all: &[Corpus]) -> Result<ExitCode, String> {
             Source::Tarball(t) if !t.is_recorded() => "hash unrecorded".to_owned(),
             Source::Tarball(t) if corpus.is_fetched(repo) => format!("vendored {}", t.version),
             Source::Tarball(t) => format!("not fetched, {}", t.version),
-            Source::Build(b) if corpus.is_fetched(repo) => format!("meson build {}", b.version),
+            Source::Build(b) if corpus.is_fetched(repo) => match b.builder {
+                Builder::Meson => format!("meson build {}", b.version),
+                Builder::Rk(_) => format!("rk build {}", b.version),
+            },
             Source::Build(b) => format!("no build, {}", b.version),
         };
         println!("{:<10} {:<20} {}", corpus.name, state, corpus.summary);
@@ -181,8 +184,12 @@ fn fetch_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, 
                 continue;
             }
             Source::Build(b) => {
+                let by = match b.builder {
+                    Builder::Meson => "meson",
+                    Builder::Rk(_) => "rk",
+                };
                 println!(
-                    "{}: built by meson where {} points, nothing to fetch",
+                    "{}: built by {by} where {} points, nothing to fetch",
                     corpus.name, b.variable
                 );
                 continue;
@@ -263,6 +270,29 @@ fn run_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, St
             continue;
         }
         let scratch = scratch.join(&corpus.name);
+        if corpus.is_kernel() {
+            if let Some(note) = kernel::other_reference(&corpus.tree(repo), &settings.cc) {
+                println!("{}: {note}", corpus.name);
+            }
+        }
+        if corpus.units.iter().any(|u| u.kind == UnitKind::KernelProbes) {
+            let done = kernel::run(repo, corpus, &settings, &register, &scratch)
+                .map_err(|e| e.to_string())?;
+            println!("{}", done.summary());
+            for outcome in done.outcomes.iter().filter(|o| o.is_failure()) {
+                println!("  {} {}", outcome.status.word(), outcome.case);
+            }
+            if report {
+                let dir = repo.join("results");
+                fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+                let path = dir.join(format!("{}.md", corpus.name));
+                fs::write(&path, kernel::markdown(&done, &settings, &register))
+                    .map_err(|e| e.to_string())?;
+                println!("  wrote {}", path.display());
+            }
+            failures += done.failures();
+            continue;
+        }
         let done =
             differ::run(repo, corpus, &settings, &register, &scratch).map_err(|e| e.to_string())?;
         println!("{}", done.summary());
@@ -320,6 +350,12 @@ fn check_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, 
     for corpus in wanted {
         if !corpus.applies() {
             println!("{}: not this machine, skipped", corpus.name);
+            continue;
+        }
+        if corpus.is_kernel() {
+            // A kernel unit only means something compiled with the flags and the persona of the
+            // build it came from, and `check` gives rucc neither. `run` is the command for these.
+            println!("{}: a kernel build, which only `run` reads, skipped", corpus.name);
             continue;
         }
         if !corpus.is_fetched(repo) {

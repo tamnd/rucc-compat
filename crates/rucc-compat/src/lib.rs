@@ -21,6 +21,9 @@
 //!   regression no answer being right or wrong will ever show.
 //! - [`meson`] reads a meson build directory's compile database, which is how a project too
 //!   big to describe in a manifest becomes a corpus, one case per compile with its own flags.
+//! - [`kernel`] reads the compile log of a Linux build made by rk, the same way for its units,
+//!   and asks its probes of both compilers again, since kbuild decides what goes into a kernel by
+//!   whether the compiler says yes to them.
 //! - [`coverage`] reads what the compiler says about which of its lowering rules a build fired,
 //!   and unions those over a corpus, which is the one coverage question nothing but a corpus can
 //!   answer.
@@ -40,6 +43,7 @@ pub mod coverage;
 pub mod differ;
 pub mod exec;
 pub mod fetch;
+pub mod kernel;
 pub mod ledger;
 pub mod lexer;
 pub mod measure;

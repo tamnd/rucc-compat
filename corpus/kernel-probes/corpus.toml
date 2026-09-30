@@ -1,0 +1,26 @@
+name = "kernel-probes"
+summary = "Every question kbuild asked the compiler while rk built Linux 7.2.8 with GCC, asked again of GCC and of rucc, with the answers compared."
+
+# kbuild decides a good part of the kernel before it compiles any of it, by asking the compiler
+# whether it takes a flag, an attribute or an option and reading the answer from the exit status.
+# A question GCC says yes to and rucc says no to is a flag kbuild quietly builds without. rk's
+# shim marks those calls as probes in compile.jsonl, and this corpus asks each distinct one again
+# of both compilers and compares the answers. See crates/rucc-compat/src/kernel.rs.
+#
+# It reads the same build directory as kernel-pp:
+#
+#     RUCC_COMPAT_KERNEL=/tmp/rk-7.2.8 rucc-compat run kernel-probes
+#
+# A disagreement is named by the question in the form `rk probes` prints it, and an accepted one
+# goes in divergences.toml under the `answer` rule. A probe that reads its program from standard
+# input is counted and not asked, because the log does not keep what kbuild piped in.
+source = "build"
+builder = "rk"
+variable = "RUCC_COMPAT_KERNEL"
+version = "7.2.8"
+era = "E11"
+gnuc = "14.2.0"
+
+[[unit]]
+name = "probes"
+kind = "kernel-probes"
