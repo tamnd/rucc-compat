@@ -343,6 +343,49 @@ pub struct Settled {
     pub why: String,
 }
 
+/// One case whose right answer cannot be taken from the reference compiler, because the program
+/// does something the language leaves undefined and a sanitizer caught it doing so.
+///
+/// Every oracle trusts the reference somewhere. A differential oracle takes its output as the
+/// answer, and the other two run the reference first and skip whatever it gets wrong, so a case
+/// the reference passes is a case the harness believes. A program that reads past the end of an
+/// array or overflows a signed integer passes under gcc because of where gcc put things and what
+/// gcc folded, and a compiler that does something else with it is not wrong. `screen` builds
+/// every case with the reference under `-fsanitize=address,undefined` to find those programs, and
+/// this is where each one it finds is written down.
+///
+/// Neither an exclusion nor a skip. An exclusion is about rucc and names the issue that will fix
+/// rucc, and a skip says the reference cannot build the file at all. Here the reference builds and
+/// runs the file, rucc may well agree with it, and nothing about either compiler is the problem.
+/// The entry is the record that a pass on this case proves less than a pass elsewhere does.
+///
+/// Held to the same rules as an exclusion in the other direction. A flagged case with no entry
+/// fails the screen, and an entry for a case the sanitizers no longer flag fails it too, so the
+/// list is a measurement of the corpus and not a place a case goes to be quiet.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Untrustworthy {
+    /// The case name, the same string the report prints.
+    pub case: String,
+    /// What the sanitizer caught, in one line, so the list can be read without running anything.
+    pub why: String,
+    /// The optimization levels this entry speaks at, empty meaning every one of them.
+    ///
+    /// A sanitizer sees what the build left in, and a read of an uninitialized slot that `-O2`
+    /// deletes is not there to catch at `-O2`, so a finding can be one level's.
+    pub opt: Vec<String>,
+}
+
+impl Untrustworthy {
+    /// Whether this entry says anything at the level the screen is being made at.
+    ///
+    /// The same rule as [`Exclusion::at`]: a run at no level cannot be named by an entry that
+    /// names any.
+    #[must_use]
+    pub fn at(&self, opt: Option<&str>) -> bool {
+        self.opt.is_empty() || opt.is_some_and(|level| self.opt.iter().any(|o| o == level))
+    }
+}
+
 /// One group of things to preprocess.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Unit {
@@ -549,6 +592,8 @@ pub struct Corpus {
     /// easily do the first and not the second. One list would make an entry ambiguous about
     /// which of the two it was excusing.
     pub exec_excluded: Vec<Exclusion>,
+    /// The cases whose reference answer a sanitizer says is not to be relied on, in file order.
+    pub untrustworthy: Vec<Untrustworthy>,
     /// The optimization levels `measure` compiles each bounded file at, each one of [`LEVELS`].
     ///
     /// Written down per corpus rather than assumed, because the cost of a file moves a long way
@@ -583,6 +628,13 @@ impl Corpus {
         self.exec_excluded
             .iter()
             .find(|e| e.case == case && e.on(system) && e.at(opt) && e.along(route))
+    }
+
+    /// The entry saying this case's reference answer is not to be relied on at this level, if
+    /// there is one.
+    #[must_use]
+    pub fn untrustworthy_at(&self, case: &str, opt: Option<&str>) -> Option<&Untrustworthy> {
+        self.untrustworthy.iter().find(|u| u.case == case && u.at(opt))
     }
 
     /// The rule about the directory this case is in, if it is in one.
@@ -813,6 +865,7 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
     let excluded = exclusions(&doc, "exclude", &whose, false)?;
     let exec_excluded = exclusions(&doc, "exec-exclude", &whose, true)?;
     let settled = settled(&doc, &whose)?;
+    let untrustworthy = untrustworthy(&doc, &whose)?;
     let levels = root.list("levels");
     if let Some(odd) = levels.iter().find(|level| !LEVELS.contains(&level.as_str())) {
         return Err(Error {
@@ -826,6 +879,15 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
         return Err(Error {
             message: format!(
                 "{whose}: a unit has a bound and there are no `levels`, so `measure` would not know what to compile it at"
+            ),
+        });
+    }
+    // The screen runs the reference's build of each program, and a corpus with no oracle is one
+    // with no program in it anybody has said how to judge, so it never gets as far as these.
+    if oracle.is_none() && !untrustworthy.is_empty() {
+        return Err(Error {
+            message: format!(
+                "{whose}: there are [[untrustworthy]] entries and no `oracle`, so `screen` never reaches them"
             ),
         });
     }
@@ -849,6 +911,7 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
         oracle,
         timeout,
         exec_excluded,
+        untrustworthy,
         levels,
     })
 }
@@ -924,6 +987,40 @@ fn settled(doc: &toml::Doc, whose: &str) -> Result<Vec<Settled>, Error> {
         let why = fields.need("why", whose)?.to_owned();
         for case in named {
             out.push(Settled { case, spec: spec.clone(), why: why.clone() });
+        }
+    }
+    Ok(out)
+}
+
+/// Every `[[untrustworthy]]` block of the manifest, as one entry per case named.
+///
+/// No `issue`, where an exclusion has one, because there is nothing for anybody to fix: the
+/// program is what it is, and the entry goes when the program changes upstream or the sanitizer
+/// stops seeing it. `why` is required instead, and is what the sanitizer said.
+fn untrustworthy(doc: &toml::Doc, whose: &str) -> Result<Vec<Untrustworthy>, Error> {
+    let mut out = Vec::new();
+    for fields in doc.named("untrustworthy") {
+        let mut named = fields.list("cases");
+        if let Some(one) = fields.str("case") {
+            named.insert(0, one.to_owned());
+        }
+        if named.is_empty() {
+            return Err(Error {
+                message: format!("{whose}: an untrustworthy entry needs `case` or `cases`"),
+            });
+        }
+        let why = fields.need("why", whose)?.to_owned();
+        let opt = fields.list("opt");
+        if let Some(odd) = opt.iter().find(|level| !LEVELS.contains(&level.as_str())) {
+            return Err(Error {
+                message: format!(
+                    "{whose}: `opt` is `{odd}`, which is not one of {}",
+                    LEVELS.join(", ")
+                ),
+            });
+        }
+        for case in named {
+            out.push(Untrustworthy { case, why: why.clone(), opt: opt.clone() });
         }
     }
     Ok(out)

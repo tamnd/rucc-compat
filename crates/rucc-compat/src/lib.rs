@@ -50,6 +50,7 @@ pub mod measure;
 pub mod meson;
 pub mod pipeline;
 pub mod sandbox;
+pub mod screen;
 pub mod sha256;
 pub mod toml;
 pub mod work;
