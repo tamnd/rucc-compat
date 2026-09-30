@@ -349,6 +349,15 @@ pub struct Unit {
     /// keeping every function's IR alive at once, and those show up as pages touched. A limit on
     /// address space would also count what an allocator reserves and never uses.
     pub megabytes: Option<u64>,
+    /// The architectures this unit means anything on, each one of [`ARCHES`], or every one the
+    /// corpus applies to when empty.
+    ///
+    /// The same field as [`Corpus::arch`], one level down. The intrinsics corpus is one set of
+    /// programs about two instruction sets: its SSE2 units include headers an arm64 machine does
+    /// not have and its NEON and ACLE units include headers an x86-64 machine does not have. A
+    /// unit that is not about this machine is walked, so an exclusion naming one of its cases is
+    /// still known to name a case, and is never offered to either compiler.
+    pub arch: Vec<String>,
 }
 
 impl Unit {
@@ -356,6 +365,12 @@ impl Unit {
     #[must_use]
     pub fn is_bounded(&self) -> bool {
         self.seconds.is_some() || self.megabytes.is_some()
+    }
+
+    /// Whether this machine is one this unit says anything about.
+    #[must_use]
+    pub fn applies(&self) -> bool {
+        self.arch.is_empty() || self.arch.iter().any(|a| a == env::consts::ARCH)
     }
 }
 
@@ -559,7 +574,7 @@ impl Corpus {
             Source::Build(b) => b.dir().is_some(),
             _ => true,
         };
-        arch && probe && build
+        arch && probe && build && self.units.iter().any(Unit::applies)
     }
 
     /// Whether the tree is there, for [`Source::Tarball`], and whether the build directory has
@@ -671,15 +686,7 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
             });
         }
     }
-    let arch = root.list("arch");
-    if let Some(odd) = arch.iter().find(|a| !ARCHES.contains(&a.as_str())) {
-        return Err(Error {
-            message: format!(
-                "{whose}: `arch` is `{odd}`, which is not one of {}",
-                ARCHES.join(", ")
-            ),
-        });
-    }
+    let arch = arches(root.list("arch"), &whose)?;
     let oracle = match root.str("oracle") {
         None => None,
         Some(word) => Some(Oracle::named(word).ok_or_else(|| Error {
@@ -977,6 +984,7 @@ fn unit(fields: &Fields, whose: &str) -> Result<Unit, Error> {
     };
     let seconds = bound("seconds")?;
     let megabytes = bound("megabytes")?;
+    let arch = arches(fields.list("arch"), whose)?;
     if (seconds.is_some() || megabytes.is_some()) && kind == UnitKind::Headers {
         return Err(Error {
             message: format!(
@@ -995,7 +1003,21 @@ fn unit(fields: &Fields, whose: &str) -> Result<Unit, Error> {
         libs,
         seconds,
         megabytes,
+        arch,
     })
+}
+
+/// An `arch` list, from the manifest or from one of its units, with every word checked.
+fn arches(arch: Vec<String>, whose: &str) -> Result<Vec<String>, Error> {
+    if let Some(odd) = arch.iter().find(|a| !ARCHES.contains(&a.as_str())) {
+        return Err(Error {
+            message: format!(
+                "{whose}: `arch` is `{odd}`, which is not one of {}",
+                ARCHES.join(", ")
+            ),
+        });
+    }
+    Ok(arch)
 }
 
 /// One difference we have decided to live with.
@@ -1243,6 +1265,41 @@ mod tests {
         fake.corpus("sys", &with(env::consts::ARCH));
         assert!(load(&fake.root, "sys").unwrap().applies());
         fake.corpus("sys", &with("pdp11"));
+        assert!(load(&fake.root, "sys").unwrap_err().message.contains("pdp11"));
+    }
+
+    #[test]
+    fn a_unit_for_another_architecture_is_walked_and_not_offered() {
+        let fake = Fake::new("unit-arch");
+        let other = if env::consts::ARCH == "x86_64" { "aarch64" } else { "x86_64" };
+        let dir = fake.root.join("corpus").join("sys");
+        for unit in ["here", "there"] {
+            fs::create_dir_all(dir.join(unit)).unwrap();
+            fs::write(dir.join(unit).join("a.c"), "int main(void) { return 0; }\n").unwrap();
+        }
+        let text = |here: &str, there: &str| {
+            format!(
+                "name = \"sys\"\nsummary = \"s\"\nsource = \"local\"\noracle = \"differential\"\n\n\
+                 [[unit]]\nname = \"here\"\nkind = \"source\"\ndir = \"here\"\narch = [\"{here}\"]\n\n\
+                 [[unit]]\nname = \"there\"\nkind = \"source\"\ndir = \"there\"\narch = [\"{there}\"]\n\n\
+                 [[exec-exclude]]\ncase = \"there/a.c\"\nissue = \"https://github.com/tamnd/rucc/issues/1\"\n\
+                 why = \"w\"\noutcome = \"wrong answer\"\n"
+            )
+        };
+        fake.corpus("sys", &text(env::consts::ARCH, other));
+        let corpus = load(&fake.root, "sys").unwrap();
+        assert!(corpus.applies());
+        assert!(corpus.units[0].applies());
+        assert!(!corpus.units[1].applies());
+        let found = crate::differ::cases(&fake.root, &corpus, &fake.root.join("scratch")).unwrap();
+        let names: Vec<&str> = found.cases.iter().map(|c| c.name.as_str()).collect();
+        assert_eq!(names, ["here/a.c"]);
+        assert_eq!(found.elsewhere, ["there/a.c"]);
+
+        // A corpus none of whose units are about this machine is not about it either.
+        fake.corpus("sys", &text(other, other));
+        assert!(!load(&fake.root, "sys").unwrap().applies());
+        fake.corpus("sys", &text("pdp11", other));
         assert!(load(&fake.root, "sys").unwrap_err().message.contains("pdp11"));
     }
 

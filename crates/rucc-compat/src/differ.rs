@@ -226,9 +226,7 @@ pub fn run(
     };
     if let Some(unit) = &settings.unit {
         if cases.is_empty() {
-            return Err(Error {
-                message: format!("{}: there is no unit called `{unit}`", corpus.name),
-            });
+            return Err(Error { message: no_such_unit(corpus, unit) });
         }
     }
     // Narrowed before the limit, so `--limit 20 --failed` is the first twenty of the failures
@@ -679,6 +677,29 @@ pub struct Found {
     /// dropping them without a word makes the census stop adding up. Empty until
     /// [`without_helpers`] has been over the list, which is `exec` and nothing else.
     pub helpers: Vec<String>,
+    /// Every case of a unit that is about another architecture, named the way the report would
+    /// name it.
+    ///
+    /// Never offered to either compiler, and kept so that an exclusion or a settled entry naming
+    /// one of them is still an entry about a case this corpus has. Without it the NEON entries of
+    /// the intrinsics corpus would read as stale on every x86-64 run, and the SSE2 ones on every
+    /// arm64 run.
+    pub elsewhere: Vec<String>,
+}
+
+/// What to say when `--unit` selects nothing, which is either a unit the manifest does not have
+/// or one it has for another machine.
+#[must_use]
+pub fn no_such_unit(corpus: &Corpus, unit: &str) -> String {
+    match corpus.units.iter().find(|u| u.name == unit) {
+        Some(found) if !found.applies() => format!(
+            "{}: unit `{unit}` is for {}, and this machine is {}",
+            corpus.name,
+            found.arch.join(" and "),
+            std::env::consts::ARCH
+        ),
+        _ => format!("{}: there is no unit called `{unit}`", corpus.name),
+    }
 }
 
 /// Works out everything a corpus asks to be preprocessed.
@@ -705,18 +726,27 @@ pub fn cases(repo: &Path, corpus: &Corpus, scratch: &Path) -> Result<Found, Erro
         .map_err(|e| Error { message: format!("{}: {e}", scratch.display()) })?;
     let mut found = Found::default();
     for unit in &corpus.units {
+        // A unit about another machine is walked all the same, into a list of its own, so the
+        // names in it are known and nothing in it runs.
+        let mut other = Found::default();
+        let into = match unit.applies() {
+            true => &mut found,
+            false => &mut other,
+        };
         match unit.kind {
-            UnitKind::Source => sources(&tree, unit, &mut found)?,
-            UnitKind::Headers => headers(&tree, unit, scratch, &mut found)?,
+            UnitKind::Source => sources(&tree, unit, into)?,
+            UnitKind::Headers => headers(&tree, unit, scratch, into)?,
             UnitKind::CompileCommands => {
                 let version = match &corpus.source {
                     Source::Build(build) => build.version.as_str(),
                     _ => unreachable!("the manifest reader refuses this unit anywhere else"),
                 };
-                meson::cases(&tree, version, unit, &mut found)?;
+                meson::cases(&tree, version, unit, into)?;
             }
         }
+        found.elsewhere.extend(other.cases.into_iter().map(|case| case.name));
     }
+    found.elsewhere.sort();
     found.cases.sort_by(|a, b| a.name.cmp(&b.name));
     found.never.sort();
     take_settled(found, &corpus.name, &corpus.settled)
@@ -763,7 +793,9 @@ pub fn without_helpers(mut found: Found, corpus: &Corpus) -> Found {
 /// be wrong about it.
 fn take_settled(mut found: Found, corpus: &str, settled: &[Settled]) -> Result<Found, Error> {
     for entry in settled {
-        if !found.cases.iter().any(|case| case.name == entry.case) {
+        if !found.cases.iter().any(|case| case.name == entry.case)
+            && !found.elsewhere.contains(&entry.case)
+        {
             return Err(Error {
                 message: format!(
                     "{corpus}: `{}` is settled and is not a case of this corpus",
@@ -1082,6 +1114,7 @@ mod tests {
                 libs: Vec::new(),
                 seconds: None,
                 megabytes: None,
+                arch: Vec::new(),
             }],
             alongside: vec![rule],
             excluded: Vec::new(),
@@ -1326,6 +1359,7 @@ mod tests {
             libs: Vec::new(),
             seconds: None,
             megabytes: None,
+            arch: Vec::new(),
         };
         let mut found = Found::default();
         sources(&root, &unit, &mut found).unwrap();
@@ -1369,6 +1403,7 @@ mod tests {
             libs: Vec::new(),
             seconds: None,
             megabytes: None,
+            arch: Vec::new(),
         };
         let entry = Settled {
             case: "suite/b.c".to_owned(),
@@ -1448,6 +1483,7 @@ mod tests {
             libs: Vec::new(),
             seconds: None,
             megabytes: None,
+            arch: Vec::new(),
         };
         let mut found = Found::default();
         sources(&root, &unit, &mut found).unwrap();

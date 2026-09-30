@@ -548,9 +548,7 @@ pub fn run(
     };
     if let Some(unit) = &settings.unit {
         if cases.is_empty() {
-            return Err(Error {
-                message: format!("{}: there is no unit called `{unit}`", corpus.name),
-            });
+            return Err(Error { message: differ::no_such_unit(corpus, unit) });
         }
     }
     // Narrowed before the limit, so `--limit 20 --failed` is the first twenty of the failures
@@ -679,7 +677,7 @@ pub fn run(
         true => corpus
             .exec_excluded
             .iter()
-            .filter(|e| !all.iter().any(|c| c.name == e.case))
+            .filter(|e| !all.iter().any(|c| c.name == e.case) && !found.elsewhere.contains(&e.case))
             .cloned()
             .collect(),
         false => Vec::new(),

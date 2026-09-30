@@ -170,6 +170,7 @@ mod tests {
                 libs: Vec::new(),
                 seconds: None,
                 megabytes: None,
+                arch: Vec::new(),
             }],
             alongside: Vec::new(),
             excluded: Vec::new(),
