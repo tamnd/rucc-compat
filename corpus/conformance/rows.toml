@@ -954,7 +954,7 @@ case = "c11/atomics.c"
 id = "c11/stdatomic"
 standard = "c11"
 clause = "7.17"
-what = "load, store, exchange, compare and exchange and the fetch operations"
+what = "load, store, exchange, compare and exchange and the fetch operations, on a structure too"
 case = "c11/atomics.c"
 
 [[row]]

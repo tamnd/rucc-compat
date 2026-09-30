@@ -1,6 +1,7 @@
 // C11 atomics: the _Atomic qualifier and specifier, <stdatomic.h> load, store, exchange,
 // compare and exchange and the fetch operations, atomic_flag, the lock free macros, and compound
-// assignment and increment on an atomic object being one atomic operation.
+// assignment and increment on an atomic object being one atomic operation. The operations take
+// an atomic structure as well as an arithmetic type.
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdatomic.h>
@@ -40,6 +41,12 @@ int main(void)
     _Atomic struct pair p = { 1, 2 };
     struct pair q = p;
     printf("%d %d\n", q.a, q.b);
+    atomic_store(&p, (struct pair){ 3, 4 });
+    struct pair r = atomic_exchange(&p, (struct pair){ 5, 6 });
+    struct pair want = { 5, 6 };
+    bool moved = atomic_compare_exchange_strong(&p, &want, (struct pair){ 7, 8 });
+    struct pair now = atomic_load(&p);
+    printf("%d %d %d %d %d\n", r.a, r.b, moved, now.a, now.b);
     atomic_thread_fence(memory_order_seq_cst);
     return 0;
 }
