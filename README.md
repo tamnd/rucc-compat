@@ -37,7 +37,7 @@ A case the reference compiler cannot preprocess either is reported as not compar
 ./target/release/rucc-compat check tcc --unit tests2 --report
 ```
 
-Each case is three runs of the compiler. `--emit=tast` is parsing and semantic analysis. `--emit=ir` is lowering, and the verifier runs on the way out of it. Then the IR from the second run goes back in as input, which parses it and verifies it a second time, and the two texts have to be the same byte for byte.
+Each case is three runs of the compiler and four builds. `--emit=tast` is parsing and semantic analysis. `--emit=ir` is lowering, and the verifier runs on the way out of it. Then the IR from the second run goes back in as input, which parses it and verifies it a second time, and the two texts have to be the same byte for byte. Last the object is built twice with the case's own flags and twice with `-O2` added, and each pair has to be the same byte for byte, which is the step the table calls `twice`. A case that does not build at all passes that step, since whether it builds is what `exec` measures, but one that builds once and fails the other time does not.
 
 The round trip is the step worth explaining. A printer and a parser that disagree can each look right on its own, and a text that does not survive being read back is not a record of what the compiler decided. Comparing the second print against the first is the cheapest way to find that out and it costs one more run of a compiler that is already fast.
 
