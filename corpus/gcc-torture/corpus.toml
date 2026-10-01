@@ -88,51 +88,27 @@ companion = "-lib.c"
 # cases that include them and none of them is a case.
 helpers = ["builtins/lib"]
 
-# A function defined inside another one, which is GNU's nested functions. A call to one goes
-# through a trampoline written on the stack, and this compiler will not have them. gcc takes these
-# thirty files and rucc reports an error on each, so nothing about the reference is visible here
-# and a `skip` would be the wrong shelf: a skip says the reference cannot get through the file
-# either, and it can. An exclusion is the wrong shelf as well, because an exclusion names the issue
-# that will remove it and no issue will. The decision was argued and finished, and this is where a
-# finished decision goes.
-#
-# Six of the thirty were in the skip array on the wrong reason before this, filed under a missing
-# type on the function above them. What was stopping them was never the missing type. It was the
-# nested function underneath it, which is what reading the dialect they ask for made visible.
+# GNU's nested functions, in the ten files where they do something rucc refuses on purpose. Eight
+# of them jump out of a nested function to a label of the function around it, with `goto` or with
+# `&&label`, which would have to unwind the frames in between, and rucc says so with E0796.
+# `pr51447.c` is one more of those, behind a global register variable. `nest-stdar-1.c` defines a
+# nested function that takes `...`, which E0797 refuses because the static chain goes after the
+# last argument. The other twenty nested function files came off this list in tamnd/rucc#2486,
+# when rucc started building nested functions with heap trampolines the way gcc 14 does.
 [[settled]]
 spec = "spec/13-gnu-compat.md section 13.3"
-why = "a call to a nested function needs an executable trampoline on the stack"
+why = "a jump out of a nested function, or a variadic nested function, is refused"
 cases = [
-  "execute/20000822-1.c",
-  "execute/20010209-1.c",
-  "execute/20010605-1.c",
-  "execute/20030501-1.c",
-  "execute/20040520-1.c",
-  "execute/20061220-1.c",
-  "execute/20090219-1.c",
   "execute/920415-1.c",
   "execute/920428-2.c",
   "execute/920501-7.c",
-  "execute/920612-2.c",
   "execute/920721-4.c",
-  "execute/921017-1.c",
-  "execute/921215-1.c",
-  "execute/931002-1.c",
   "execute/comp-goto-2.c",
-  "execute/nest-align-1.c",
   "execute/nest-stdar-1.c",
-  "execute/nestfunc-1.c",
-  "execute/nestfunc-2.c",
-  "execute/nestfunc-3.c",
   "execute/nestfunc-5.c",
   "execute/nestfunc-6.c",
-  "execute/nestfunc-7.c",
-  "execute/pr103405.c",
-  "execute/pr22061-3.c",
-  "execute/pr22061-4.c",
   "execute/pr24135.c",
   "execute/pr51447.c",
-  "execute/pr71494.c",
 ]
 
 # What is left is 11 cases out of 1870, so 1859 of them pass, and none of the 11 is stale. Every
@@ -290,9 +266,9 @@ cases = [
 # was right, so this list is about what the compiler produced rather than about what it accepted.
 #
 # It is shorter than that issue expected. The guess there was nineteen hundred programs of red.
-# The unit is 1783 programs, which is the 1907 in the tarball less the 7 skipped, the 30 settled
-# above and the 87 that exist to be included by another file, and at `-O0` 1757 of them pass, 17
-# are named below and 9 are refused by gcc 16 as well. At `-O3` it is 1748, 21 and 14, and no
+# The unit is 1803 programs, which is the 1907 in the tarball less the 7 skipped, the 10 settled
+# above and the 87 that exist to be included by another file, and at `-O0` 1777 of them pass, 17
+# are named below and 9 are refused by gcc 16 as well. At `-O3` it is 1768, 21 and 14, and no
 # program fails there without an entry below naming it. tamnd/rucc#1737 took `strcat.c` and
 # `strncpy.c` under `builtins`, and tamnd/rucc#1752 took `memcmp.c`, which was the last program
 # under `builtins` that did not build at every optimizing level. tamnd/rucc#1760 took

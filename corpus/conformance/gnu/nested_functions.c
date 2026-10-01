@@ -1,6 +1,6 @@
-/* Nested functions, which rucc turns down today, tamnd/rucc#2486. One is only called, so it
-   needs a static chain and no trampoline, and one has its address taken, which is where GCC
-   needs a trampoline. */
+/* Nested functions, which rucc builds since tamnd/rucc#2486. One is only called, so it needs a
+   static chain and no trampoline, and one has its address taken, which is where GCC needs a
+   trampoline. */
 #include <stdio.h>
 
 static int apply(int (*f)(int), int x) { return f(x); }

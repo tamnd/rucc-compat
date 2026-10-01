@@ -1601,7 +1601,6 @@ standard = "gnu"
 clause = "Nested Functions"
 what = "a function defined inside another, called and passed by address"
 case = "gnu/nested_functions.c"
-issue = "tamnd/rucc#2486"
 feature = "nested_functions"
 
 [[row]]
