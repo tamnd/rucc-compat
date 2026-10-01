@@ -75,6 +75,28 @@ static void t_vmax_u32(void)
     SUM("vmax_u32", sum);
 }
 
+static void t_vmax_f32(void)
+{
+    uint64_t sum = 0;
+    for (int r = 0; r < ROUNDS; r++) {
+        ARG(float32x2_t, a0, 0, 32);
+        ARG(float32x2_t, a1, 1, 32);
+        KEEP(float32x2_t, vmax_f32(a0, a1));
+    }
+    SUM("vmax_f32", sum);
+}
+
+static void t_vmax_f64(void)
+{
+    uint64_t sum = 0;
+    for (int r = 0; r < ROUNDS; r++) {
+        ARG(float64x1_t, a0, 0, 64);
+        ARG(float64x1_t, a1, 1, 64);
+        KEEP(float64x1_t, vmax_f64(a0, a1));
+    }
+    SUM("vmax_f64", sum);
+}
+
 static void t_vmaxq_s8(void)
 {
     uint64_t sum = 0;
@@ -141,6 +163,28 @@ static void t_vmaxq_u32(void)
     SUM("vmaxq_u32", sum);
 }
 
+static void t_vmaxq_f32(void)
+{
+    uint64_t sum = 0;
+    for (int r = 0; r < ROUNDS; r++) {
+        ARG(float32x4_t, a0, 0, 32);
+        ARG(float32x4_t, a1, 1, 32);
+        KEEP(float32x4_t, vmaxq_f32(a0, a1));
+    }
+    SUM("vmaxq_f32", sum);
+}
+
+static void t_vmaxq_f64(void)
+{
+    uint64_t sum = 0;
+    for (int r = 0; r < ROUNDS; r++) {
+        ARG(float64x2_t, a0, 0, 64);
+        ARG(float64x2_t, a1, 1, 64);
+        KEEP(float64x2_t, vmaxq_f64(a0, a1));
+    }
+    SUM("vmaxq_f64", sum);
+}
+
 int main(void)
 {
     t_vmax_s8();
@@ -149,11 +193,15 @@ int main(void)
     t_vmax_u8();
     t_vmax_u16();
     t_vmax_u32();
+    t_vmax_f32();
+    t_vmax_f64();
     t_vmaxq_s8();
     t_vmaxq_s16();
     t_vmaxq_s32();
     t_vmaxq_u8();
     t_vmaxq_u16();
     t_vmaxq_u32();
+    t_vmaxq_f32();
+    t_vmaxq_f64();
     return 0;
 }

@@ -75,6 +75,28 @@ static void t_vmin_u32(void)
     SUM("vmin_u32", sum);
 }
 
+static void t_vmin_f32(void)
+{
+    uint64_t sum = 0;
+    for (int r = 0; r < ROUNDS; r++) {
+        ARG(float32x2_t, a0, 0, 32);
+        ARG(float32x2_t, a1, 1, 32);
+        KEEP(float32x2_t, vmin_f32(a0, a1));
+    }
+    SUM("vmin_f32", sum);
+}
+
+static void t_vmin_f64(void)
+{
+    uint64_t sum = 0;
+    for (int r = 0; r < ROUNDS; r++) {
+        ARG(float64x1_t, a0, 0, 64);
+        ARG(float64x1_t, a1, 1, 64);
+        KEEP(float64x1_t, vmin_f64(a0, a1));
+    }
+    SUM("vmin_f64", sum);
+}
+
 static void t_vminq_s8(void)
 {
     uint64_t sum = 0;
@@ -141,6 +163,28 @@ static void t_vminq_u32(void)
     SUM("vminq_u32", sum);
 }
 
+static void t_vminq_f32(void)
+{
+    uint64_t sum = 0;
+    for (int r = 0; r < ROUNDS; r++) {
+        ARG(float32x4_t, a0, 0, 32);
+        ARG(float32x4_t, a1, 1, 32);
+        KEEP(float32x4_t, vminq_f32(a0, a1));
+    }
+    SUM("vminq_f32", sum);
+}
+
+static void t_vminq_f64(void)
+{
+    uint64_t sum = 0;
+    for (int r = 0; r < ROUNDS; r++) {
+        ARG(float64x2_t, a0, 0, 64);
+        ARG(float64x2_t, a1, 1, 64);
+        KEEP(float64x2_t, vminq_f64(a0, a1));
+    }
+    SUM("vminq_f64", sum);
+}
+
 int main(void)
 {
     t_vmin_s8();
@@ -149,11 +193,15 @@ int main(void)
     t_vmin_u8();
     t_vmin_u16();
     t_vmin_u32();
+    t_vmin_f32();
+    t_vmin_f64();
     t_vminq_s8();
     t_vminq_s16();
     t_vminq_s32();
     t_vminq_u8();
     t_vminq_u16();
     t_vminq_u32();
+    t_vminq_f32();
+    t_vminq_f64();
     return 0;
 }

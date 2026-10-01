@@ -69,6 +69,16 @@ static void t_vminv_u32(void)
     SUM("vminv_u32", sum);
 }
 
+static void t_vminv_f32(void)
+{
+    uint64_t sum = 0;
+    for (int r = 0; r < ROUNDS; r++) {
+        ARG(float32x2_t, a0, 0, 32);
+        KEEP(float32_t, vminv_f32(a0));
+    }
+    SUM("vminv_f32", sum);
+}
+
 static void t_vminvq_s8(void)
 {
     uint64_t sum = 0;
@@ -129,6 +139,26 @@ static void t_vminvq_u32(void)
     SUM("vminvq_u32", sum);
 }
 
+static void t_vminvq_f32(void)
+{
+    uint64_t sum = 0;
+    for (int r = 0; r < ROUNDS; r++) {
+        ARG(float32x4_t, a0, 0, 32);
+        KEEP(float32_t, vminvq_f32(a0));
+    }
+    SUM("vminvq_f32", sum);
+}
+
+static void t_vminvq_f64(void)
+{
+    uint64_t sum = 0;
+    for (int r = 0; r < ROUNDS; r++) {
+        ARG(float64x2_t, a0, 0, 64);
+        KEEP(float64_t, vminvq_f64(a0));
+    }
+    SUM("vminvq_f64", sum);
+}
+
 int main(void)
 {
     t_vminv_s8();
@@ -137,11 +167,14 @@ int main(void)
     t_vminv_u8();
     t_vminv_u16();
     t_vminv_u32();
+    t_vminv_f32();
     t_vminvq_s8();
     t_vminvq_s16();
     t_vminvq_s32();
     t_vminvq_u8();
     t_vminvq_u16();
     t_vminvq_u32();
+    t_vminvq_f32();
+    t_vminvq_f64();
     return 0;
 }

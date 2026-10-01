@@ -95,53 +95,9 @@ dir = "acle-flagged"
 flags = ["-march=armv8-a+crc+simd"]
 arch = ["aarch64"]
 
-# What rucc's Arm headers get wrong today. Each intrinsic named here has a program of its own, which
-# scripts/arm_neon.py makes for any intrinsic this file names, so that the rest of its family is
-# still held to the answer. They were found by this corpus on the arm64 runner against gcc 16, and
-# the descriptions say what the two print for the same inputs.
-
-# rucc writes these as a comparison and a negation in C. FABS and FABD clear the sign bit whatever
-# the value is, and `x < 0 ? -x : x` leaves it set on -0.0 and on a NaN with the sign bit set, so
-# rucc gives vabs_f32(-0.0) as -0.0 where gcc gives +0.0, gives -qNaN back as -qNaN where gcc gives
-# +qNaN, and gives vabd_f32 of a negative NaN and anything as the negative NaN.
-[[exec-exclude]]
-cases = ["neon/vabs_f32.c", "neon/vabs_f64.c", "neon/vabsq_f32.c", "neon/vabsq_f64.c", "neon/vabd_f32.c", "neon/vabd_f64.c", "neon/vabdq_f32.c", "neon/vabdq_f64.c"]
-issue = "tamnd/rucc#1991"
-why = "fabs and fabd clear the sign bit of -0.0 and of a negative NaN, and rucc's `x < 0 ? -x : x` keeps it"
-outcome = "wrong answer"
-
-# rucc writes vmax and vmin as `a > b ? a : b` and `a < b ? a : b`, and the across-lanes forms as a
-# loop of the same comparison. FMAX, FMIN, FMAXV and FMINV return a NaN when either operand is one,
-# and order -0.0 below +0.0. The comparison is false for a NaN, so vmax_f32 of (qNaN, 1.0) is 1.0
-# in rucc and the qNaN in gcc, and vmax_f32(+0.0, -0.0) is -0.0 in rucc and +0.0 in gcc, with vmin
-# the mirror image. The vmaxnm and vminnm forms, which are the ones meant to ignore a quiet NaN, agree.
-[[exec-exclude]]
-cases = ["neon/vmax_f32.c", "neon/vmax_f64.c", "neon/vmaxq_f32.c", "neon/vmaxq_f64.c", "neon/vmin_f32.c", "neon/vmin_f64.c", "neon/vminq_f32.c", "neon/vminq_f64.c", "neon/vmaxv_f32.c", "neon/vmaxvq_f32.c", "neon/vmaxvq_f64.c", "neon/vminv_f32.c", "neon/vminvq_f32.c", "neon/vminvq_f64.c"]
-issue = "tamnd/rucc#1991"
-why = "fmax and fmin return a NaN operand and put -0.0 below +0.0, and rucc's comparison drops the NaN and returns whichever zero is second"
-outcome = "wrong answer"
-
-# rucc adds the four lanes left to right starting from 0. FADDP, which gcc uses, adds them in
-# pairs, (a0 + a1) + (a2 + a3), so the rounding is different: for (1e8, 1, -1e8, 1) gcc gives 0.0
-# and rucc gives 1.0. Starting the sum from +0.0 also turns an all -0.0 vector into +0.0 where gcc
-# keeps -0.0, which is wrong in vaddv_f32 and vaddvq_f64 as well, though the random inputs have not
-# happened on it there.
-[[exec-exclude]]
-case = "neon/vaddvq_f32.c"
-issue = "tamnd/rucc#1991"
-why = "the lanes are summed left to right from +0.0 rather than pairwise the way faddp does"
-outcome = "wrong answer"
-
-# The mask of the bits SLI and SRI keep is made by shifting a 64 bit value by 64 - n and by n. At
-# the ends of the range, vsli_n by 0 and vsri_n by 64, that is a shift by 64 in C, which is
-# undefined, and AArch64's shift takes the count modulo 64. So vsli_n_s64(a, b, 0) gives a | b
-# where it should give b, and vsri_n_s64(a, b, 64) gives b where it should give a. The narrower
-# elements are shifted as 64 bit values and are right at every count.
-[[exec-exclude]]
-cases = ["neon/vsli_n_s64.c", "neon/vsli_n_u64.c", "neon/vsliq_n_s64.c", "neon/vsliq_n_u64.c", "neon/vsri_n_s64.c", "neon/vsri_n_u64.c", "neon/vsriq_n_s64.c", "neon/vsriq_n_u64.c"]
-issue = "tamnd/rucc#1991"
-why = "the kept mask is a shift by 64 at vsli_n's 0 and vsri_n's 64, and the machine takes the count modulo 64"
-outcome = "wrong answer"
+# Any intrinsic this file names as a neon/ program gets a program of its own from
+# scripts/arm_neon.py, whether or not an entry excuses it, which is how an intrinsic whose answer
+# depends on something besides rucc is kept from taking the rest of its family down with it.
 
 # When both operands are NaN, which of the two comes back is not something C says, and gcc is not
 # consistent about it: at -O0 it gives vmul_n_f32((qNaN 1, sNaN 3), -qNaN 2) as the scalar's NaN,
@@ -149,14 +105,3 @@ outcome = "wrong answer"
 # gives at both levels. Inside the vmul_n family's program the two disagreed at -O0 over the random
 # inputs, and in a program of their own they agree at both levels, so "neon/vmul_n_f32.c" and
 # "neon/vmulq_n_f32.c" are kept apart for that reason and are not excused.
-
-# rucc's assembly for a function with target("+crc"), and for a unit built with -march=armv8-a+crc,
-# has the crc32 instructions and no `.arch armv8-a+crc` directive, which gcc writes at the top of
-# the file and before each such function. The assembler is not told the architecture on the command
-# line, so it refuses them. The object and driver paths do not go through the text and pass.
-[[exec-exclude]]
-cases = ["acle-attribute/crc32.c", "acle-flagged/crc32.c"]
-issue = "tamnd/rucc#1991"
-why = "the assembly has crc32 instructions and no .arch directive enabling crc, so the assembler refuses it"
-outcome = "did not build"
-route = ["assembly"]

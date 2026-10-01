@@ -159,6 +159,16 @@ static void t_vaddvq_u64(void)
     SUM("vaddvq_u64", sum);
 }
 
+static void t_vaddvq_f32(void)
+{
+    uint64_t sum = 0;
+    for (int r = 0; r < ROUNDS; r++) {
+        ARG(float32x4_t, a0, 0, 32);
+        KEEP(float32_t, vaddvq_f32(a0));
+    }
+    SUM("vaddvq_f32", sum);
+}
+
 static void t_vaddvq_f64(void)
 {
     uint64_t sum = 0;
@@ -186,6 +196,7 @@ int main(void)
     t_vaddvq_u16();
     t_vaddvq_u32();
     t_vaddvq_u64();
+    t_vaddvq_f32();
     t_vaddvq_f64();
     return 0;
 }
