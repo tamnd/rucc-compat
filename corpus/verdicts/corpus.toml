@@ -1,0 +1,107 @@
+name = "verdicts"
+summary = "Small programs a compiler has to accept and small programs it has to refuse, each refusal with the gcc 16 sentence it has to say."
+
+# The programs are ours and live next to this manifest, so there is nothing to fetch. They are
+# under this repository's license.
+source = "local"
+
+# Each case says at its top whether both compilers have to accept it or reject it, and a
+# rejection names the sentence its error has to contain. `rucc-compat verdict` is the only
+# command that reads this corpus, since half of it is programs that are not meant to build.
+judge = "verdict"
+timeout = 10
+
+# Each standard is its own unit with -pedantic-errors, which is what makes a construct from a
+# later standard an error in an earlier one. A case is filed under the oldest mode it is about.
+[[unit]]
+name = "c89"
+kind = "source"
+dir = "c89"
+flags = ["-std=c89", "-pedantic-errors"]
+
+[[unit]]
+name = "c99"
+kind = "source"
+dir = "c99"
+flags = ["-std=c99", "-pedantic-errors"]
+
+[[unit]]
+name = "c11"
+kind = "source"
+dir = "c11"
+flags = ["-std=c11", "-pedantic-errors"]
+
+[[unit]]
+name = "c23"
+kind = "source"
+dir = "c23"
+flags = ["-std=c23", "-pedantic-errors"]
+
+# The GNU extensions, in GCC's default dialect.
+[[unit]]
+name = "gnu"
+kind = "source"
+dir = "gnu"
+flags = ["-std=gnu23"]
+
+# The cases rucc does not get right yet, each with the issue that will take it off the list.
+
+[[exclude]]
+case = "c23/constexpr_lossy.c"
+issue = "tamnd/rucc#2611"
+why = "rucc accepts a constexpr initializer that is not an integer constant"
+
+[[exclude]]
+case = "c23/nullptr_to_int.c"
+issue = "tamnd/rucc#2612"
+why = "rucc calls nullptr a void pointer in the error"
+
+[[exclude]]
+case = "c23/old_style_definition.c"
+issue = "tamnd/rucc#2611"
+why = "rucc accepts an old-style definition in C23 pedantic mode"
+
+[[exclude]]
+case = "c23/typeof_bitfield.c"
+issue = "tamnd/rucc#2611"
+why = "rucc accepts typeof applied to a bit-field"
+
+[[exclude]]
+case = "c89/for_declaration.c"
+issue = "tamnd/rucc#2610"
+why = "rucc writes the keyword in backticks rather than quotes"
+
+[[exclude]]
+case = "c89/long_long.c"
+issue = "tamnd/rucc#2610"
+why = "rucc accepts long long in C90 pedantic mode"
+
+[[exclude]]
+case = "c89/mixed_declaration.c"
+issue = "tamnd/rucc#2610"
+why = "rucc accepts a declaration after a statement in C90 pedantic mode"
+
+[[exclude]]
+case = "c99/invalid_storage_param.c"
+issue = "tamnd/rucc#2611"
+why = "rucc accepts a storage class on a parameter"
+
+[[exclude]]
+case = "c99/mixed_types.c"
+issue = "tamnd/rucc#2612"
+why = "rucc says two or more data types rather than naming them"
+
+[[exclude]]
+case = "c99/register_address.c"
+issue = "tamnd/rucc#2611"
+why = "rucc accepts the address of a register variable"
+
+[[exclude]]
+case = "c99/unknown_type.c"
+issue = "tamnd/rucc#2612"
+why = "rucc gives a parse error rather than unknown type name"
+
+[[exclude]]
+case = "gnu/nested_goto_out.c"
+issue = "tamnd/rucc#2613"
+why = "rucc gives E0796 rather than treating the label as the nested function's"

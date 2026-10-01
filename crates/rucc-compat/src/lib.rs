@@ -56,6 +56,7 @@ pub mod sandbox;
 pub mod screen;
 pub mod sha256;
 pub mod toml;
+pub mod verdict;
 pub mod work;
 
 /// The repository root, found by walking up from `start` until something has a `corpus`

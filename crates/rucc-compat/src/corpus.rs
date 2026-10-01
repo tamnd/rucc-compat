@@ -633,6 +633,13 @@ pub struct Corpus {
     /// Written down per corpus rather than assumed, because the cost of a file moves a long way
     /// between levels and a bound that was set at `-O0` says nothing about `-O2`.
     pub levels: Vec<String>,
+    /// Whether the cases are judged by what each compiler says about them rather than by what
+    /// either one makes of them, which is what `judge = "verdict"` asks for.
+    ///
+    /// Half of such a corpus is programs both compilers have to refuse, so the commands that take
+    /// a case through rucc and expect it to come out the other side pass it over, and `verdict` is
+    /// the only command that reads it. See [`crate::verdict`].
+    pub verdict: bool,
 }
 
 impl Corpus {
@@ -914,6 +921,22 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
             ),
         });
     }
+    let verdict = match root.str("judge") {
+        None => false,
+        Some("verdict") => true,
+        Some(word) => {
+            return Err(Error {
+                message: format!("{whose}: `judge` is `{word}`, and `verdict` is the only judge"),
+            });
+        }
+    };
+    if verdict && oracle.is_some() {
+        return Err(Error {
+            message: format!(
+                "{whose}: a corpus judged by its verdicts has programs that do not build, so it has no `oracle`"
+            ),
+        });
+    }
     let levels = root.list("levels");
     if let Some(odd) = levels.iter().find(|level| !LEVELS.contains(&level.as_str())) {
         return Err(Error {
@@ -962,6 +985,7 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
         untrustworthy,
         arguments,
         levels,
+        verdict,
     })
 }
 

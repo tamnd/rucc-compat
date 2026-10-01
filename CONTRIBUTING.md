@@ -155,6 +155,7 @@ An entry is a promise to remove the entry. When the issue closes, the entry goes
 - `pipeline.rs` takes a corpus through rucc alone: the front end, the lowering, the verifier and the IR round trip.
 - `exec.rs` builds the programs and runs them, and `sandbox.rs` runs one program under a timeout and says how it ended, how long it took and the most memory it held.
 - `measure.rs` compiles the bounded files of a corpus and fails when rucc goes over a bound.
+- `verdict.rs` reads what a case of a `judge = "verdict"` corpus says it expects, gives it to both compilers with `-fsyntax-only`, and says whether each accepted or refused it with the sentence the case names.
 - `main.rs` is the command line and nothing else.
 
 Before either compiler runs, `agreement` makes them agree about the things a difference must not come from.
