@@ -10,7 +10,7 @@ use rucc_compat::coverage::{self, Marks, Verdict};
 use rucc_compat::differ::{self, Settings};
 use rucc_compat::exec::{self, Route};
 use rucc_compat::{fetch, kernel, repo_root};
-use rucc_compat::{measure, pipeline, rows, screen};
+use rucc_compat::{measure, pipeline, rows, screen, verdict};
 
 const USAGE: &str = "\
 rucc-compat, the compatibility harness for rucc
@@ -24,6 +24,7 @@ usage:
   rucc-compat screen [corpus...] [options]
   rucc-compat measure [corpus...] [options]
   rucc-compat asm [corpus...] [options]
+  rucc-compat verdict [corpus...] [options]
   rucc-compat rows [corpus...] [--matrix FILE]
   rucc-compat coverage [file or directory...] [--report] [--floor PERCENT] [--unreached]
 
@@ -36,12 +37,13 @@ commands:
   screen           build the programs with cc under sanitizers and list the ones they catch
   measure          time the bounded files through rucc and fail over a time or memory bound
   asm              assemble what the reference made of a kernel's units with both assemblers
+  verdict          say whether both compilers accept and reject what a case says they should
   rows             check a corpus's rows.toml against its cases and count the rows
   coverage         union what exec recorded and say which lowering rules nothing fired
 
 options:
   --rucc PATH      the compiler under test, or $RUCC, or `rucc`
-  --cc PATH        run, exec, screen, measure and asm: the reference compiler, or $CC, or `cc`
+  --cc PATH        run, exec, screen, measure, asm and verdict: the reference, or $CC, or `cc`
   --as CMD         asm only: the reference assembler and its first words, default `as`
   --no-reference   measure only: time rucc on its own
   --markers        run only: compare line markers as well as tokens
@@ -117,6 +119,15 @@ per standard, which is the number a green run is a claim about. `--matrix` holds
 to rucc's GNU matrix as well, so every attribute, builtin and extension in it has a row. `exec`
 prints the same count under the summary of a corpus that has rows.
 
+`verdict` reads the corpora whose manifest says `judge = \"verdict\"` and passes over the rest,
+and `check` and `exec` pass over those. A case there says at its top whether both compilers have
+to accept it or reject it, and a rejection names the sentences its error has to contain, in
+gcc's words. Each case is given to both compilers with its unit's flags and `-fsyntax-only`.
+rucc fails a case by accepting what it should refuse, refusing what it should accept, refusing
+without the sentence, or crashing. The reference is held to the case as well, and a case gcc no
+longer agrees with is reported as out of date rather than as a fault of rucc. Exclusions work
+the way they do for `check`.
+
 `--rule-coverage` writes one file holding the union over every corpus the command ran, in the
 format the compiler's own `-Zrule-coverage` writes, so that `coverage` can be given several of
 them from several sweeps and union those in turn.
@@ -171,6 +182,7 @@ fn run() -> Result<ExitCode, String> {
         "coverage" => coverage_of(&repo, rest),
         "rows" => rows_of(&repo, &all, rest),
         "asm" => asm_them(&repo, &all, rest),
+        "verdict" => verdict_them(&repo, &all, rest),
         other => Err(format!("`{other}` is not a command, try --help")),
     }
 }
@@ -489,6 +501,15 @@ fn check_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, 
             // A kernel unit only means something compiled with the flags and the persona of the
             // build it came from, and `check` gives rucc neither. `run` is the command for these.
             println!("{}: a kernel build, which only `run` reads, skipped", corpus.name);
+            continue;
+        }
+        if corpus.verdict {
+            // Half of these are programs rucc has to refuse, so taking them through the pipeline
+            // and expecting a tree out of the other end would count every right refusal as a bug.
+            println!(
+                "{}: judged by its verdicts, which only `verdict` reads, skipped",
+                corpus.name
+            );
             continue;
         }
         if !corpus.is_fetched(repo) {
@@ -1009,6 +1030,73 @@ fn coverage_of(repo: &Path, args: &[String]) -> Result<ExitCode, String> {
         true => Ok(ExitCode::FAILURE),
         false => Ok(ExitCode::SUCCESS),
     }
+}
+
+fn verdict_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, String> {
+    let mut settings = verdict::Settings {
+        rucc: from_env("RUCC", "rucc"),
+        cc: from_env("CC", "cc"),
+        only: Vec::new(),
+    };
+    let mut report = false;
+    let mut names = Vec::new();
+    let mut at = 0;
+    while at < args.len() {
+        let arg = args[at].as_str();
+        match arg {
+            "--report" => report = true,
+            "--rucc" => settings.rucc = PathBuf::from(value(args, &mut at, arg)?),
+            "--cc" => settings.cc = PathBuf::from(value(args, &mut at, arg)?),
+            "--only" => settings.only.push(value(args, &mut at, arg)?),
+            other if other.starts_with('-') => {
+                return Err(format!("`{other}` is not an option of verdict"));
+            }
+            other => names.push(other.to_owned()),
+        }
+        at += 1;
+    }
+    let wanted = chosen(all, &names)?;
+    let scratch = repo.join("target").join("verdict");
+    let mut failures = 0;
+    for corpus in wanted {
+        if !corpus.verdict {
+            // Only skipped quietly when nobody asked for it by name, since naming a corpus that
+            // has no verdicts and hearing nothing back would look like a pass.
+            if !names.is_empty() {
+                println!("{}: not judged by verdicts, skipped", corpus.name);
+            }
+            continue;
+        }
+        if !corpus.applies() {
+            println!("{}: not this machine, skipped", corpus.name);
+            continue;
+        }
+        let scratch = scratch.join(&corpus.name);
+        let done = verdict::run(repo, corpus, &settings, &scratch).map_err(|e| e.to_string())?;
+        println!("{}", done.summary());
+        for outcome in done.outcomes.iter().filter(|o| o.is_failure()) {
+            let detail = outcome.status.detail();
+            match detail.is_empty() {
+                true => println!("  {} {}", outcome.status.word(), outcome.case),
+                false => println!("  {} {}: {detail}", outcome.status.word(), outcome.case),
+            }
+        }
+        for outcome in done.outcomes.iter().filter(|o| o.is_stale()) {
+            println!("  passes now, take the exclusion out: {}", outcome.case);
+        }
+        for entry in &done.unmatched {
+            println!("  excluded but not a case of this corpus: {}", entry.case);
+        }
+        if report {
+            let dir = repo.join("results");
+            fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+            let path = dir.join(format!("{}.md", corpus.name));
+            fs::write(&path, verdict::markdown(&done, &settings)).map_err(|e| e.to_string())?;
+            println!("  wrote {}", path.display());
+        }
+        failures += done.failures();
+    }
+    Ok(if failures == 0 { ExitCode::SUCCESS } else { ExitCode::FAILURE })
 }
 
 /// The corpora the names ask for, or every one of them when no name was given.

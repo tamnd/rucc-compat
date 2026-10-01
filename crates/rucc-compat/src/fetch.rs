@@ -182,6 +182,7 @@ mod tests {
             untrustworthy: Vec::new(),
             arguments: Vec::new(),
             levels: Vec::new(),
+            verdict: false,
         }
     }
 
