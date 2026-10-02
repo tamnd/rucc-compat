@@ -32,11 +32,3 @@ flags = ["-std=gnu23"]
 unit = "x86-64"
 dir = "sysv"
 companion = ".callee.c"
-
-# rucc lowers `_BitInt` at the widths a register has and at no other, so `_BitInt(7)`,
-# `_BitInt(37)` and `_BitInt(65)` stop it at code generation on every path that builds the case.
-[[exec-exclude]]
-issue = "https://github.com/tamnd/rucc/issues/425"
-why = "a _BitInt whose width no register has is not lowered, E0653"
-outcome = "did not build"
-case = "x86-64/sysv/bitint.c"
