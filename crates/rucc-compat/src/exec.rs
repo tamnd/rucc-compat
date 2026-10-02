@@ -75,6 +75,16 @@ pub enum Route {
     Object,
     /// `rucc case.c -o case`, which is what a user runs.
     Driver,
+    /// The case's own file compiled by rucc and every other file by the reference, then linked.
+    ///
+    /// Only in a corpus whose manifest says `mixed`, where a case is a caller in its own file and
+    /// a callee in the file beside it. Each half built by a different compiler is the only way
+    /// to find out whether the two agree about where an argument goes, since a compiler that
+    /// puts a value in the wrong register at both ends of a call gets the right answer on every
+    /// other route.
+    Caller,
+    /// The other way round: the reference compiles the case's own file and rucc compiles the rest.
+    Callee,
 }
 
 impl Route {
@@ -85,19 +95,35 @@ impl Route {
             Route::Assembly => "assembly",
             Route::Object => "object",
             Route::Driver => "driver",
+            Route::Caller => "caller",
+            Route::Callee => "callee",
         }
     }
 
     /// The route of that name.
     #[must_use]
     pub fn named(word: &str) -> Option<Route> {
-        Route::all().into_iter().find(|r| r.word() == word)
+        Route::all().into_iter().chain(Route::mixed()).find(|r| r.word() == word)
     }
 
-    /// All three, in the order they were built and the order they are reported.
+    /// The three every corpus is built by, in the order they were built and the order they are
+    /// reported.
     #[must_use]
     pub fn all() -> Vec<Route> {
         vec![Route::Assembly, Route::Object, Route::Driver]
+    }
+
+    /// The two a `mixed` corpus is built by as well, which split each case between the
+    /// compilers.
+    #[must_use]
+    pub fn mixed() -> Vec<Route> {
+        vec![Route::Caller, Route::Callee]
+    }
+
+    /// Whether this route splits a case between the two compilers.
+    #[must_use]
+    pub fn is_mixed(self) -> bool {
+        matches!(self, Route::Caller | Route::Callee)
     }
 }
 
@@ -383,6 +409,9 @@ pub struct Report {
     pub corpus: String,
     /// Which oracle decided every case in it.
     pub oracle: Oracle,
+    /// The routes every case was built by, which for a `mixed` corpus is more than were asked
+    /// for.
+    pub routes: Vec<Route>,
     /// Every case on every route, in name order.
     pub outcomes: Vec<Outcome>,
     /// Exclusions naming a case this corpus does not have.
@@ -603,7 +632,8 @@ pub fn run(
 
     let rucc = differ::program(&settings.rucc);
     let cc = differ::program(&settings.cc);
-    let settings = Settings { rucc, cc, ..settings.clone() };
+    let routes = routes_for(corpus, &settings.routes)?;
+    let settings = Settings { rucc, cc, routes, ..settings.clone() };
     let memory = settings.memory.and_then(sandbox::memory_limit);
     let seconds = settings.timeout.unwrap_or(corpus.timeout);
     let limits = Limits { timeout: Duration::from_secs(seconds), memory };
@@ -710,6 +740,7 @@ pub fn run(
     Ok(Report {
         corpus: corpus.name.clone(),
         oracle,
+        routes: settings.routes.clone(),
         outcomes,
         unmatched,
         never,
@@ -723,6 +754,36 @@ pub fn run(
         timeout: limits.timeout,
         fired,
     })
+}
+
+/// The routes one corpus is built by, given the ones the command line asked for.
+///
+/// A `mixed` corpus is built the three ordinary ways and the two mixed ones when nothing narrowed
+/// the routes, and the ones asked for when something did. Any other corpus has no second file to
+/// give the other compiler, so a mixed route asked of it is dropped, and a run that asked for
+/// nothing else is refused rather than run with no routes at all.
+///
+/// # Errors
+///
+/// When the only routes asked for are mixed ones and the corpus is not.
+pub fn routes_for(corpus: &Corpus, asked: &[Route]) -> Result<Vec<Route>, Error> {
+    if corpus.mixed {
+        let mut routes = asked.to_vec();
+        if asked == Route::all().as_slice() {
+            routes.extend(Route::mixed());
+        }
+        return Ok(routes);
+    }
+    let routes: Vec<Route> = asked.iter().copied().filter(|route| !route.is_mixed()).collect();
+    if routes.is_empty() {
+        return Err(Error {
+            message: format!(
+                "{}: the `caller` and `callee` paths are for a corpus whose manifest says `mixed`",
+                corpus.name
+            ),
+        });
+    }
+    Ok(routes)
 }
 
 /// One case, built every way and run every time.
@@ -901,11 +962,10 @@ pub(crate) fn build(
 ) -> Result<PathBuf, String> {
     fs::create_dir_all(out).map_err(|e| format!("{}: {e}", out.display()))?;
     let exe = out.join(settings.program());
-    let recording = |what: &str| recording(mine, settings, out, what);
     match route {
         Route::Driver => {
             let mut args = flags(case, settings, mine);
-            args.extend(recording("driver"));
+            args.extend(recording(mine, settings, out, "driver"));
             for input in &inputs.files {
                 args.extend(spelled(input, &case.dir));
             }
@@ -914,7 +974,7 @@ pub(crate) fn build(
             args.push(exe.clone().into_os_string());
             once(compiler, &args, &case.dir)?;
         }
-        Route::Assembly | Route::Object => {
+        Route::Assembly | Route::Object | Route::Caller | Route::Callee => {
             // One run of the compiler per input, because `-S` and `-c` each write one file and
             // there is nowhere for the second one to go.
             let (flag, ext) = match route {
@@ -923,9 +983,21 @@ pub(crate) fn build(
             };
             let mut parts = Vec::with_capacity(inputs.files.len());
             for (index, input) in inputs.files.iter().enumerate() {
+                // Which compiler builds this part. On a mixed route it is rucc for the case's own
+                // file and the reference for the rest, or the other way round, and on the others
+                // it is whichever compiler this build is for.
+                let (compiler, mine) = match route {
+                    Route::Caller | Route::Callee => {
+                        match (index == 0) == (route == Route::Caller) {
+                            true => (settings.rucc.as_path(), true),
+                            false => (settings.cc.as_path(), false),
+                        }
+                    }
+                    _ => (compiler, mine),
+                };
                 let part = out.join(format!("part{index}.{ext}"));
                 let mut args = flags(case, settings, mine);
-                args.extend(recording(&format!("part{index}")));
+                args.extend(recording(mine, settings, out, &format!("part{index}")));
                 args.push(flag.into());
                 args.extend(spelled(input, &case.dir));
                 args.push("-o".into());
@@ -1206,7 +1278,7 @@ pub fn markdown(report: &Report, settings: &Settings) -> String {
         Some(level) => format!("`-O{level}`"),
         None => "whatever each compiler defaults to".to_owned(),
     };
-    let routes: Vec<&str> = settings.routes.iter().map(|r| r.word()).collect();
+    let routes: Vec<&str> = report.routes.iter().map(|r| r.word()).collect();
     let _ = writeln!(
         out,
         "Oracle: {}. Build paths: {}. Optimization: {level}.\n",
@@ -1453,6 +1525,7 @@ mod tests {
         Report {
             corpus: "t".to_owned(),
             oracle: Oracle::SelfCheck,
+            routes: Route::all(),
             outcomes,
             unmatched: Vec::new(),
             never: Vec::new(),
@@ -1880,5 +1953,27 @@ unused rules/x86-64.rules:19 (sub.i32 x y)
         assert!(why.len() < 200, "{why}");
         // The comparison itself saw the whole of both, which is what made this a difference.
         assert_ne!(long, "y");
+    }
+
+    /// The two mixed routes are offered by the corpus that asks for them, on top of the three,
+    /// and only when the command line did not pick the routes itself. A corpus that does not ask
+    /// drops them, and refuses a run that asked for nothing else.
+    #[test]
+    fn the_mixed_routes_belong_to_the_corpus_that_says_mixed() {
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let abi = crate::corpus::load(&repo, "abi").unwrap();
+        let other = crate::corpus::load(&repo, "conformance").unwrap();
+        assert!(abi.mixed && !other.mixed);
+        let five = [Route::all(), Route::mixed()].concat();
+        assert_eq!(routes_for(&abi, &Route::all()).unwrap(), five);
+        assert_eq!(routes_for(&abi, &[Route::Callee]).unwrap(), [Route::Callee]);
+        assert_eq!(routes_for(&other, &Route::all()).unwrap(), Route::all());
+        assert_eq!(routes_for(&other, &[Route::Driver, Route::Caller]).unwrap(), [Route::Driver]);
+        let refused = routes_for(&other, &[Route::Caller]).unwrap_err();
+        assert!(refused.message.contains("`mixed`"), "{}", refused.message);
+        for route in five {
+            assert_eq!(Route::named(route.word()), Some(route));
+            assert!(crate::corpus::ROUTES.contains(&route.word()));
+        }
     }
 }

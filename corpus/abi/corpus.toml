@@ -1,0 +1,42 @@
+name = "abi"
+summary = "The System V AMD64 calling convention, one case per part of the classification, each built with rucc on one side of every call and gcc on the other."
+
+# The programs are ours and live next to this manifest, so there is nothing to fetch. They are
+# under this repository's license.
+source = "local"
+
+# The classification is the x86-64 one, so the cases mean nothing anywhere else.
+arch = ["x86_64"]
+
+# Each half prints what it was handed and what came back, and the reference is gcc building both
+# halves, so a difference is the two compilers disagreeing about where a value goes.
+oracle = "differential"
+timeout = 10
+
+# Each case is a caller in its own file and a callee in the file beside it, and `exec` builds it
+# twice more with each compiler building one half. That is the build that matters here: a
+# compiler that puts a value in the wrong register at both ends of a call gets the right answer
+# when it builds the whole program.
+mixed = true
+
+[[unit]]
+name = "x86-64"
+kind = "source"
+dir = "x86-64"
+flags = ["-std=gnu23"]
+
+# The callee half of each case is a file that defines `CALLEE` and includes the case, so both
+# halves are written in one place. It goes on the command line of its case and is not a case of
+# its own.
+[[alongside]]
+unit = "x86-64"
+dir = "sysv"
+companion = ".callee.c"
+
+# rucc lowers `_BitInt` at the widths a register has and at no other, so `_BitInt(7)`,
+# `_BitInt(37)` and `_BitInt(65)` stop it at code generation on every path that builds the case.
+[[exec-exclude]]
+issue = "https://github.com/tamnd/rucc/issues/425"
+why = "a _BitInt whose width no register has is not lowered, E0653"
+outcome = "did not build"
+case = "x86-64/sysv/bitint.c"

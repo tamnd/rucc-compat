@@ -1135,6 +1135,7 @@ mod tests {
             arguments: Vec::new(),
             levels: Vec::new(),
             verdict: false,
+            mixed: false,
         }
     }
 
