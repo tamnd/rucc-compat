@@ -57,11 +57,11 @@ pub const LEVELS: &[&str] = &["0", "1", "2", "3", "s", "z"];
 /// What an execution exclusion's `route` is allowed to name, which is the build paths `exec`
 /// takes, written the way the report writes them.
 ///
-/// The same three words [`crate::exec::Route`] answers with. They are repeated here rather than
+/// The same five words [`crate::exec::Route`] answers with. They are repeated here rather than
 /// read from there because a manifest is loaded by commands that never run a program, and a
 /// manifest that could only be checked by the half of the harness that builds things would be a
 /// manifest nothing checks.
-pub const ROUTES: &[&str] = &["assembly", "object", "driver"];
+pub const ROUTES: &[&str] = &["assembly", "object", "driver", "caller", "callee"];
 
 /// How long a case gets to run when its corpus does not say, in seconds.
 pub const TIMEOUT: u64 = 10;
@@ -640,6 +640,14 @@ pub struct Corpus {
     /// a case through rucc and expect it to come out the other side pass it over, and `verdict` is
     /// the only command that reads it. See [`crate::verdict`].
     pub verdict: bool,
+    /// Whether each case is a caller and a callee in two files, built a second and a third time
+    /// with each compiler building one of them, which is what `mixed = true` asks for.
+    ///
+    /// The ABI corpus is the one. A compiler that puts an argument in the wrong place at both
+    /// ends of a call gets the right answer when it builds the whole program, so the only build
+    /// that can catch it is one where the other end was built by the reference. See
+    /// [`crate::exec::Route::Caller`].
+    pub mixed: bool,
 }
 
 impl Corpus {
@@ -969,6 +977,14 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
             ),
         });
     }
+    let mixed = root.bool("mixed", false);
+    if mixed && oracle.is_none() {
+        return Err(Error {
+            message: format!(
+                "{whose}: `mixed` builds each case with both compilers and runs it, which needs an `oracle`"
+            ),
+        });
+    }
     Ok(Corpus {
         name: name.to_owned(),
         summary: root.need("summary", &whose)?.to_owned(),
@@ -986,6 +1002,7 @@ pub fn load(repo: &Path, name: &str) -> Result<Corpus, Error> {
         arguments,
         levels,
         verdict,
+        mixed,
     })
 }
 

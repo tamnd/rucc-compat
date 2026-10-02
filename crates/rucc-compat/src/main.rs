@@ -47,7 +47,8 @@ options:
   --as CMD         asm only: the reference assembler and its first words, default `as`
   --no-reference   measure only: time rucc on its own
   --markers        run only: compare line markers as well as tokens
-  --path NAME      exec only: build this way, one of assembly, object, driver, repeatable
+  --path NAME      exec only: build this way, one of assembly, object, driver, and caller or
+                   callee for a mixed corpus, repeatable
   --opt LEVEL      exec, screen and measure: the level to pass the compilers after -O
   --machine NAME   exec and measure: what to call this machine in the report
   --target TRIPLE  exec and asm: build for this target, passed to rucc as --target
@@ -582,7 +583,7 @@ fn exec_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, S
             "--path" => {
                 let word = value(args, &mut at, arg)?;
                 let route = Route::named(&word).ok_or_else(|| {
-                    format!("`{word}` is not a build path, try assembly, object or driver")
+                    format!("`{word}` is not a build path, try assembly, object, driver, caller or callee")
                 })?;
                 routes.push(route);
             }
