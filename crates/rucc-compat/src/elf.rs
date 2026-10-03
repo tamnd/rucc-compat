@@ -149,37 +149,110 @@ fn string(table: &[u8], at: u32) -> String {
     String::from_utf8_lossy(&rest[..end]).into_owned()
 }
 
-/// Reads a little endian ELF64 relocatable object.
+/// Where the fields of an ELF file are, which is all that differs between ELF32 and ELF64 here.
+struct Class {
+    /// Whether it is ELF64.
+    wide: bool,
+}
+
+impl Class {
+    /// A word, which is an address, an offset or a size.
+    fn word(&self, data: &[u8], at: usize) -> u64 {
+        if self.wide { u64_at(data, at) } else { u64::from(u32_at(data, at)) }
+    }
+
+    /// Where a field of the file header, a section header or a symbol is, by its ELF64 offset.
+    fn file(&self, at64: usize) -> usize {
+        if self.wide {
+            return at64;
+        }
+        match at64 {
+            40 => 32,
+            58 => 46,
+            60 => 48,
+            62 => 50,
+            _ => at64,
+        }
+    }
+
+    fn section(&self, at64: usize) -> usize {
+        if self.wide {
+            return at64;
+        }
+        match at64 {
+            24 => 16,
+            32 => 20,
+            40 => 24,
+            44 => 28,
+            48 => 32,
+            56 => 36,
+            _ => at64,
+        }
+    }
+
+    fn header_size(&self) -> u64 {
+        if self.wide { 64 } else { 40 }
+    }
+
+    fn symbol_size(&self) -> usize {
+        if self.wide { 24 } else { 16 }
+    }
+
+    /// The size of a relocation, with or without its addend.
+    fn reloc_size(&self, rela: bool) -> usize {
+        match (self.wide, rela) {
+            (true, true) => 24,
+            (true, false) => 16,
+            (false, true) => 12,
+            (false, false) => 8,
+        }
+    }
+
+    /// The symbol and the type a relocation's info word holds.
+    fn info(&self, info: u64) -> (u32, u32) {
+        if self.wide {
+            ((info >> 32) as u32, (info & 0xffff_ffff) as u32)
+        } else {
+            ((info >> 8) as u32, (info & 0xff) as u32)
+        }
+    }
+}
+
+/// Reads a little endian ELF64 or ELF32 relocatable object.
+///
+/// ELF32 is what the kernel's 16-bit and 32-bit boot code is built as. Its relocations are
+/// `SHT_REL`, which keep the addend in the bytes they patch, so comparing the bytes compares it.
 ///
 /// # Errors
 ///
 /// When it is not one, or it points past its own end.
 pub fn read(data: &[u8]) -> Result<Object, String> {
-    if data.len() < 64 || &data[..4] != b"\x7fELF" {
+    if data.len() < 52 || &data[..4] != b"\x7fELF" {
         return Err("not an ELF file".to_owned());
     }
-    if data[4] != 2 || data[5] != 1 {
-        return Err("not a little endian 64-bit ELF file".to_owned());
+    if !matches!(data[4], 1 | 2) || data[5] != 1 || (data[4] == 2 && data.len() < 64) {
+        return Err("not a little endian ELF32 or ELF64 file".to_owned());
     }
+    let class = Class { wide: data[4] == 2 };
     if u16_at(data, 16) != 1 {
         return Err("not a relocatable object".to_owned());
     }
-    let shoff = u64_at(data, 40);
-    let shentsize = u64::from(u16_at(data, 58));
-    let mut shnum = u64::from(u16_at(data, 60));
-    let mut shstrndx = u32::from(u16_at(data, 62));
-    if shentsize < 64 {
+    let shoff = class.word(data, class.file(40));
+    let shentsize = u64::from(u16_at(data, class.file(58)));
+    let mut shnum = u64::from(u16_at(data, class.file(60)));
+    let mut shstrndx = u32::from(u16_at(data, class.file(62)));
+    if shentsize < class.header_size() {
         return Err("section headers are too small".to_owned());
     }
     // Past 0xff00 sections the counts live in the first section header, which the kernel's
     // biggest objects need.
     if shoff != 0 {
-        let first = slice(data, shoff, 64)?;
+        let first = slice(data, shoff, class.header_size())?;
         if shnum == 0 {
-            shnum = u64_at(first, 32);
+            shnum = class.word(first, class.section(32));
         }
         if shstrndx == 0xffff {
-            shstrndx = u32_at(first, 40);
+            shstrndx = u32_at(first, class.section(40));
         }
     }
     let table = slice(data, shoff, shnum * shentsize)?;
@@ -189,13 +262,13 @@ pub fn read(data: &[u8]) -> Result<Object, String> {
             Header {
                 name: u32_at(h, 0),
                 kind: u32_at(h, 4),
-                flags: u64_at(h, 8),
-                offset: u64_at(h, 24),
-                size: u64_at(h, 32),
-                link: u32_at(h, 40),
-                info: u32_at(h, 44),
-                align: u64_at(h, 48),
-                entsize: u64_at(h, 56),
+                flags: class.word(h, 8),
+                offset: class.word(h, class.section(24)),
+                size: class.word(h, class.section(32)),
+                link: u32_at(h, class.section(40)),
+                info: u32_at(h, class.section(44)),
+                align: class.word(h, class.section(48)),
+                entsize: class.word(h, class.section(56)),
             }
         })
         .collect();
@@ -212,8 +285,14 @@ pub fn read(data: &[u8]) -> Result<Object, String> {
         let wide =
             headers.iter().find(|h| h.kind == SHT_SYMTAB_SHNDX).map(&contents).transpose()?;
         let body = contents(symtab)?;
-        for (n, s) in body.chunks_exact(24).enumerate() {
-            let mut section = u16_at(s, 6);
+        for (n, s) in body.chunks_exact(class.symbol_size()).enumerate() {
+            // ELF32 puts the value and size before the info, other and section fields.
+            let (value, size, info, other, at) = if class.wide {
+                (u64_at(s, 8), u64_at(s, 16), s[4], s[5], 6)
+            } else {
+                (u64::from(u32_at(s, 4)), u64::from(u32_at(s, 8)), s[12], s[13], 14)
+            };
+            let mut section = u16_at(s, at);
             if section == 0xffff {
                 if let Some(wide) = wide.filter(|w| w.len() >= n * 4 + 4) {
                     section = u16::try_from(u32_at(wide, n * 4)).unwrap_or(u16::MAX);
@@ -222,10 +301,10 @@ pub fn read(data: &[u8]) -> Result<Object, String> {
             raw.push(Raw {
                 name: string(strings, u32_at(s, 0)),
                 section,
-                value: u64_at(s, 8),
-                size: u64_at(s, 16),
-                info: s[4],
-                other: s[5],
+                value,
+                size,
+                info,
+                other,
             });
         }
     }
@@ -250,15 +329,20 @@ pub fn read(data: &[u8]) -> Result<Object, String> {
 
     let mut relocs: BTreeMap<usize, Vec<Reloc>> = BTreeMap::new();
     for h in headers.iter().filter(|h| h.kind == SHT_RELA || h.kind == SHT_REL) {
-        let size = if h.kind == SHT_RELA { 24 } else { 16 };
+        let rela = h.kind == SHT_RELA;
         let list = relocs.entry(h.info as usize).or_default();
-        for r in contents(h)?.chunks_exact(size) {
-            let info = u64_at(r, 8);
-            let (name, offset) = target((info >> 32) as u32);
-            let addend = if h.kind == SHT_RELA { u64_at(r, 16) as i64 } else { 0 };
+        let step = if class.wide { 8 } else { 4 };
+        for r in contents(h)?.chunks_exact(class.reloc_size(rela)) {
+            let (symbol, kind) = class.info(class.word(r, step));
+            let (name, offset) = target(symbol);
+            let addend = match (rela, class.wide) {
+                (false, _) => 0,
+                (true, true) => u64_at(r, 16) as i64,
+                (true, false) => i64::from(u32_at(r, 8) as i32),
+            };
             list.push(Reloc {
-                offset: u64_at(r, 0),
-                kind: (info & 0xffff_ffff) as u32,
+                offset: class.word(r, 0),
+                kind,
                 target: name,
                 addend: addend.wrapping_add(offset),
             });
@@ -660,5 +744,75 @@ mod tests {
         let mut short = Builder::new().build();
         short.truncate(200);
         assert!(read(&short).is_err());
+    }
+
+    /// Name, type, contents, link, info and entry size of one ELF32 section.
+    type Body32<'a> = (u32, u32, &'a [u8], u32, u32, u32);
+
+    /// An ELF32 object as gas writes one for `-m16` code: `.text` holding `e8 fc ff ff ff`, a
+    /// global `start` at 0, and an `R_386_PC32` against an undefined `far` at 1.
+    fn elf32() -> Vec<u8> {
+        let shstrtab = b"\0.text\0.symtab\0.strtab\0.rel.text\0.shstrtab\0".to_vec();
+        let strtab = b"\0start\0far\0".to_vec();
+        let text = vec![0xe8, 0xfc, 0xff, 0xff, 0xff];
+        let symbol = |name: u32, value: u32, info: u8, section: u16| {
+            let mut s = Vec::new();
+            s.extend_from_slice(&name.to_le_bytes());
+            s.extend_from_slice(&value.to_le_bytes());
+            s.extend_from_slice(&0u32.to_le_bytes());
+            s.extend_from_slice(&[info, 0]);
+            s.extend_from_slice(&section.to_le_bytes());
+            s
+        };
+        let mut symtab = vec![0; 16];
+        symtab.extend(symbol(1, 0, 0x10, 1));
+        symtab.extend(symbol(7, 0, 0x10, 0));
+        let mut rel = Vec::new();
+        rel.extend_from_slice(&1u32.to_le_bytes());
+        rel.extend_from_slice(&((2u32 << 8) | 2).to_le_bytes());
+        let bodies: [Body32<'_>; 5] = [
+            (1, 1, &text, 0, 0, 0),
+            (7, SHT_SYMTAB, &symtab, 3, 1, 16),
+            (15, 3, &strtab, 0, 0, 0),
+            (23, SHT_REL, &rel, 2, 1, 8),
+            (33, 3, &shstrtab, 0, 0, 0),
+        ];
+        let mut file = vec![0u8; 52];
+        file[..7].copy_from_slice(b"\x7fELF\x01\x01\x01");
+        file[16..18].copy_from_slice(&1u16.to_le_bytes());
+        file[18..20].copy_from_slice(&3u16.to_le_bytes());
+        let mut headers = vec![0u8; 40];
+        for (name, kind, body, link, info, entsize) in bodies {
+            let offset = file.len() as u32;
+            file.extend_from_slice(body);
+            let mut h = Vec::new();
+            for word in [name, kind, 0, 0, offset, body.len() as u32, link, info, 1, entsize] {
+                h.extend_from_slice(&word.to_le_bytes());
+            }
+            headers.extend(h);
+        }
+        let shoff = file.len() as u32;
+        file.extend(headers);
+        file[32..36].copy_from_slice(&shoff.to_le_bytes());
+        file[46..48].copy_from_slice(&40u16.to_le_bytes());
+        file[48..50].copy_from_slice(&6u16.to_le_bytes());
+        file[50..52].copy_from_slice(&5u16.to_le_bytes());
+        file
+    }
+
+    #[test]
+    fn an_elf32_object_is_read_like_an_elf64_one() {
+        let object = read(&elf32()).unwrap();
+        let text = object.sections.iter().find(|s| s.name == ".text").unwrap();
+        assert_eq!(text.bytes, [0xe8, 0xfc, 0xff, 0xff, 0xff]);
+        assert_eq!(
+            text.relocs,
+            [Reloc { offset: 1, kind: 2, target: "far".to_owned(), addend: 0 }]
+        );
+        let names: Vec<&str> = object.symbols.iter().map(|s| s.name.as_str()).collect();
+        assert_eq!(names, ["far", "start"]);
+        let start = object.symbols.iter().find(|s| s.name == "start").unwrap();
+        assert_eq!((start.section.as_str(), start.bind), (".text", 1));
+        assert!(compare(&object, &read(&elf32()).unwrap()).is_empty());
     }
 }
