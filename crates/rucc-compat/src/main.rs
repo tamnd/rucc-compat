@@ -4,11 +4,11 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use rucc_compat::asm;
 use rucc_compat::corpus::{self, Builder, Corpus, Source, UnitKind};
 use rucc_compat::coverage::{self, Marks, Verdict};
 use rucc_compat::differ::{self, Settings};
 use rucc_compat::exec::{self, Route};
+use rucc_compat::{asm, csmith};
 use rucc_compat::{fetch, kernel, repo_root};
 use rucc_compat::{measure, pipeline, rows, screen, verdict};
 
@@ -27,6 +27,7 @@ usage:
   rucc-compat verdict [corpus...] [options]
   rucc-compat rows [corpus...] [--matrix FILE]
   rucc-compat coverage [file or directory...] [--report] [--floor PERCENT] [--unreached]
+  rucc-compat csmith [options]
 
 commands:
   list             what corpora there are and whether they are ready to run
@@ -40,6 +41,7 @@ commands:
   verdict          say whether both compilers accept and reject what a case says they should
   rows             check a corpus's rows.toml against its cases and count the rows
   coverage         union what exec recorded and say which lowering rules nothing fired
+  csmith           build the checked in Csmith seeds with both compilers and compare the runs
 
 options:
   --rucc PATH      the compiler under test, or $RUCC, or `rucc`
@@ -67,6 +69,11 @@ options:
   --matrix FILE    rows only: rucc's crates/rucc-gnu/features.toml, every feature needs a row
   --floor PERCENT  coverage only: fail when less than that much of the rule set fired
   --unreached      coverage only: check every rule nothing fired against unreached.toml
+  --csmith PATH    csmith only: the generator, or $CSMITH, or `csmith`
+  --include DIR    csmith only: where csmith.h is, when it is not beside the generator
+  --seed N         csmith only: run this seed, in the list or not, may be given more than once
+  --reduce         csmith only: reduce each failure into results/csmith/<seed>.c
+  --reducer PATH   csmith only: the reducer, default `cvise`
 
 Naming no corpus means all of them. The exit status is 1 when anything failed.
 
@@ -145,6 +152,16 @@ makes it reachable, and every entry has to be about a rule that exists and that 
 so the list goes stale in neither direction. It wants the whole sweep for the same reason the
 floor does, and it wants it more, since one level on its own leaves most of the rule set
 untouched and would report most of it as unexplained.
+
+`csmith` makes a program of each seed in `corpus/csmith/seeds.txt` with Csmith, builds it with
+rucc and with the reference at `--opt`, default 0, runs both, and compares how they ended and
+what they printed. A seed the reference cannot build or run to the end has no answer and is
+counted apart. rucc fails a seed by refusing it, crashing on it, or building a program that
+ends differently or prints another checksum. The list names the Csmith it was written for, and
+another version is said out loud since it makes other programs from the same seeds. `--reduce`
+hands each failure to C-Vise with a test that keeps it the same failure, and checks a wrong
+answer against the reference under the sanitizers at every step so that the reduced file stays
+a program with one right answer. `--report` writes `results/csmith.md`.
 ";
 
 fn main() -> ExitCode {
@@ -184,6 +201,7 @@ fn run() -> Result<ExitCode, String> {
         "rows" => rows_of(&repo, &all, rest),
         "asm" => asm_them(&repo, &all, rest),
         "verdict" => verdict_them(&repo, &all, rest),
+        "csmith" => csmith_them(&repo, rest),
         other => Err(format!("`{other}` is not a command, try --help")),
     }
 }
@@ -456,6 +474,68 @@ fn asm_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, St
         failures += done.failures();
     }
     Ok(if failures == 0 { ExitCode::SUCCESS } else { ExitCode::FAILURE })
+}
+
+fn csmith_them(repo: &Path, args: &[String]) -> Result<ExitCode, String> {
+    let mut settings = csmith::Settings {
+        rucc: from_env("RUCC", "rucc"),
+        cc: from_env("CC", "cc"),
+        csmith: from_env("CSMITH", "csmith"),
+        ..csmith::Settings::default()
+    };
+    let mut report = false;
+    let mut at = 0;
+    while at < args.len() {
+        let arg = args[at].as_str();
+        let number =
+            |text: String| text.parse::<u64>().map_err(|_| format!("`{text}` is not a number"));
+        match arg {
+            "--report" => report = true,
+            "--reduce" => settings.reduce = true,
+            "--rucc" => settings.rucc = PathBuf::from(value(args, &mut at, arg)?),
+            "--cc" => settings.cc = PathBuf::from(value(args, &mut at, arg)?),
+            "--csmith" => settings.csmith = PathBuf::from(value(args, &mut at, arg)?),
+            "--include" => settings.include = Some(PathBuf::from(value(args, &mut at, arg)?)),
+            "--reducer" => settings.reducer = PathBuf::from(value(args, &mut at, arg)?),
+            "--opt" => settings.opt = value(args, &mut at, arg)?,
+            "--seed" => settings.only.push(number(value(args, &mut at, arg)?)?),
+            "--jobs" => settings.jobs = Some(number(value(args, &mut at, arg)?)? as usize),
+            "--limit" => settings.limit = Some(number(value(args, &mut at, arg)?)? as usize),
+            other => return Err(format!("`{other}` is not an option of csmith")),
+        }
+        at += 1;
+    }
+    let text = fs::read_to_string(repo.join(csmith::SEEDS))
+        .map_err(|e| format!("{}: {e}", csmith::SEEDS))?;
+    let list = csmith::parse(&text)?;
+    let version = csmith::version_of(&settings.csmith)?;
+    if version != list.version {
+        println!("csmith: the list was written for {}, this is {version}", list.version);
+    }
+    let mut seeds = if settings.only.is_empty() { list.seeds } else { settings.only.clone() };
+    if let Some(limit) = settings.limit {
+        seeds.truncate(limit);
+    }
+    let scratch = repo.join("target").join("csmith");
+    let mut done = csmith::run(&seeds, &settings, &scratch)?;
+    println!("{}", done.summary());
+    for case in done.cases.iter().filter(|c| c.outcome.failed()) {
+        println!("  seed {}: {:?}", case.seed, case.outcome);
+    }
+    let results = repo.join("results");
+    if settings.reduce {
+        csmith::reduce(&mut done, &settings, &scratch, &results.join("csmith"))?;
+        for path in done.cases.iter().filter_map(|c| c.reduced.as_ref()) {
+            println!("  wrote {}", path.display());
+        }
+    }
+    if report {
+        fs::create_dir_all(&results).map_err(|e| e.to_string())?;
+        let path = results.join("csmith.md");
+        fs::write(&path, done.markdown(&version)).map_err(|e| e.to_string())?;
+        println!("  wrote {}", path.display());
+    }
+    Ok(if done.failures() == 0 { ExitCode::SUCCESS } else { ExitCode::FAILURE })
 }
 
 fn check_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode, String> {

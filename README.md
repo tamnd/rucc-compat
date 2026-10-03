@@ -137,6 +137,21 @@ A run narrowed by any of `--unit`, `--only`, `--failed` or `--limit` is not a wh
 ./target/release/rucc-compat exec gcc-torture --excluded --opt 2
 ```
 
+## Csmith
+
+The corpora are programs somebody wrote, so they cover what their authors thought of. A Csmith program is written by nobody: a few thousand lines of arithmetic over every integer type, through pointers, bitfields, packed structures, unions, globals and volatiles, with no undefined behaviour in it by construction, ending in one checksum. `rucc-compat csmith` makes a program of each seed in `corpus/csmith/seeds.txt`, builds it with rucc and with the reference at `--opt`, runs both, and compares how they ended and what they printed.
+
+```
+./target/release/rucc-compat csmith --rucc ../rucc/target/release/rucc --cc gcc-16 --report
+./target/release/rucc-compat csmith --seed 808 --opt 2
+```
+
+Csmith makes the same program of a seed every time, so the list and the version of Csmith on its first line are the whole input. Two machines with the same Csmith run the same ten thousand programs, and a seed that disagrees today and agreed last week is a regression somebody can bisect. A different Csmith is said out loud rather than refused, since it is still a fine test, just not the same one. `csmith.h` is looked for beside the binary, the way `cmake --install` lays it out, and `--include` says where it is otherwise.
+
+A seed the reference cannot build, or whose program does not finish in ten seconds, has no answer and is counted apart, and some Csmith programs just loop for a very long time. rucc fails a seed by refusing it, crashing on it, taking more than two minutes over it, or building a program that ends differently or prints another checksum. rucc's program gets twice the reference's time so that being slower is not reported as being wrong.
+
+`--reduce` hands each failure to C-Vise, or anything that takes the same arguments named with `--reducer`, and writes what comes out to `results/csmith/<seed>.c` with the seed and the disagreement at the top. The test it reduces against keeps a refusal the same refusal by its error code, and keeps a wrong answer honest: at every step the file is built again by the reference under AddressSanitizer and UndefinedBehaviorSanitizer and has to give the same answer, and gcc is asked for the warnings about reading something never written. Without that a reducer will happily cut a program down to one that reads an uninitialised variable, at which point both compilers are right and the file is noise.
+
 ## The corpora
 
 Each directory under `corpus/` describes one body of code, in a `corpus.toml` that says where it comes from, what license it carries and what to do with it. There are four kinds, and the difference is where the code lives.
