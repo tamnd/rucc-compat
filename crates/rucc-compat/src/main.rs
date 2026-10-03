@@ -1136,6 +1136,11 @@ fn verdict_them(repo: &Path, all: &[Corpus], args: &[String]) -> Result<ExitCode
         }
         at += 1;
     }
+    // Both compilers run in the directory of the case, as they do for `measure`, so a relative
+    // path such as `rucc/target/release/rucc` has to be made absolute here or it names nothing
+    // there. A bare name is left for the search path to find.
+    settings.rucc = anchored(settings.rucc);
+    settings.cc = anchored(settings.cc);
     let wanted = chosen(all, &names)?;
     let scratch = repo.join("target").join("verdict");
     let mut failures = 0;
