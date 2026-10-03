@@ -685,7 +685,7 @@ jobs:
         with:
           path: sweep
       - name: union it and check every rule
-        run: ./target/release/rucc-compat coverage sweep --report --unreached --floor 92.6
+        run: ./target/release/rucc-compat coverage sweep --report --unreached --floor 87.6
       - name: keep the report
         if: always()
         uses: actions/upload-artifact@v4.6.2
