@@ -888,6 +888,11 @@ mod tests {
         assert!(sample(&names, None, |_| false).iter().all(|t| *t));
     }
 
+    // Unix only. The names come from the `source` link rk leaves in the build directory, which
+    // the test makes with a Unix symlink, and the log it writes holds the paths as JSON strings,
+    // where a Windows path's backslashes are escapes. rk builds Linux on Linux, so nothing on
+    // Windows reads a kernel build.
+    #[cfg(unix)]
     #[test]
     fn units_are_sampled_and_named_from_the_tree() {
         let root =
@@ -909,7 +914,6 @@ mod tests {
         }
         fs::write(out.join(LOG), log).unwrap();
         fs::write(out.join(SUMMARY), BUILD_JSON).unwrap();
-        #[cfg(unix)]
         std::os::unix::fs::symlink(&src, out.join("source")).unwrap();
         let manifest = "name = \"kernel-pp\"\nsummary = \"s\"\nsource = \"build\"\nbuilder = \"rk\"\nvariable = \"RUCC_COMPAT_NOT_SET\"\nversion = \"7.2.8\"\nera = \"E11\"\ngnuc = \"14.2.0\"\n\n[[unit]]\nname = \"units\"\nkind = \"kernel-units\"\nsample = 4\n";
         fs::create_dir_all(root.join("repo/corpus/kernel-pp")).unwrap();
@@ -923,7 +927,6 @@ mod tests {
         let names: Vec<&str> = found.cases.iter().map(|c| c.name.as_str()).collect();
         assert!(names.len() == 4 || names.len() == 5, "{names:?}");
         assert!(names.contains(&"units/lib/f3.c"), "the exporter was not taken: {names:?}");
-        #[cfg(unix)]
         assert!(names.iter().all(|n| n.starts_with("units/lib/")), "{names:?}");
         let case = &found.cases[0];
         assert_eq!(case.dir, out);
