@@ -188,7 +188,7 @@ issue = "https://github.com/tamnd/rucc-compat/issues/191"
 
 [[rule]]
 pattern = "(or.i64x2 (value.i64x2 x) (value.i64x2 y))"
-why = "the same, for the or"
+why = "the same, for the or of two vectors"
 issue = "https://github.com/tamnd/rucc-compat/issues/191"
 
 [[rule]]
@@ -206,7 +206,7 @@ issue = "https://github.com/tamnd/rucc/issues/2772"
 
 [[rule]]
 pattern = "(or.i1 (value.i1 x) (iconst.i1 k))"
-why = "the same, for the or"
+why = "the same, for an or of a truth value with a constant"
 issue = "https://github.com/tamnd/rucc/issues/2772"
 
 [[rule]]
@@ -216,7 +216,7 @@ issue = "https://github.com/tamnd/rucc/issues/2772"
 
 [[rule]]
 pattern = "(smulh.i32 (value.i32 x) (value.i32 y))"
-why = "the same, signed"
+why = "the same, for the signed high multiply"
 issue = "https://github.com/tamnd/rucc/issues/2772"
 
 [[rule]]
@@ -246,10 +246,10 @@ issue = "https://github.com/tamnd/rucc/issues/2772"
 
 [[rule]]
 pattern = "(trunc.i32.i1 (value.i32 x))"
-why = "the same, from `i32`"
+why = "the same, for a truth value taken from an `i32`"
 issue = "https://github.com/tamnd/rucc/issues/2772"
 
 [[rule]]
 pattern = "(trunc.i64.i1 (value.i64 x))"
-why = "the same, from `i64`"
+why = "the same, for a truth value taken from an `i64`"
 issue = "https://github.com/tamnd/rucc/issues/2772"
