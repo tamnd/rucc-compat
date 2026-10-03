@@ -23,32 +23,233 @@
 # the rule set, so asking this of one is asking it to explain most of the compiler.
 
 # The scaled index address written out as arithmetic. A load of an array element does reach a
-# `leaq (%rdi,%rsi,8)`, from the addressing mode built for the load, and these three are the
-# same address computed on its own and handed to something other than a memory operand. They
-# are reachable: a hand written case fires all three. Nothing in the corpus writes one.
+# `leaq (%rdi,%rsi,8)`, from the addressing mode built for the load, and this is the same address
+# computed on its own and handed to something other than a memory operand. It is reachable: a hand
+# written case fires it. The scales of four and eight fire over the corpus now, and nothing in it
+# writes the scale of two.
 
 [[rule]]
 pattern = "(add.i64 (value.i64 x) (shl.i64 (value.i64 y) (iconst.i64 1)))"
 why = "no program in the corpus takes a scaled index address as a value rather than as a memory operand, so the rule is reachable and unreached, and a hand written case fires it"
 issue = "https://github.com/tamnd/rucc-compat/issues/59"
 
-[[rule]]
-pattern = "(add.i64 (value.i64 x) (shl.i64 (value.i64 y) (iconst.i64 2)))"
-why = "the same, at a scale of four"
-issue = "https://github.com/tamnd/rucc-compat/issues/59"
+# `_Float16`. No program in the corpus uses the type, and a hand written one that loads, returns
+# and copies one fires all five.
 
 [[rule]]
-pattern = "(add.i64 (value.i64 x) (shl.i64 (value.i64 y) (iconst.i64 3)))"
-why = "the same, at a scale of eight"
-issue = "https://github.com/tamnd/rucc-compat/issues/59"
-
-# The narrow integer equality. C promotes both operands of a comparison to at least `int`, so
-# the ten conditions are unreachable below four bytes, with one exception: the front end
-# converts a value to a truth by comparing it against zero at the value's own width, and the
-# peephole turns the negation of one of those into an equality at that width. The one byte form
-# is reached. The two byte form is the same thing one type over.
+pattern = "(load.f16 (value.i64 a))"
+why = "no program in the corpus loads a `_Float16`, so the rule is reachable and unreached, and a hand written case fires it"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
 
 [[rule]]
-pattern = "(icmp_eq.i1 (value.i16 x) (value.i16 y))"
-why = "no program in the corpus negates a truth test on a short, so the rule is reachable and unreached, and a hand written case fires it"
-issue = "https://github.com/tamnd/rucc-compat/issues/61"
+pattern = "(load.f16 (add.i64 (value.i64 a) (iconst.i64 k)))"
+why = "the same, at an offset"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(ret.f16 (value.f16 v))"
+why = "no program in the corpus returns a `_Float16`, and a hand written case fires it"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(bitcast.i16.f16 (value.i16 x))"
+why = "no program in the corpus copies the bits of a `short` into a `_Float16`, and a hand written case fires it"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(bitcast.f16.i16 (value.f16 x))"
+why = "the same, the other way"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+# A `__float128` and a `_Bool` at an offset from an address, which is an array element or a
+# structure field of the type. The corpus loads and stores both at a bare address only.
+
+[[rule]]
+pattern = "(load.f128 (add.i64 (value.i64 a) (iconst.i64 k)))"
+why = "no program in the corpus loads a `__float128` field or element at a constant offset, and a hand written case fires it"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(store.f128 (value.f128 v) (add.i64 (value.i64 a) (iconst.i64 k)))"
+why = "the same, for the store"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(load.i1 (add.i64 (value.i64 a) (iconst.i64 k)))"
+why = "no program in the corpus loads a `_Bool` field or element at a constant offset, and a hand written case fires it"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(store.i1 (value.i1 v) (add.i64 (value.i64 a) (iconst.i64 k)))"
+why = "the same, for the store"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+# The narrow integer orderings. C compares a `char` or a `short` at `int`, and the comparison
+# comes back to the narrow width once the optimizer sees both operands are extensions from it. A
+# hand written case fires all nine. The corpus does not compare two narrow values these ways.
+
+[[rule]]
+pattern = "(icmp_sle.i1 (value.i8 x) (value.i8 y))"
+why = "no program in the corpus compares two `signed char` values with `<=`, and a hand written case fires it"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(icmp_sle.i1 (value.i16 x) (value.i16 y))"
+why = "the same, for `short`"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(icmp_sge.i1 (value.i8 x) (value.i8 y))"
+why = "no program in the corpus compares two `signed char` values with `>=`, and a hand written case fires it"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(icmp_sge.i1 (value.i16 x) (value.i16 y))"
+why = "the same, for `short`"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(icmp_ult.i1 (value.i8 x) (value.i8 y))"
+why = "no program in the corpus compares two `unsigned char` values with `<`, and a hand written case fires it"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(icmp_ult.i1 (value.i16 x) (value.i16 y))"
+why = "the same, for `unsigned short`"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(icmp_ule.i1 (value.i8 x) (value.i8 y))"
+why = "no program in the corpus compares two `unsigned char` values with `<=`, and a hand written case fires it"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(icmp_ule.i1 (value.i16 x) (value.i16 y))"
+why = "the same, for `unsigned short`"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(icmp_ugt.i1 (value.i8 x) (value.i8 y))"
+why = "no program in the corpus compares two `unsigned char` values with `>`, and a hand written case fires it"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+# The vector rules. A GNU vector of four `int` or two `long`, or a loop the vectorizer takes over
+# arrays of them, fires all twelve. The corpus has neither at these shapes.
+
+[[rule]]
+pattern = "(load.i32x4 (add.i64 (value.i64 a) (iconst.i64 k)))"
+why = "no program in the corpus loads a vector of four `int` at a constant offset, and a hand written case fires it"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(store.i32x4 (value.i32x4 v) (add.i64 (value.i64 a) (iconst.i64 k)))"
+why = "the same, for the store"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(sub.i32x4 (value.i32x4 x) (value.i32x4 y))"
+why = "no program in the corpus subtracts two vectors of four `int`, and a hand written case fires it"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(load.i64x2 (value.i64 a))"
+why = "no program in the corpus loads a vector of two `long`, and a hand written case fires it"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(load.i64x2 (add.i64 (value.i64 a) (iconst.i64 k)))"
+why = "the same, at an offset"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(store.i64x2 (value.i64x2 v) (value.i64 a))"
+why = "no program in the corpus stores a vector of two `long`, and a hand written case fires it"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(store.i64x2 (value.i64x2 v) (add.i64 (value.i64 a) (iconst.i64 k)))"
+why = "the same, at an offset"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(add.i64x2 (value.i64x2 x) (value.i64x2 y))"
+why = "no program in the corpus adds two vectors of two `long`, and a hand written case fires it"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(sub.i64x2 (value.i64x2 x) (value.i64x2 y))"
+why = "the same, for the subtraction"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(and.i64x2 (value.i64x2 x) (value.i64x2 y))"
+why = "the same, for the and"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(or.i64x2 (value.i64x2 x) (value.i64x2 y))"
+why = "the same, for the or"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+[[rule]]
+pattern = "(xor.i64x2 (value.i64x2 x) (value.i64x2 y))"
+why = "the same, for the exclusive or"
+issue = "https://github.com/tamnd/rucc-compat/issues/191"
+
+# Rules nothing in the compiler writes the pattern of on x86-64, as far as anyone has found. Each
+# one either gets a producer or leaves the rule set, and the issue says which.
+
+[[rule]]
+pattern = "(and.i1 (value.i1 x) (iconst.i1 k))"
+why = "folding takes a logic operation on a constant truth before selection sees it"
+issue = "https://github.com/tamnd/rucc/issues/2772"
+
+[[rule]]
+pattern = "(or.i1 (value.i1 x) (iconst.i1 k))"
+why = "the same, for the or"
+issue = "https://github.com/tamnd/rucc/issues/2772"
+
+[[rule]]
+pattern = "(umulh.i32 (value.i32 x) (value.i32 y))"
+why = "a 32 bit division by a constant multiplies at 64 bits on x86-64, and only i686 asks for a high multiply at 32"
+issue = "https://github.com/tamnd/rucc/issues/2772"
+
+[[rule]]
+pattern = "(smulh.i32 (value.i32 x) (value.i32 y))"
+why = "the same, signed"
+issue = "https://github.com/tamnd/rucc/issues/2772"
+
+[[rule]]
+pattern = "(sdiv.i8 (value.i8 x) (value.i8 y))"
+why = "C divides at `int` and the narrowing pass did not shorten a signed `char` division in any case tried"
+issue = "https://github.com/tamnd/rucc/issues/2772"
+
+[[rule]]
+pattern = "(sdiv.i16 (value.i16 x) (value.i16 y))"
+why = "the same, for `short`"
+issue = "https://github.com/tamnd/rucc/issues/2772"
+
+[[rule]]
+pattern = "(srem.i8 (value.i8 x) (value.i8 y))"
+why = "the same, for the remainder of a signed `char`"
+issue = "https://github.com/tamnd/rucc/issues/2772"
+
+[[rule]]
+pattern = "(srem.i16 (value.i16 x) (value.i16 y))"
+why = "the same, for the remainder of a `short`"
+issue = "https://github.com/tamnd/rucc/issues/2772"
+
+[[rule]]
+pattern = "(trunc.i16.i1 (value.i16 x))"
+why = "the front end makes a truth value by comparing against zero and never by truncating"
+issue = "https://github.com/tamnd/rucc/issues/2772"
+
+[[rule]]
+pattern = "(trunc.i32.i1 (value.i32 x))"
+why = "the same, from `i32`"
+issue = "https://github.com/tamnd/rucc/issues/2772"
+
+[[rule]]
+pattern = "(trunc.i64.i1 (value.i64 x))"
+why = "the same, from `i64`"
+issue = "https://github.com/tamnd/rucc/issues/2772"
