@@ -259,6 +259,28 @@ pub fn assembler_words(flags: &[String]) -> Vec<String> {
         .collect()
 }
 
+/// The x86 mode flag kbuild gave the compiler, the last one winning, as in `-m16` for the real
+/// mode setup code. The assembler is told the mode by the compiler driver, not by a `-Wa,` word.
+#[must_use]
+pub fn mode(flags: &[String]) -> Option<&str> {
+    flags
+        .iter()
+        .rev()
+        .map(String::as_str)
+        .find(|f| matches!(*f, "-m16" | "-m32" | "-m64" | "-mx32"))
+}
+
+/// What gcc's driver tells gas for that mode. `-m16` code is assembled as 32-bit, and the
+/// `.code16gcc` gcc writes at the top of the text is what makes it 16-bit.
+#[must_use]
+pub fn gas_mode(mode: &str) -> &'static str {
+    match mode {
+        "-m16" | "-m32" => "--32",
+        "-mx32" => "--x32",
+        _ => "--64",
+    }
+}
+
 fn first_line(ran: &sandbox::Ran) -> String {
     let text = String::from_utf8_lossy(&ran.err);
     let line = text.lines().map(str::trim).find(|l| !l.is_empty());
@@ -290,6 +312,13 @@ fn one(case: &Case, at: usize, settings: &Settings, scratch: &Path) -> (Status, 
 
     let program = differ::program(Path::new(&settings.assembler[0]));
     let mut args: Vec<String> = settings.assembler[1..].to_vec();
+    // Only gas takes the mode as a word. llvm-mc has it in the triple it was given.
+    let gas = Path::new(&settings.assembler[0])
+        .file_name()
+        .is_some_and(|name| name.to_string_lossy().ends_with("as"));
+    if let Some(mode) = mode(&case.flags).filter(|_| gas) {
+        args.push(gas_mode(mode).to_owned());
+    }
     args.extend(words.iter().cloned());
     args.extend(["-o".to_owned(), theirs.to_string_lossy().into_owned(), file.clone()]);
     let status = match sandbox::run(&program, &args, &case.dir, &limits) {
@@ -304,6 +333,7 @@ fn one(case: &Case, at: usize, settings: &Settings, scratch: &Path) -> (Status, 
             args.push(format!("--target={target}"));
         }
         args.extend(["-c", "-x", "assembler"].map(str::to_owned));
+        args.extend(mode(&case.flags).map(str::to_owned));
         args.extend(case.flags.iter().filter(|f| f.starts_with("-Wa,")).cloned());
         args.extend(["-o".to_owned(), ours.to_string_lossy().into_owned(), file.clone()]);
         match sandbox::run(&rucc, &args, &case.dir, &limits) {
@@ -548,6 +578,17 @@ mod tests {
             ],
         };
         assert_eq!(report.manifest(), "hu/a.c  u/a.c\n");
+    }
+
+    #[test]
+    fn the_mode_is_the_last_one_given_and_gas_gets_it_as_the_driver_says() {
+        let flags: Vec<String> = ["-m64", "-O2", "-m16", "-march=i386"].map(str::to_owned).to_vec();
+        assert_eq!(mode(&flags), Some("-m16"));
+        assert_eq!(gas_mode("-m16"), "--32");
+        assert_eq!(gas_mode("-m32"), "--32");
+        assert_eq!(gas_mode("-m64"), "--64");
+        assert_eq!(gas_mode("-mx32"), "--x32");
+        assert_eq!(mode(&["-O2".to_owned()]), None);
     }
 
     #[test]
