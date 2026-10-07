@@ -1,0 +1,73 @@
+# Ubuntu 24.04 x86-64 with binutils 2.42, GCC 13.3 and lld. Made with the 0.28.0 build of main at d64556e.
+# rucc 0.28.0
+# x86_64, ldd (Ubuntu GLIBC 2.39-0ubuntu8.7) 2.39
+hello-O0 rc=0 hello linux 8 16
+hello-O2 rc=0 hello linux 8 16
+elf-type rc=0 DYN
+interp rc=0 interpreter: /lib64/ld-linux-x86-64.so.2
+relro rc=0 1
+stack rc=0 RW
+static rc=0 hello linux 8 16|EXEC
+static-pie rc=0 hello linux 8 16|DYN
+no-pie rc=0 hello linux 8 16|EXEC
+shared-O0 rc=0 lib_add=45 data=7 tls=41|dlsym=49
+shared-O2 rc=0 lib_add=45 data=7 tls=41|dlsym=49
+shared-exports rc=0 lib_add lib_data tls_counter 
+gcc-uses-rucc-so rc=0 lib_add=45 data=7 tls=40|dlsym=49
+threads-O0 rc=0 counter=400000 mine=0 w=1,2 q=5566583
+threads-O2 rc=0 counter=400000 mine=0 w=1,2 q=5566583
+ifunc rc=0 ifunc=1 tc=2
+symver rc=0  f@VERS_1  f@@VERS_2 
+fortify3 rc=0 3
+ssp-strong rc=0 1
+cf-protection rc=0 IBT SHSTK 
+stack-clash rc=0 hello linux 8 16
+fno-plt rc=1 
+relr rc=0 3
+fhardened rc=1 
+leaf-fp rc=1 
+ssp-macros rc=0 
+debian-flags rc=0 hello linux 8 16
+ubuntu-flags rc=1 
+fedora-flags rc=1 
+arch-flags rc=1 
+bigtls-dlopen rc=1 ./libbig.so: cannot allocate memory in static TLS block
+tls-relocs rc=0 R_X86_64_GOTTPOFF R_X86_64_PC32 
+ftls-model rc=1 
+tls-gnu2 rc=1 
+dwarf-version rc=0 44|Version: 5
+dwarf-sections rc=0 .debug_abbrev .debug_info .debug_line .debug_line_str .debug_loclists .debug_rnglists .debug_str .eh_frame .eh_frame_hdr 
+gsplit-dwarf rc=1 
+gz rc=0 7
+grecord rc=1 
+build-id rc=1 0
+pg rc=0 gmon.out
+coverage rc=0 0
+ubsan rc=1 
+asan rc=1 
+openmp rc=1 
+tgmath rc=1 
+f128-macros rc=1 
+march-v3 rc=0 
+gnuc rc=0 #define __GNUC__ 16 #define __GNUC_MINOR__ 0 #define __pic__ 2 #define __PIE__ 2 #define __STDC_VERSION__ 202311L 
+v-banner rc=1 0
+dumpmachine rc=0 x86_64-unknown-linux-gnu
+dumpversion rc=0 16
+print-libc rc=0 full
+print-libgcc rc=0 bare libgcc.a
+print-ld rc=0 bare ld
+multi-os rc=1 
+MG rc=1 
+dumpspecs rc=1 
+gcc-toolchain rc=1 
+specs rc=1 
+W-unknown rc=1 no
+implicit-fn rc=1 
+int-conversion rc=1 
+response-file rc=0 hello linux 8 16
+MD rc=0 hmd.o
+save-temps rc=0 hst.i hst.s 
+S-roundtrip rc=0 hello linux 8 16
+lto rc=0 hello linux 8 16
+fuse-ld-lld rc=0 hello linux 8 16
+fuse-ld-bfd rc=0 hello linux 8 16

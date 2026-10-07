@@ -1,0 +1,2 @@
+VERS_1 { global: f; local: *; };
+VERS_2 { global: f; } VERS_1;
