@@ -42,3 +42,44 @@ These are the faults that the expected files hold today, with the milestone that
 | `riscv64-compile` | There is no RISC-V back end. | L9 |
 
 `gsplit-dwarf`, `ubsan` and `asan` are refused on purpose, and each message names the reason. `openmp` is refused as an unknown option, and no milestone adds it.
+
+## Build system fixtures
+
+`buildsys/run.sh` is the test of milestone L2 item P3. Each fixture configures one project twice, once with `CC=gcc` and once with `CC=rucc`, and prints the lines of the two configurations that are different. Then it builds the project with each compiler and runs the result.
+
+| Fixture | What it configures | The summary |
+|---|---|---|
+| `autotools` | A small autoconf, automake and libtool package. | The cache variables of `config.log`, and the compiler variables of `libtool --config`. |
+| `cmake` | A small CMake project. | The compiler variables of CMake, and the result of each `check_*` call. |
+| `meson` | A small meson project. | The compiler object: its id, version, headers, functions, arguments and attributes. |
+| `zlib` | zlib 1.3.1. | What `configure` prints, the variables of the `Makefile`, and the changes to `zconf.h`. |
+| `openssl` | OpenSSL 3.5.4. | `configdata.pm -o -m`. |
+| `python` | Python 3.14.0. | `pyconfig.h`, and the compiler variables of the `Makefile`. |
+
+Run it in a container that has the GCC that rucc copies, which is GCC 16. Arch Linux has it:
+
+```
+docker build -t rucc-buildsys - <<'END'
+FROM archlinux:latest
+RUN pacman -Syu --noconfirm --needed gcc make autoconf automake libtool cmake ninja meson perl python curl xz diffutils which pkgconf
+END
+docker run --rm -v /path/to/rucc-release:/opt/rucc:ro -v "$PWD/probes/linux/buildsys:/fx:ro" rucc-buildsys /fx/run.sh /opt/rucc/rucc /fx/expected/arch.txt
+```
+
+`FIXTURES="zlib cmake"` runs only some fixtures. `FULL=1` also builds OpenSSL and Python. The exit test of L2 is that each fixture writes the same configuration with each compiler, or that a line in `docs/DIVERGENCE.md` of tamnd/rucc names the difference.
+
+`buildsys/expected/arch.txt` was made with rucc 0.28.0 and GCC 16.2.1 in Arch Linux. These are the differences in it:
+
+| Fixture | Difference | Owner |
+|---|---|---|
+| `autotools` | `sys_lib_search_path_spec` has `/usr/lib64` and no GCC directory. | Fixed on main by tamnd/rucc#3309. |
+| `zlib` | `configure` does not find GCC, so the shared library has no `-fPIC` and does not link. | Fixed on main by tamnd/rucc#3308. |
+| `cmake` | The implicit link directories have the GCC directory last and `/usr/lib64` first. | tamnd/rucc#3326 |
+| `cmake`, `meson` | The version is 16.0.0. GCC is 16.2.1. | `docs/DIVERGENCE.md` |
+| `cmake` | The implicit include directories have no GCC directory, because the rucc headers are inside the binary. | `docs/DIVERGENCE.md` |
+| `cmake` | The implicit link libraries have `librucc_builtins.a` and no `libatomic`. | `docs/DIVERGENCE.md` |
+| `cmake`, `meson` | `-fno-plt` is refused. | L3 |
+| `cmake`, `meson` | `-fopenmp` and `-fsanitize=address` are refused on purpose. | `docs/DIVERGENCE.md` |
+| `python` | `_Py_HACL_CAN_COMPILE_VEC256` is not defined, because rucc has no AVX2 intrinsics. | L6 |
+
+Make the file again with the next release, because main changes the `autotools` and `zlib` lines.

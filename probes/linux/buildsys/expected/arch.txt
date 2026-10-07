@@ -1,0 +1,45 @@
+# rucc 0.28.0
+# gcc (GCC) 16.2.1 20260810
+# Arch Linux, x86_64
+autotools configure gcc=ok rucc=ok
+autotools < sys_lib_search_path_spec="/usr/lib/gcc/x86_64-pc-linux-gnu/16 /usr/lib /lib "
+autotools > sys_lib_search_path_spec="/usr/lib64 /lib64 /usr/lib /lib "
+autotools build gcc=ok rucc=ok
+cmake configure gcc=ok rucc=ok
+cmake < CMAKE_C_COMPILER_VERSION=16.2.1
+cmake > CMAKE_C_COMPILER_VERSION=16.0.0
+cmake < CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES=/usr/lib/gcc/x86_64-pc-linux-gnu/16/include;/usr/local/include;/usr/include
+cmake < CMAKE_C_IMPLICIT_LINK_DIRECTORIES=/usr/lib/gcc/x86_64-pc-linux-gnu/16;/usr/lib;/lib
+cmake < CMAKE_C_IMPLICIT_LINK_LIBRARIES=gcc;gcc_s_asneeded;atomic_asneeded;c;gcc;gcc_s_asneeded
+cmake > CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES=/usr/local/include;/usr/include
+cmake > CMAKE_C_IMPLICIT_LINK_DIRECTORIES=/usr/lib64;/lib64;/usr/lib;/lib;/usr/lib/gcc/x86_64-pc-linux-gnu/16;/usr/lib64/gcc/x86_64-pc-linux-gnu/16
+cmake > CMAKE_C_IMPLICIT_LINK_LIBRARIES=c;/opt/rucc/lib/rucc/x86_64-linux-gnu/librucc_builtins.a;gcc;gcc_s
+cmake < flag -fno-plt=1
+cmake > flag -fno-plt=
+cmake < flag -fopenmp=1
+cmake > flag -fopenmp=
+cmake build gcc=ok rucc=ok
+meson configure gcc=ok rucc=ok
+meson < version=16.2.1
+meson > version=16.0.0
+meson < argument -fno-plt=true
+meson > argument -fno-plt=false
+meson < argument -fsanitize=address=true
+meson < argument -fopenmp=true
+meson > argument -fsanitize=address=false
+meson > argument -fopenmp=false
+meson build gcc=ok rucc=ok
+zlib configure gcc=ok rucc=ok
+zlib < Checking for attribute(visibility) support... Yes.
+zlib < CFLAGS=-O3 -D_LARGEFILE64_SOURCE=1 -DHAVE_HIDDEN
+zlib < SFLAGS=-O3 -fPIC -D_LARGEFILE64_SOURCE=1 -DHAVE_HIDDEN
+zlib > CFLAGS=-O -D_LARGEFILE64_SOURCE=1
+zlib > SFLAGS=-O -D_LARGEFILE64_SOURCE=1
+zlib < LDSHARED=CC -shared -Wl,-soname,libz.so.1,--version-script,zlib.map
+zlib > LDSHARED=cc -shared
+zlib build gcc=static,shared rucc=fail
+openssl configure gcc=ok rucc=ok
+openssl build gcc=skipped rucc=skipped
+python configure gcc=ok rucc=ok
+python < #define _Py_HACL_CAN_COMPILE_VEC256 1
+python build gcc=skipped rucc=skipped
