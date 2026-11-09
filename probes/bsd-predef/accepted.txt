@@ -21,14 +21,8 @@
 # x86_64 and aarch64: rucc does not have __builtin_speculation_safe_value.
 *           *           __HAVE_SPECULATION_SAFE_VALUE         tamnd/rucc#4088
 
-# aarch64: the ACLE macros, their spelling (65 and 14, not 'A' and 0xe), SME keywords and 16-byte CAS.
+# aarch64: the ACLE macros, SME keywords and 16-byte CAS.
 *-aarch64   *           __ARM_*                               tamnd/rucc#4088
 *-aarch64   *           __arm_*                               tamnd/rucc#4088
 *-aarch64   *           __GCC_HAVE_SYNC_COMPARE_AND_SWAP_16   tamnd/rucc#4088
 *-aarch64   *           __FP_FAST_FMA*                        tamnd/rucc#4088
-
-# riscv64: the BSD GCC defaults are rv64gc with -mcmodel=medany. rucc does not give the extension macros.
-*-riscv64   *           __riscv_*                             tamnd/rucc#4088
-*-riscv64   *           __FP_FAST_FMA*                        tamnd/rucc#4088
-*-riscv64   *           __GCC_ATOMIC_*_LOCK_FREE              tamnd/rucc#4088
-*-riscv64   *           __GCC_HAVE_SYNC_COMPARE_AND_SWAP_*    tamnd/rucc#4088
