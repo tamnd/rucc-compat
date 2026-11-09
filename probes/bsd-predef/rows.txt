@@ -1,0 +1,19 @@
+# One row for each reference compiler and architecture. The personas and the versions come from personas.toml of tamnd/rucc-bsd.
+# The expected file of a row is expected/<id>.txt. The reference column names the compiler that made it.
+#
+# id                      system   personas   arch     rucc target                   gnuc     reference
+freebsd-gcc15-x86_64      freebsd  16,15,14   x86_64   x86_64-unknown-freebsd15.1    15.2.0   amd64-gcc15
+freebsd-gcc15-aarch64     freebsd  16,15,14   aarch64  aarch64-unknown-freebsd15.1   15.2.0   aarch64-gcc15
+freebsd-gcc15-riscv64     freebsd  16,15,14   riscv64  riscv64-unknown-freebsd15.1   15.2.0   riscv64-gcc15
+freebsd-gcc14-x86_64      freebsd  14         x86_64   x86_64-unknown-freebsd15.1    14.2.0   amd64-gcc14
+freebsd-gcc14-aarch64     freebsd  14         aarch64  aarch64-unknown-freebsd15.1   14.2.0   aarch64-gcc14
+freebsd-gcc14-riscv64     freebsd  14         riscv64  riscv64-unknown-freebsd15.1   14.2.0   riscv64-gcc14
+netbsd-current-x86_64     netbsd   current    x86_64   x86_64-unknown-netbsd11.99    14.4.0   netbsd-current-tools
+netbsd-current-aarch64    netbsd   current    aarch64  aarch64-unknown-netbsd11.99   14.4.0   netbsd-current-tools
+netbsd-current-riscv64    netbsd   current    riscv64  riscv64-unknown-netbsd11.99   14.4.0   netbsd-current-tools
+netbsd-11-x86_64          netbsd   11         x86_64   x86_64-unknown-netbsd11.1     12.5.0   netbsd-11-tools
+netbsd-11-aarch64         netbsd   11         aarch64  aarch64-unknown-netbsd11.1    12.5.0   netbsd-11-tools
+netbsd-11-riscv64         netbsd   11         riscv64  riscv64-unknown-netbsd11.1    12.5.0   netbsd-11-tools
+netbsd-10-x86_64          netbsd   10         x86_64   x86_64-unknown-netbsd10.2     10.5.0   netbsd-10-tools
+netbsd-10-aarch64         netbsd   10         aarch64  aarch64-unknown-netbsd10.2    10.5.0   netbsd-10-tools
+netbsd-10-riscv64         netbsd   10         riscv64  riscv64-unknown-netbsd10.2    10.5.0   netbsd-10-tools
