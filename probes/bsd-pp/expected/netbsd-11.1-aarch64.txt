@@ -1,0 +1,689 @@
+# netbsd-11.1-aarch64: netbsd aarch64, reference netbsd-11-tools
+# command: /mnt/nb/tools/bin/aarch64--netbsd-gcc --sysroot=SET
+# version: aarch64--netbsd-gcc (NetBSD nb3 20260326) 12.5.0
+# tools: build.sh tools of NetBSD/src 4198f5370c187384b1de46b9b0fcd04462a420e0
+# host: Linux 7.0.0-1017-azure
+world:a.out.h rc=0 tokens=178 text=1396ce97dc997ca7
+world:aio.h rc=0 tokens=6241 text=07eee9162477a4a8
+world:ar.h rc=0 tokens=47 text=fd5e6e1338219019
+world:archive.h rc=0 tokens=12473 text=31d7d5c9b4016dfe
+world:archive_entry.h rc=0 tokens=7937 text=740b2d41a7317e8b
+world:assert.h rc=0 tokens=116 text=22726e7be64f5377
+world:atf-c.h rc=0 tokens=6368 text=1d33a2f40e0abb61
+world:atomic.h rc=0 tokens=3544 text=ee137fb262d1fc07
+world:bitstring.h rc=0 tokens=5 text=ba545d0b0a14dad7
+world:blocklist.h rc=0 tokens=1635 text=276c70a1e3b0d750
+world:bluetooth.h rc=0 tokens=14419 text=08cee8bd32a6df7e
+world:bm.h rc=0 tokens=192 text=d118a0a696745cb7
+world:bozohttpd.h rc=1
+world:bzlib.h rc=0 tokens=3023 text=174c4ed4d507e04b
+world:cbor.h rc=0 tokens=9424 text=63155a55cc4e4345
+world:cdbr.h rc=0 tokens=634 text=5d52f8610738bdee
+world:cdbw.h rc=0 tokens=633 text=ada080af08f19000
+world:complex.h rc=0 tokens=622 text=bd6f5b65fff32c50
+world:cpio.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:ctype.h rc=0 tokens=320 text=75ff0da54a5690ea
+world:curses.h rc=0 tokens=11180 text=fb49c5add007ab19
+world:db.h rc=0 tokens=3134 text=bfa186cc7276a81f
+world:des.h rc=0 tokens=3550 text=1e6e1ef57f2c1741
+world:dirent.h rc=0 tokens=3065 text=e9a6803fdbba98fa
+world:disktab.h rc=0 tokens=58 text=8636d59dec3ed922
+world:dlfcn.h rc=0 tokens=240 text=b943e84092663b56
+world:dm.h rc=0 tokens=695 text=da6208fc0a6d5149
+world:dns_sd.h rc=0 tokens=2510 text=2ace68e2e7f01820
+world:dwarf.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:elf.h rc=0 tokens=1345 text=73b3f69e4b87dd90
+world:elfdefinitions.h rc=0 tokens=888 text=6fb7a41fdda4555e
+world:endian.h rc=0 tokens=2127 text=f3e7bff36dcaa5e3
+world:err.h rc=0 tokens=519 text=ccaaf5b480dfaeac
+world:errno.h rc=0 tokens=68 text=16aeb4e0b1ce64d5
+world:eti.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:evdns.h rc=0 tokens=13583 text=47edc98161888135
+world:event.h rc=0 tokens=12579 text=f3873caf0b696608
+world:evhttp.h rc=0 tokens=14425 text=439f7b8765e7b6b9
+world:evrpc.h rc=0 tokens=13427 text=7852bd8da8a15d95
+world:evutil.h rc=0 tokens=6526 text=c98d3b8c7e369c01
+world:execinfo.h rc=0 tokens=271 text=b7050bf11cc5c333
+world:expat.h rc=0 tokens=6291 text=453166a0989f1a3e
+world:expat_config.h rc=0 tokens=2127 text=f3e7bff36dcaa5e3
+world:expat_external.h rc=0 tokens=17 text=7188a912146dd359
+world:fcntl.h rc=0 tokens=2913 text=9278ccc8cfba2fbd
+world:fenv.h rc=0 tokens=173 text=dd591423d79a9655
+world:fetch.h rc=0 tokens=5825 text=4a87b8566734d04d
+world:fido.h rc=0 tokens=65319 text=034568a2e6f54399
+world:float.h rc=0 tokens=47 text=cf03e34e170833f6
+world:fmtmsg.h rc=0 tokens=64 text=6a398d1a7cbfa867
+world:fnmatch.h rc=0 tokens=54 text=391cd6ef2ccbbbdb
+world:form.h rc=0 tokens=12399 text=adc29eafef1022d8
+world:fstab.h rc=0 tokens=111 text=4ca64d9ff08c9e54
+world:fts.h rc=0 tokens=273 text=24cfc63efbdd5a3c
+world:ftw.h rc=0 tokens=5026 text=6abba781adbe8d10
+world:fuse.h rc=0 tokens=15366 text=4f1b4fdfc88bc78d
+world:fuse_log.h rc=0 tokens=249 text=c05e59187c72432b
+world:fuse_lowlevel.h rc=0 tokens=15418 text=370ad471d443b136
+world:fuse_opt.h rc=0 tokens=373 text=7f150c92c78ce242
+world:gelf.h rc=0 tokens=5133 text=c41405777b74937b
+world:getopt.h rc=0 tokens=4420 text=7abd3e23ac0e1c96
+world:glob.h rc=0 tokens=5107 text=fd8c8898be41ea6b
+world:grp.h rc=0 tokens=3013 text=a803c27fd40b1c8c
+world:gssapi.h rc=0 tokens=7443 text=aa58843c66fc326d
+world:hesiod.h rc=0 tokens=146 text=4ff356ae95be2d9c
+world:histedit.h rc=0 tokens=7720 text=a0be0cd23fd8f53f
+world:iconv.h rc=0 tokens=196 text=d40374c5e1a7f932
+world:ieeefp.h rc=0 tokens=151 text=b912083f42fc67f4
+world:ifaddrs.h rc=0 tokens=98 text=01bb770694e95a11
+world:inttypes.h rc=0 tokens=490 text=f7266cd101ebdd2c
+world:iscsi.h rc=0 tokens=725 text=1178b21a2625e3d3
+world:isns.h rc=0 tokens=7243 text=330925df2d922039
+world:isns_defs.h rc=0 tokens=274 text=a45203fdb6e84524
+world:iso646.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:krb5.h rc=0 tokens=29587 text=b2bd1fc4b3c2bce7
+world:kvm.h rc=0 tokens=5536 text=edb30868e8d3aa02
+world:langinfo.h rc=0 tokens=172 text=886e3fc2e239ac02
+world:lauxlib.h rc=0 tokens=5417 text=5c36479d474cd99f
+world:lber.h rc=0 tokens=2421 text=2ecc0180bb3ae735
+world:lber_types.h rc=0 tokens=33 text=068a208d3ce67bc4
+world:ldap.h rc=0 tokens=6885 text=b33e03e9ad96ee24
+world:ldap_cdefs.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:ldap_features.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:ldap_schema.h rc=0 tokens=931 text=4db72fa20ce4067a
+world:ldap_utf8.h rc=0 tokens=258 text=a0d10b5b74d4a236
+world:libdwarf.h rc=0 tokens=8936 text=9ffdbc40d324bb6a
+world:libelf.h rc=0 tokens=4619 text=6e7682bf1aaf76d0
+world:libgen.h rc=0 tokens=56 text=b178311b7d6f1367
+world:libintl.h rc=0 tokens=463 text=3c7083f79215f2d4
+world:libproc.h rc=0 tokens=6731 text=1174d59fabb37901
+world:limits.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:link.h rc=0 tokens=4069 text=7c05e17f23fa27bb
+world:link_aout.h rc=0 tokens=798 text=a3bf4fd084759d8f
+world:link_elf.h rc=0 tokens=4069 text=7c05e17f23fa27bb
+world:locale.h rc=0 tokens=199 text=e00b333f0d8af3db
+world:login_cap.h rc=0 tokens=248 text=8a78f6d30a5bf65f
+world:lua.h rc=0 tokens=2160 text=683c6635c28c26e3
+world:luaconf.h rc=0 tokens=243 text=350c79298d41b674
+world:lualib.h rc=0 tokens=2281 text=b038a8c90e54031d
+world:lwp.h rc=0 tokens=4960 text=1faff4a21a032ec5
+world:lzf.h rc=0 tokens=3188 text=10585b691c79a4ac
+world:lzfP.h rc=0 tokens=3106 text=8d987122ce5d7058
+world:lzma.h rc=0 tokens=4243 text=8b5ce2f7e548ce35
+world:magic.h rc=0 tokens=2982 text=b19bb0be42e42b1f
+world:malloc.h rc=0 tokens=4856 text=30b52fdfda8735aa
+world:math.h rc=0 tokens=1863 text=c4b812b6e83274ea
+world:md2.h rc=0 tokens=2934 text=24d2046b6dacba0e
+world:md4.h rc=0 tokens=2917 text=0bd2a2d26622288c
+world:md5.h rc=0 tokens=2917 text=ac6615585fca964d
+world:memory.h rc=0 tokens=934 text=3be4fe636f21407c
+world:menu.h rc=0 tokens=11935 text=dd173750c33871ae
+world:mj.h rc=0 tokens=253 text=fc6b3df917ede4e4
+world:mntopts.h rc=0 tokens=116 text=4984ec20123d974c
+world:monetary.h rc=0 tokens=184 text=33260b9db2165914
+world:mpool.h rc=0 tokens=310 text=49236be94a28aea3
+world:mqueue.h rc=0 tokens=6265 text=df261b16c1c2dec5
+world:ndbm.h rc=0 tokens=3270 text=85faf9c404d59d64
+world:netconfig.h rc=0 tokens=182 text=51cd5a89732b92c4
+world:netdb.h rc=0 tokens=1018 text=b2bbd8ce219769d8
+world:netgroup.h rc=0 tokens=115 text=19adc329cd114373
+world:netpgp.h rc=0 tokens=511 text=f7a981539593b65d
+world:nl_types.h rc=0 tokens=130 text=4cb386613a1794b1
+world:nlist.h rc=0 tokens=86 text=287d6a4c43fe2f67
+world:npf.h rc=0 tokens=9944 text=255b35cdd93c7f56
+world:nsswitch.h rc=0 tokens=3002 text=baf4d42d58ab6117
+world:openldap.h rc=0 tokens=6906 text=8f79aae5e845fba3
+world:panel.h rc=0 tokens=11317 text=48717b0826ab6b1e
+world:paths.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:pcap-namedb.h rc=0 tokens=2670 text=a008ff451e6aa7bf
+world:pcap.h rc=0 tokens=10856 text=faef25578f614bc0
+world:pci.h rc=0 tokens=378 text=864289b1cd89e2e1
+world:perfuse.h rc=0 tokens=2851 text=46fa799c725a67e7
+world:poll.h rc=0 tokens=222 text=45cdc25039e33ae7
+world:pthread.h rc=0 tokens=6435 text=5734c2495f5bc731
+world:pthread_queue.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:pthread_types.h rc=0 tokens=351 text=a85b87ffd06d8b66
+world:puffs.h rc=0 tokens=14336 text=790b59a1456f8ec4
+world:puffsdump.h rc=0 tokens=9915 text=ca6f6efa59be353b
+world:pwd.h rc=0 tokens=3088 text=839b9a6b85d509bb
+world:quota.h rc=0 tokens=3104 text=543caee680352fe3
+world:radlib.h rc=0 tokens=4536 text=5788a867173f82c0
+world:radlib_vs.h rc=0 tokens=4358 text=aa5f774c670f22e3
+world:randomid.h rc=0 tokens=241 text=40092fe2c1fd2fef
+world:ranlib.h rc=0 tokens=20 text=464dfdd5cba2a9e1
+world:re_comp.h rc=0 tokens=57 text=e0f5b83772a9dc44
+world:regex.h rc=0 tokens=2958 text=e48e4db9d3d3a4a7
+world:regexp.h rc=0 tokens=140 text=b8abac8caa5804f4
+world:res_update.h rc=0 tokens=10437 text=212ebf6b39b5e0da
+world:resolv.h rc=0 tokens=10283 text=c8c53b074126fdd3
+world:rmd160.h rc=0 tokens=2943 text=f42b73e0db731ade
+world:rmt.h rc=0 tokens=2961 text=597f3733e64ec6c8
+world:rtld_db.h rc=0 tokens=3674 text=42a840eedd77fc25
+world:saslc.h rc=0 tokens=2981 text=17949d438a61bb6b
+world:sched.h rc=0 tokens=4882 text=6d8d3a9af90b3da2
+world:sdp.h rc=0 tokens=15208 text=a25712be0872acbf
+world:search.h rc=0 tokens=474 text=13abbb441b586d29
+world:semaphore.h rc=0 tokens=4704 text=2f8a9c4cf36a5623
+world:setjmp.h rc=0 tokens=186 text=f34fe0d2ecad20c9
+world:sgtty.h rc=0 tokens=3071 text=5491c2be84b47637
+world:sha1.h rc=0 tokens=2946 text=0de62e672d5f2815
+world:sha2.h rc=0 tokens=3276 text=d422e10f045376c5
+world:signal.h rc=0 tokens=4240 text=0b642c5dc396be02
+world:skey.h rc=0 tokens=2837 text=c57b26066f6338ee
+world:soundcard.h rc=0 tokens=3578 text=09f05b011023818b
+world:spawn.h rc=0 tokens=3906 text=5478812bc3fa3716
+world:sqlite3.h rc=0 tokens=6897 text=15bdf424025cd549
+world:sqlite3ext.h rc=0 tokens=11326 text=9ab4b2ef0ed8f149
+world:stab.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:stdalign.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:stdarg.h rc=0 tokens=174 text=7f040a1f0b377c24
+world:stdbool.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:stddef.h rc=0 tokens=113 text=77b8ddd3069c4a57
+world:stdint.h rc=0 tokens=209 text=37de606a8c8062fb
+world:stdio.h rc=0 tokens=2523 text=2a463605edfa71df
+world:stdlib.h rc=0 tokens=4635 text=9df2429c2d622fcb
+world:stdnoreturn.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:string.h rc=0 tokens=934 text=3be4fe636f21407c
+world:stringlist.h rc=0 tokens=2886 text=e5200fa0cf5f1fef
+world:strings.h rc=0 tokens=934 text=8f8c471bff20b24b
+world:struct.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sysexits.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:syslog.h rc=0 tokens=706 text=f0b90a376e82e24f
+world:tar.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:tcpd.h rc=0 tokens=3079 text=7c3064a500e8402e
+world:term.h rc=0 tokens=1381 text=25132f8e638e199a
+world:termcap.h rc=0 tokens=137 text=5cd45da57dfaab71
+world:termios.h rc=0 tokens=418 text=020c37d5619c98e2
+world:threads.h rc=0 tokens=6762 text=8f3120e01c6bfe8c
+world:time.h rc=0 tokens=4589 text=2829e4388c67bac5
+world:ttyent.h rc=0 tokens=110 text=c364f2af1fca75b6
+world:tzfile.h rc=0 tokens=59 text=7200e37a2886aca6
+world:uchar.h rc=0 tokens=440 text=83979903ec8b66c4
+world:ucontext.h rc=0 tokens=491 text=36a47b0336486485
+world:ulimit.h rc=0 tokens=49 text=1a7fc378e7efaf69
+world:unbound.h rc=0 tokens=1025 text=b7d68e36af962fb7
+world:unctrl.h rc=0 tokens=57 text=fc3707f7576c7d04
+world:unistd.h rc=0 tokens=4364 text=6b174d7e059c5b4b
+world:unwind.h rc=0 tokens=470 text=6ba28e7e7691839b
+world:usbhid.h rc=0 tokens=516 text=01b1ba3129a71f45
+world:util.h rc=0 tokens=3807 text=ea892bc0fd374a0d
+world:utime.h rc=0 tokens=124 text=12c3f559ec161bf8
+world:utmp.h rc=0 tokens=4680 text=03c1e5d3b7f83896
+world:utmpx.h rc=0 tokens=5606 text=1293d4126f46baa3
+world:uuid.h rc=0 tokens=3016 text=b4e2ca38f77f9bd4
+world:vis.h rc=0 tokens=3149 text=59c72be1d446c055
+world:wchar.h rc=0 tokens=4175 text=e53e0b9904709910
+world:wctype.h rc=0 tokens=469 text=8f075f39bfb3b7ba
+world:wordexp.h rc=0 tokens=144 text=13d374cfd2321248
+world:zconf.h rc=0 tokens=2890 text=c82ee0d7c46a97de
+world:zlib.h rc=0 tokens=4110 text=25c35f3e7e58815f
+world:sys/acct.h rc=0 tokens=45 text=b26640c393518e6c
+world:sys/acl.h rc=0 tokens=3955 text=5ffac39b81050b31
+world:sys/agpio.h rc=0 tokens=2903 text=796b88a705038ee4
+world:sys/aio.h rc=0 tokens=3365 text=df3edcbeecdde482
+world:sys/ansi.h rc=0 tokens=170 text=c9f237c67f635ca6
+world:sys/aout_mids.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/ataio.h rc=0 tokens=2985 text=da5d52a49bf73803
+world:sys/atomic.h rc=0 tokens=3544 text=ee137fb262d1fc07
+world:sys/audioio.h rc=0 tokens=4030 text=13301accad7da5cc
+world:sys/bitops.h rc=0 tokens=1000 text=a22369398b2ad563
+world:sys/bootblock.h rc=0 tokens=1491 text=33dc124a207aea72
+world:sys/bswap.h rc=0 tokens=605 text=7daf3963724f4fd9
+world:sys/buf.h rc=0 tokens=3413 text=45aeb9d3d7fb943b
+world:sys/callback.h rc=0 tokens=3045 text=54d6446a21164b4f
+world:sys/callout.h rc=0 tokens=2818 text=000c03d7ec46f3c0
+world:sys/cdbr.h rc=0 tokens=634 text=5d52f8610738bdee
+world:sys/cdefs.h rc=0 tokens=27 text=c4244fea69b47c7f
+world:sys/cdefs_aout.h rc=1
+world:sys/cdefs_elf.h rc=1
+world:sys/cdio.h rc=0 tokens=473 text=1fd6bab101b94a74
+world:sys/chio.h rc=0 tokens=196 text=a3f7c71cabee0b48
+world:sys/clock.h rc=0 tokens=363 text=4ef0ee8987dc79c4
+world:sys/clockctl.h rc=0 tokens=4759 text=83aa51dfd540898a
+world:sys/common_ansi.h rc=0 tokens=79 text=f1c1bd17ac21a705
+world:sys/common_int_const.h rc=1
+world:sys/common_int_fmtio.h rc=1
+world:sys/common_int_limits.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/common_int_mwgwtypes.h rc=0 tokens=90 text=35d5654106c542f4
+world:sys/common_int_types.h rc=0 tokens=52 text=4c5243a544c83edb
+world:sys/common_limits.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/common_lock.h rc=0 tokens=157 text=7a0c3184a115b895
+world:sys/common_wchar_limits.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/condvar.h rc=0 tokens=14 text=adb24ccd30b2752a
+world:sys/conf.h rc=0 tokens=3342 text=74b8e2217c566eac
+world:sys/container_of.h rc=0 tokens=113 text=77b8ddd3069c4a57
+world:sys/core.h rc=0 tokens=114 text=703e4160ee8e4f57
+world:sys/cpufreq.h rc=0 tokens=52 text=747e4ff41556debf
+world:sys/cpuio.h rc=0 tokens=4661 text=254a2da0077b3d4a
+world:sys/ctype_bits.h rc=0 tokens=81 text=a4bba927ab3f9fad
+world:sys/ctype_inline.h rc=0 tokens=81 text=a4bba927ab3f9fad
+world:sys/device.h rc=0 tokens=6568 text=06fc16131bc9175f
+world:sys/device_if.h rc=0 tokens=218 text=d7ab0a246c4bbb37
+world:sys/dir.h rc=0 tokens=3065 text=e9a6803fdbba98fa
+world:sys/dirent.h rc=0 tokens=52 text=0ce903dcee08bc17
+world:sys/disk.h rc=0 tokens=4947 text=7ad3309f31a60899
+world:sys/disklabel.h rc=0 tokens=4838 text=1bfe2ed6f55f8c1e
+world:sys/disklabel_acorn.h rc=0 tokens=118 text=834d42e23d051963
+world:sys/disklabel_gpt.h rc=0 tokens=85 text=e8478d114b33f4da
+world:sys/disklabel_rdb.h rc=0 tokens=3201 text=1c3e7c806071465f
+world:sys/dkbad.h rc=0 tokens=29 text=d151d9a5fc148f5a
+world:sys/dkio.h rc=0 tokens=2816 text=bbb1fc0d8abf57bc
+world:sys/dkstat.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/domain.h rc=0 tokens=9247 text=fac14b9e0237bf76
+world:sys/drvctlio.h rc=0 tokens=6113 text=cfade043331eaaf9
+world:sys/dvdio.h rc=0 tokens=3236 text=67a8f2cb332629aa
+world:sys/efiio.h rc=0 tokens=2903 text=2156765c5048b6af
+world:sys/elfdefinitions.h rc=0 tokens=888 text=6fb7a41fdda4555e
+world:sys/endian.h rc=0 tokens=2127 text=f3e7bff36dcaa5e3
+world:sys/envsys.h rc=0 tokens=499 text=d96a8e8605b02788
+world:sys/errno.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/evcnt.h rc=0 tokens=290 text=c9368da1301cda25
+world:sys/event.h rc=0 tokens=3106 text=8bcc742e85fe7eb2
+world:sys/eventfd.h rc=0 tokens=2956 text=2b20d130a30545ee
+world:sys/exec.h rc=0 tokens=24 text=056251df1e17b255
+world:sys/exec_aout.h rc=0 tokens=85 text=5b3f352c91f12a81
+world:sys/exec_coff.h rc=1
+world:sys/exec_ecoff.h rc=1
+world:sys/exec_elf.h rc=0 tokens=1345 text=73b3f69e4b87dd90
+world:sys/exec_script.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/extattr.h rc=0 tokens=3202 text=0942cecbed577dcc
+world:sys/extent.h rc=0 tokens=2984 text=4a04fc1b930a578e
+world:sys/fault.h rc=0 tokens=39 text=b1ce230ef0e7ca3d
+world:sys/fcntl.h rc=0 tokens=2913 text=9278ccc8cfba2fbd
+world:sys/fd_set.h rc=0 tokens=114 text=4f6a68798136a73f
+world:sys/fdio.h rc=0 tokens=70 text=e52ed72229fd9eb7
+world:sys/featuretest.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/file.h rc=0 tokens=2913 text=9278ccc8cfba2fbd
+world:sys/filedesc.h rc=0 tokens=3633 text=cb63d94363af4193
+world:sys/filio.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/flashio.h rc=0 tokens=3030 text=d883e23f85f3c3ed
+world:sys/float_ieee754.h rc=0 tokens=47 text=cf03e34e170833f6
+world:sys/fstypes.h rc=0 tokens=12 text=174a8daf6c637f1f
+world:sys/futex.h rc=0 tokens=185 text=4abe0a896487127a
+world:sys/gcq.h rc=0 tokens=1454 text=228c792784d6c9bb
+world:sys/gmon.h rc=0 tokens=107 text=79a0b7e82852fa5a
+world:sys/gpio.h rc=0 tokens=4660 text=672c29e43be10d48
+world:sys/hash.h rc=0 tokens=3013 text=ece04cc3b5efc701
+world:sys/hook.h rc=0 tokens=2957 text=e702cdba91fee054
+world:sys/idtype.h rc=0 tokens=46 text=38ad3f229d1ebc9c
+world:sys/ieee754.h rc=0 tokens=2203 text=beb5ac91bfa471b5
+world:sys/intr.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/intrio.h rc=0 tokens=3026 text=775e6f878cb65aee
+world:sys/inttypes.h rc=0 tokens=209 text=37de606a8c8062fb
+world:sys/ioccom.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/ioctl.h rc=0 tokens=2925 text=1319293dd6e4039e
+world:sys/ioctl_compat.h rc=0 tokens=113 text=72bd5412ab438b2a
+world:sys/iostat.h rc=0 tokens=4766 text=6f1f23591160650a
+world:sys/ipc.h rc=0 tokens=2883 text=6971b66837c57429
+world:sys/ipmi.h rc=0 tokens=132 text=75c8c113daf09633
+world:sys/joystick.h rc=0 tokens=2942 text=592d18ea6474255a
+world:sys/kcore.h rc=0 tokens=45 text=8e0ce9874d8d6105
+world:sys/kcov.h rc=0 tokens=4083 text=7fe0bf035c57d86a
+world:sys/kcpuset.h rc=0 tokens=8 text=377fd0d0d1769cd9
+world:sys/kgdb.h rc=1
+world:sys/kmem.h rc=0 tokens=2959 text=a30a4b8f1a21a996
+world:sys/ksem.h rc=0 tokens=2807 text=1afe9f54372d8b0c
+world:sys/ksyms.h rc=0 tokens=1400 text=575119e251280e6c
+world:sys/ktrace.h rc=0 tokens=5501 text=ebf1bf1fba37295d
+world:sys/localcount.h rc=1
+world:sys/localedef.h rc=0 tokens=196 text=8627e7b678fe1126
+world:sys/lock.h rc=0 tokens=3576 text=28543362ed795cb5
+world:sys/lockf.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/lua.h rc=0 tokens=5260 text=17f6fe4c7b9b48ac
+world:sys/lwp.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/lwpctl.h rc=0 tokens=15 text=6b64ea3265461efc
+world:sys/malloc.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/mallocvar.h rc=0 tokens=2807 text=8824bacfd9f8ecac
+world:sys/mbuf.h rc=0 tokens=7900 text=7ace9e7ce5d31cf9
+world:sys/md4.h rc=0 tokens=2917 text=0bd2a2d26622288c
+world:sys/md5.h rc=0 tokens=2917 text=ac6615585fca964d
+world:sys/midiio.h rc=0 tokens=2439 text=6127265836e389f6
+world:sys/mman.h rc=0 tokens=375 text=57ec5a0b8743a6d0
+world:sys/module.h rc=0 tokens=3553 text=f982a986e26d5f23
+world:sys/mount.h rc=0 tokens=5870 text=5733e6bf91ad999a
+world:sys/mqueue.h rc=0 tokens=17 text=6b1e8da57b59e7b2
+world:sys/msg.h rc=0 tokens=3076 text=d65ade2407f87b22
+world:sys/msgbuf.h rc=0 tokens=23 text=b247210c7bcc65c4
+world:sys/mtio.h rc=0 tokens=52 text=10407af5ae820376
+world:sys/mutex.h rc=0 tokens=2876 text=257fca4314cef3e9
+world:sys/namei.h rc=0 tokens=2914 text=890b2c625fdda0ea
+world:sys/null.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/param.h rc=0 tokens=3327 text=a3da75710e3fa95d
+world:sys/pcu.h rc=1
+world:sys/pipe.h rc=0 tokens=6439 text=d80d994d653d1a69
+world:sys/pmf.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/poll.h rc=0 tokens=222 text=45cdc25039e33ae7
+world:sys/pool.h rc=0 tokens=304 text=fc6bac2b82136407
+world:sys/power.h rc=0 tokens=297 text=ac971300a812bbf6
+world:sys/proc.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/protosw.h rc=0 tokens=141 text=4fd2f9c25dd51a89
+world:sys/pset.h rc=0 tokens=2915 text=5a6c39253d4ab568
+world:sys/psref.h rc=0 tokens=2867 text=e7d4250173d7bc22
+world:sys/ptrace.h rc=0 tokens=922 text=ea635c6525afaa7c
+world:sys/ptree.h rc=0 tokens=500 text=d5fd0444231b4893
+world:sys/queue.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/quota.h rc=0 tokens=2838 text=adf6d4e89c39ed34
+world:sys/quotactl.h rc=0 tokens=496 text=c0c126f64c553972
+world:sys/radioio.h rc=0 tokens=3356 text=d4e72fc44c24bbec
+world:sys/radixtree.h rc=0 tokens=430 text=ac08b1fe765780f7
+world:sys/random.h rc=0 tokens=115 text=82d3881fad30334d
+world:sys/ras.h rc=0 tokens=2846 text=af1cade4dff4fc6b
+world:sys/rbtree.h rc=0 tokens=3002 text=347811931de88436
+world:sys/reboot.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/resource.h rc=0 tokens=4748 text=61c84091d9b83ab4
+world:sys/resourcevar.h rc=1
+world:sys/rmd160.h rc=0 tokens=2943 text=f42b73e0db731ade
+world:sys/rnd.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/rndio.h rc=0 tokens=3154 text=d98cace8ff725741
+world:sys/rwlock.h rc=0 tokens=2832 text=28f0b57f53c4e790
+world:sys/scanio.h rc=0 tokens=65 text=6b76fc60a72d229c
+world:sys/sched.h rc=0 tokens=2950 text=6474221ab8a3692e
+world:sys/scsiio.h rc=0 tokens=3057 text=5cdfc3cb9f47a539
+world:sys/sdt.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/select.h rc=0 tokens=4589 text=58cb66054c4a8c4e
+world:sys/selinfo.h rc=0 tokens=3146 text=d31a224b95430b81
+world:sys/sem.h rc=0 tokens=3073 text=6974fb33e6a3df82
+world:sys/semaphore.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/sha1.h rc=0 tokens=2946 text=0de62e672d5f2815
+world:sys/sha2.h rc=0 tokens=3276 text=d422e10f045376c5
+world:sys/sha3.h rc=0 tokens=3089 text=8533621d1a6ad34c
+world:sys/shm.h rc=0 tokens=3067 text=fe9e95d8ee306834
+world:sys/siginfo.h rc=0 tokens=276 text=c1907dd8cd0835ba
+world:sys/signal.h rc=0 tokens=738 text=0b422bc35b30ade8
+world:sys/signalvar.h rc=0 tokens=4078 text=1d24a2b383aa0eb6
+world:sys/sigtypes.h rc=0 tokens=114 text=ee280919463f6f74
+world:sys/sleepq.h rc=1
+world:sys/socket.h rc=0 tokens=973 text=83e68d671a4a4a2c
+world:sys/socketvar.h rc=0 tokens=5347 text=aa729551a7ea8aee
+world:sys/sockio.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/soundcard.h rc=0 tokens=3578 text=09f05b011023818b
+world:sys/spawn.h rc=0 tokens=3589 text=03db9e38394c639f
+world:sys/specificdata.h rc=0 tokens=3017 text=997861bc99e1d913
+world:sys/stat.h rc=0 tokens=4942 text=098fc76e97bfc35b
+world:sys/statvfs.h rc=0 tokens=581 text=fe2a906494112280
+world:sys/stdalign.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/stdarg.h rc=0 tokens=174 text=7f040a1f0b377c24
+world:sys/stdbool.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/stddef.h rc=0 tokens=113 text=77b8ddd3069c4a57
+world:sys/stdint.h rc=0 tokens=209 text=37de606a8c8062fb
+world:sys/swap.h rc=0 tokens=28 text=8ea7e10fb14c3ea4
+world:sys/syncobj.h rc=0 tokens=10 text=5566e83cb82f4a78
+world:sys/syscall.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/syscallargs.h rc=0 tokens=92490 text=daddc52e114d0eed
+world:sys/sysctl.h rc=0 tokens=4545 text=be0167144f2bc522
+world:sys/syslimits.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/syslog.h rc=0 tokens=706 text=f0b90a376e82e24f
+world:sys/tape.h rc=0 tokens=4710 text=3abdf3bd3166bd36
+world:sys/termios.h rc=0 tokens=418 text=020c37d5619c98e2
+world:sys/time.h rc=0 tokens=4589 text=0532ca27abfc9201
+world:sys/timeb.h rc=0 tokens=66 text=c3011a069db6df01
+world:sys/timepps.h rc=0 tokens=3580 text=d2b91eac4b7b0bd7
+world:sys/timerfd.h rc=0 tokens=4746 text=7cd7463b68ff9ac5
+world:sys/times.h rc=0 tokens=126 text=88ecb8f517098a85
+world:sys/timespec.h rc=0 tokens=185 text=4abe0a896487127a
+world:sys/timex.h rc=0 tokens=100 text=c4707293aab85e6e
+world:sys/tls.h rc=0 tokens=131 text=c8917b5f6562c038
+world:sys/trace.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/tree.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/tty.h rc=0 tokens=5496 text=21e61c8d169bea80
+world:sys/ttychars.h rc=0 tokens=47 text=dbd39802645713c0
+world:sys/ttycom.h rc=0 tokens=51 text=9362a709323de518
+world:sys/ttydefaults.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/ttydev.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/types.h rc=0 tokens=2804 text=bb64ce24d296e8a9
+world:sys/ucontext.h rc=0 tokens=410 text=e1bc6b29f3645aa6
+world:sys/ucred.h rc=0 tokens=24 text=f372d5adccfafa34
+world:sys/uio.h rc=0 tokens=282 text=634e43c69e745f36
+world:sys/un.h rc=0 tokens=2839 text=96c59c61d3c42a9b
+world:sys/unistd.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/unpcb.h rc=0 tokens=2973 text=59a6a002bcf79c48
+world:sys/utsname.h rc=0 tokens=83 text=0c5f939115f63f15
+world:sys/uuid.h rc=0 tokens=263 text=0ed4f682ae646e15
+world:sys/verified_exec.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/videoio.h rc=0 tokens=8766 text=32adef912dd850b9
+world:sys/vmmeter.h rc=0 tokens=47 text=d2bf93232d6635b0
+world:sys/vnode.h rc=0 tokens=6345 text=005c94696959644b
+world:sys/vnode_if.h rc=0 tokens=2539 text=dd26aec9968142b5
+world:sys/vnode_impl.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:sys/wait.h rc=0 tokens=3197 text=ca1c2547cc5a6f80
+world:sys/wapbl.h rc=0 tokens=6945 text=4132747b7cf4baaf
+world:sys/wapbl_replay.h rc=0 tokens=2956 text=c43289c11c2e02f6
+world:sys/wchan.h rc=0 tokens=7 text=ca993836ef8b0e01
+world:sys/wdog.h rc=0 tokens=30 text=bcc17b0391b29ce6
+world:sys/xattr.h rc=0 tokens=3518 text=b7a003af0f2480a1
+world:arpa/ftp.h rc=0 tokens=0 text=e3b0c44298fc1c14
+world:arpa/inet.h rc=0 tokens=4458 text=3d2dbeb8c343d966
+world:arpa/nameser.h rc=0 tokens=5081 text=093304c276261b30
+world:arpa/nameser_compat.h rc=0 tokens=2208 text=070a68d69ca6c18c
+world:arpa/telnet.h rc=0 tokens=55 text=aeb58489cd26f05d
+world:arpa/tftp.h rc=0 tokens=32 text=812ea3eca32be29a
+kernel:sys/acct.h rc=0 tokens=59 text=ad28afa4a40de607
+kernel:sys/acl.h rc=1
+kernel:sys/agpio.h rc=0 tokens=2624 text=c38d843ff40e697a
+kernel:sys/aio.h rc=1
+kernel:sys/ansi.h rc=0 tokens=170 text=c9f237c67f635ca6
+kernel:sys/aout_mids.h rc=0 tokens=0 text=e3b0c44298fc1c14
+kernel:sys/ataio.h rc=0 tokens=2682 text=b22a0acd07b1d3e1
+kernel:sys/atomic.h rc=1
+kernel:sys/audioio.h rc=0 tokens=2902 text=345b6132dd5d9572
+kernel:sys/bitops.h rc=0 tokens=1000 text=a22369398b2ad563
+kernel:sys/bootblock.h rc=0 tokens=1491 text=33dc124a207aea72
+kernel:sys/bswap.h rc=0 tokens=597 text=5fc8af6e3e2e1cf2
+kernel:sys/buf.h rc=1
+kernel:sys/callback.h rc=1
+kernel:sys/callout.h rc=0 tokens=2690 text=79d2a0cbf5f3036f
+kernel:sys/cdbr.h rc=0 tokens=2627 text=ccd8ea33fb64e0a4
+kernel:sys/cdefs.h rc=0 tokens=27 text=c4244fea69b47c7f
+kernel:sys/cdefs_aout.h rc=1
+kernel:sys/cdefs_elf.h rc=1
+kernel:sys/cdio.h rc=0 tokens=678 text=06a927a5cd1d8d46
+kernel:sys/chio.h rc=0 tokens=196 text=a3f7c71cabee0b48
+kernel:sys/clock.h rc=0 tokens=138 text=47f9cab24858da4c
+kernel:sys/clockctl.h rc=1
+kernel:sys/common_ansi.h rc=0 tokens=79 text=f1c1bd17ac21a705
+kernel:sys/common_int_const.h rc=1
+kernel:sys/common_int_fmtio.h rc=1
+kernel:sys/common_int_limits.h rc=0 tokens=0 text=e3b0c44298fc1c14
+kernel:sys/common_int_mwgwtypes.h rc=0 tokens=90 text=35d5654106c542f4
+kernel:sys/common_int_types.h rc=0 tokens=52 text=4c5243a544c83edb
+kernel:sys/common_limits.h rc=0 tokens=0 text=e3b0c44298fc1c14
+kernel:sys/common_lock.h rc=0 tokens=157 text=7a0c3184a115b895
+kernel:sys/common_wchar_limits.h rc=0 tokens=0 text=e3b0c44298fc1c14
+kernel:sys/condvar.h rc=0 tokens=161 text=647ee203ab87b116
+kernel:sys/conf.h rc=1
+kernel:sys/container_of.h rc=0 tokens=113 text=77b8ddd3069c4a57
+kernel:sys/core.h rc=0 tokens=114 text=703e4160ee8e4f57
+kernel:sys/cpufreq.h rc=1
+kernel:sys/cpuio.h rc=1
+kernel:sys/ctype_bits.h rc=0 tokens=81 text=a4bba927ab3f9fad
+kernel:sys/ctype_inline.h rc=0 tokens=81 text=a4bba927ab3f9fad
+kernel:sys/device.h rc=1
+kernel:sys/device_if.h rc=0 tokens=257 text=214c2c8d5b3b1dff
+kernel:sys/dir.h rc=1
+kernel:sys/dirent.h rc=0 tokens=52 text=0ce903dcee08bc17
+kernel:sys/disk.h rc=1
+kernel:sys/disklabel.h rc=0 tokens=4938 text=32e10e95868f80a9
+kernel:sys/disklabel_acorn.h rc=0 tokens=192 text=5965957561184747
+kernel:sys/disklabel_gpt.h rc=0 tokens=85 text=e8478d114b33f4da
+kernel:sys/disklabel_rdb.h rc=0 tokens=2922 text=1efba6fb539228f7
+kernel:sys/dkbad.h rc=0 tokens=43 text=f4d4a6370ffc78e2
+kernel:sys/dkio.h rc=0 tokens=2537 text=83172b9a471399b2
+kernel:sys/dkstat.h rc=0 tokens=16 text=b9b9cb221b5ba679
+kernel:sys/domain.h rc=1
+kernel:sys/drvctlio.h rc=0 tokens=5876 text=b8567ca850098206
+kernel:sys/dvdio.h rc=0 tokens=2957 text=48a19a2db2293037
+kernel:sys/efiio.h rc=0 tokens=2677 text=5b825763f46c471c
+kernel:sys/elfdefinitions.h rc=0 tokens=888 text=6fb7a41fdda4555e
+kernel:sys/endian.h rc=0 tokens=2119 text=159a8f91a44fdb95
+kernel:sys/envsys.h rc=0 tokens=290 text=31fb0d443b36d48a
+kernel:sys/errno.h rc=0 tokens=0 text=e3b0c44298fc1c14
+kernel:sys/evcnt.h rc=0 tokens=363 text=ee195bfbe5fce3e3
+kernel:sys/event.h rc=1
+kernel:sys/eventfd.h rc=0 tokens=43 text=2463763225dd7d6c
+kernel:sys/exec.h rc=0 tokens=1383 text=26612becede25c99
+kernel:sys/exec_aout.h rc=0 tokens=169 text=809b30f77d04d2d4
+kernel:sys/exec_coff.h rc=1
+kernel:sys/exec_ecoff.h rc=1
+kernel:sys/exec_elf.h rc=0 tokens=3515 text=bc2707a20ce61a2b
+kernel:sys/exec_script.h rc=0 tokens=12 text=212021ec876240e1
+kernel:sys/extattr.h rc=1
+kernel:sys/extent.h rc=1
+kernel:sys/fault.h rc=0 tokens=0 text=e3b0c44298fc1c14
+kernel:sys/fcntl.h rc=0 tokens=20 text=314195041e58f445
+kernel:sys/fd_set.h rc=0 tokens=114 text=4f6a68798136a73f
+kernel:sys/fdio.h rc=0 tokens=70 text=e52ed72229fd9eb7
+kernel:sys/featuretest.h rc=0 tokens=0 text=e3b0c44298fc1c14
+kernel:sys/file.h rc=1
+kernel:sys/filedesc.h rc=1
+kernel:sys/filio.h rc=0 tokens=0 text=e3b0c44298fc1c14
+kernel:sys/flashio.h rc=0 tokens=2727 text=57b44f3dddb7b110
+kernel:sys/float_ieee754.h rc=0 tokens=47 text=cf03e34e170833f6
+kernel:sys/fstypes.h rc=0 tokens=48 text=6a34213f1059db74
+kernel:sys/futex.h rc=0 tokens=248 text=21acd6534612fc99
+kernel:sys/gcq.h rc=1
+kernel:sys/gmon.h rc=0 tokens=107 text=79a0b7e82852fa5a
+kernel:sys/gpio.h rc=1
+kernel:sys/hash.h rc=0 tokens=2734 text=5faa0dec4400494e
+kernel:sys/hook.h rc=1
+kernel:sys/idtype.h rc=0 tokens=46 text=38ad3f229d1ebc9c
+kernel:sys/ieee754.h rc=0 tokens=2195 text=300eaf6c65fe6ed1
+kernel:sys/intr.h rc=1
+kernel:sys/intrio.h rc=1
+kernel:sys/inttypes.h rc=0 tokens=209 text=37de606a8c8062fb
+kernel:sys/ioccom.h rc=0 tokens=0 text=e3b0c44298fc1c14
+kernel:sys/ioctl.h rc=0 tokens=2622 text=14fb463c85b03a72
+kernel:sys/ioctl_compat.h rc=0 tokens=113 text=72bd5412ab438b2a
+kernel:sys/iostat.h rc=1
+kernel:sys/ipc.h rc=1
+kernel:sys/ipmi.h rc=0 tokens=132 text=75c8c113daf09633
+kernel:sys/joystick.h rc=0 tokens=2639 text=9e07b4416bfba573
+kernel:sys/kcore.h rc=0 tokens=45 text=8e0ce9874d8d6105
+kernel:sys/kcov.h rc=1
+kernel:sys/kcpuset.h rc=1
+kernel:sys/kgdb.h rc=1
+kernel:sys/kmem.h rc=0 tokens=2680 text=7b2bd1dfbf32863b
+kernel:sys/ksem.h rc=1
+kernel:sys/ksyms.h rc=0 tokens=3781 text=ecd599e26df6cabe
+kernel:sys/ktrace.h rc=1
+kernel:sys/localcount.h rc=0 tokens=2617 text=807c9f96b0bb4a3a
+kernel:sys/localedef.h rc=0 tokens=196 text=8627e7b678fe1126
+kernel:sys/lock.h rc=1
+kernel:sys/lockf.h rc=1
+kernel:sys/lua.h rc=1
+kernel:sys/lwp.h rc=1
+kernel:sys/lwpctl.h rc=1
+kernel:sys/malloc.h rc=0 tokens=2558 text=e0ca82ac2d7e215b
+kernel:sys/mallocvar.h rc=0 tokens=2528 text=c083f929efb8fa16
+kernel:sys/mbuf.h rc=1
+kernel:sys/md4.h rc=0 tokens=2599 text=5fc5e22f005f7def
+kernel:sys/md5.h rc=0 tokens=2599 text=067f87a6b6082c8c
+kernel:sys/midiio.h rc=0 tokens=578 text=15d725ae5f3be3e6
+kernel:sys/mman.h rc=0 tokens=184 text=38fc66aa2baa1b08
+kernel:sys/module.h rc=1
+kernel:sys/mount.h rc=1
+kernel:sys/mqueue.h rc=1
+kernel:sys/msg.h rc=1
+kernel:sys/msgbuf.h rc=0 tokens=84 text=ef5fd94a7adf125b
+kernel:sys/mtio.h rc=0 tokens=52 text=10407af5ae820376
+kernel:sys/mutex.h rc=1
+kernel:sys/namei.h rc=1
+kernel:sys/null.h rc=0 tokens=0 text=e3b0c44298fc1c14
+kernel:sys/param.h rc=1
+kernel:sys/pcu.h rc=0 tokens=0 text=e3b0c44298fc1c14
+kernel:sys/pipe.h rc=1
+kernel:sys/pmf.h rc=0 tokens=3007 text=d6b5c29d200659aa
+kernel:sys/poll.h rc=0 tokens=949 text=4413626596960f9a
+kernel:sys/pool.h rc=1
+kernel:sys/power.h rc=0 tokens=88 text=f7401b9c859a2381
+kernel:sys/proc.h rc=1
+kernel:sys/protosw.h rc=1
+kernel:sys/pset.h rc=0 tokens=2651 text=0ba237f0bd84b0ff
+kernel:sys/psref.h rc=0 tokens=2702 text=7ab2be6fad991d1e
+kernel:sys/ptrace.h rc=0 tokens=1556 text=9bb3cd0ad9be7e25
+kernel:sys/ptree.h rc=0 tokens=291 text=fad0e0ead4d770a5
+kernel:sys/queue.h rc=0 tokens=0 text=e3b0c44298fc1c14
+kernel:sys/quota.h rc=0 tokens=2559 text=2d22d3a4a629574b
+kernel:sys/quotactl.h rc=0 tokens=471 text=7bf9a8272be81b1c
+kernel:sys/radioio.h rc=1
+kernel:sys/radixtree.h rc=0 tokens=2758 text=117fd5657ce5034c
+kernel:sys/random.h rc=0 tokens=93 text=9c38c8d26499f1ad
+kernel:sys/ras.h rc=0 tokens=2576 text=88cf7e06f3b59979
+kernel:sys/rbtree.h rc=0 tokens=2723 text=1342f57e5ab4fd80
+kernel:sys/reboot.h rc=0 tokens=22 text=9d560dab0c5dc473
+kernel:sys/resource.h rc=1
+kernel:sys/resourcevar.h rc=1
+kernel:sys/rmd160.h rc=0 tokens=2607 text=c23ae2dedc9a4cb2
+kernel:sys/rnd.h rc=0 tokens=2562 text=07a13b6c9067c342
+kernel:sys/rndio.h rc=0 tokens=2818 text=26ef33ac6a2af074
+kernel:sys/rwlock.h rc=0 tokens=161 text=ace5854862025efe
+kernel:sys/scanio.h rc=0 tokens=65 text=6b76fc60a72d229c
+kernel:sys/sched.h rc=1
+kernel:sys/scsiio.h rc=0 tokens=2754 text=4e0d976a3df6b223
+kernel:sys/sdt.h rc=0 tokens=2736 text=5ad27ef2420d6bc8
+kernel:sys/select.h rc=1
+kernel:sys/selinfo.h rc=1
+kernel:sys/sem.h rc=1
+kernel:sys/semaphore.h rc=0 tokens=0 text=e3b0c44298fc1c14
+kernel:sys/sha1.h rc=0 tokens=2610 text=943c59c51b443a27
+kernel:sys/sha2.h rc=0 tokens=2721 text=1879e822607a31a8
+kernel:sys/sha3.h rc=0 tokens=2810 text=207a495b90335528
+kernel:sys/shm.h rc=1
+kernel:sys/siginfo.h rc=0 tokens=309 text=a775f3dfa182859e
+kernel:sys/signal.h rc=0 tokens=904 text=c5c221217aaafed4
+kernel:sys/signalvar.h rc=1
+kernel:sys/sigtypes.h rc=0 tokens=114 text=ee280919463f6f74
+kernel:sys/sleepq.h rc=1
+kernel:sys/socket.h rc=0 tokens=826 text=ce05804ef71f0e50
+kernel:sys/socketvar.h rc=1
+kernel:sys/sockio.h rc=0 tokens=0 text=e3b0c44298fc1c14
+kernel:sys/soundcard.h rc=0 tokens=3275 text=12e021e41bea9de9
+kernel:sys/spawn.h rc=1
+kernel:sys/specificdata.h rc=1
+kernel:sys/stat.h rc=1
+kernel:sys/statvfs.h rc=0 tokens=2896 text=8b22d00d1a04a65b
+kernel:sys/stdalign.h rc=0 tokens=0 text=e3b0c44298fc1c14
+kernel:sys/stdarg.h rc=0 tokens=174 text=7f040a1f0b377c24
+kernel:sys/stdbool.h rc=0 tokens=0 text=e3b0c44298fc1c14
+kernel:sys/stddef.h rc=0 tokens=113 text=77b8ddd3069c4a57
+kernel:sys/stdint.h rc=0 tokens=209 text=37de606a8c8062fb
+kernel:sys/swap.h rc=0 tokens=28 text=8ea7e10fb14c3ea4
+kernel:sys/syncobj.h rc=0 tokens=124 text=25c0198695c93d3a
+kernel:sys/syscall.h rc=0 tokens=0 text=e3b0c44298fc1c14
+kernel:sys/syscallargs.h rc=1
+kernel:sys/sysctl.h rc=1
+kernel:sys/syslimits.h rc=0 tokens=0 text=e3b0c44298fc1c14
+kernel:sys/syslog.h rc=0 tokens=259 text=6fc3ab325dbd24ad
+kernel:sys/tape.h rc=1
+kernel:sys/termios.h rc=0 tokens=294 text=57f5596acf95fda4
+kernel:sys/time.h rc=1
+kernel:sys/timeb.h rc=0 tokens=18 text=eb5d51c650ac5941
+kernel:sys/timepps.h rc=1
+kernel:sys/timerfd.h rc=1
+kernel:sys/times.h rc=0 tokens=101 text=22ad99b12d4215e8
+kernel:sys/timespec.h rc=0 tokens=185 text=4abe0a896487127a
+kernel:sys/timex.h rc=1
+kernel:sys/tls.h rc=0 tokens=187 text=116e429d252c02ed
+kernel:sys/trace.h rc=0 tokens=0 text=e3b0c44298fc1c14
+kernel:sys/tree.h rc=0 tokens=0 text=e3b0c44298fc1c14
+kernel:sys/tty.h rc=1
+kernel:sys/ttychars.h rc=0 tokens=47 text=dbd39802645713c0
+kernel:sys/ttycom.h rc=0 tokens=51 text=9362a709323de518
+kernel:sys/ttydefaults.h rc=0 tokens=8 text=838cdc8941f7fd64
+kernel:sys/ttydev.h rc=0 tokens=0 text=e3b0c44298fc1c14
+kernel:sys/types.h rc=0 tokens=2525 text=36492d1342ea47dd
+kernel:sys/ucontext.h rc=0 tokens=543 text=718caca48c205623
+kernel:sys/ucred.h rc=0 tokens=24 text=f372d5adccfafa34
+kernel:sys/uio.h rc=0 tokens=262 text=254c66919bf6ef2f
+kernel:sys/un.h rc=0 tokens=2669 text=31aed29e471329e3
+kernel:sys/unistd.h rc=0 tokens=0 text=e3b0c44298fc1c14
+kernel:sys/unpcb.h rc=1
+kernel:sys/utsname.h rc=0 tokens=83 text=0c5f939115f63f15
+kernel:sys/uuid.h rc=0 tokens=316 text=6ac32397eb9c0924
+kernel:sys/verified_exec.h rc=0 tokens=6031 text=7667b67be4c9da26
+kernel:sys/videoio.h rc=1
+kernel:sys/vmmeter.h rc=0 tokens=47 text=d2bf93232d6635b0
+kernel:sys/vnode.h rc=1
+kernel:sys/vnode_if.h rc=0 tokens=2539 text=6329b442482e4726
+kernel:sys/vnode_impl.h rc=1
+kernel:sys/wait.h rc=0 tokens=2845 text=0b359ead9b5083b7
+kernel:sys/wapbl.h rc=1
+kernel:sys/wapbl_replay.h rc=0 tokens=2677 text=1ddef69686234df9
+kernel:sys/wchan.h rc=0 tokens=7 text=ca993836ef8b0e01
+kernel:sys/wdog.h rc=0 tokens=30 text=bcc17b0391b29ce6
+kernel:sys/xattr.h rc=1
