@@ -30,4 +30,4 @@ python3 probes/bsd-abi/abi.py fetch freebsd-15.1-x86_64 /tmp/bsd-sets
 python3 probes/bsd-abi/abi.py check --rucc path/to/rucc --sets /tmp/bsd-sets --rows freebsd-15.1-x86_64 -v
 ```
 
-`accepted.txt` lists the known differences, each with the rucc issue that owns it. At the moment it holds one difference: on the NetBSD rows, rucc gives `max_align_t` the layout of its own `stddef.h` (tamnd/rucc#4143). A line is a row glob, a question glob and the issue. The check fails on a difference that is not in the list. It also fails on a line of the list that matches no difference. The `bsd probes` job of `ci.yml` runs the check with rucc from its main branch.
+`accepted.txt` lists the known differences, each with the rucc issue that owns it. At the moment it is empty. A line is a row glob, a question glob and the issue. The check fails on a difference that is not in the list. It also fails on a line of the list that matches no difference. The `bsd probes` job of `ci.yml` runs the check with rucc from its main branch.
