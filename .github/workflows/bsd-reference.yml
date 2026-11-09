@@ -17,6 +17,7 @@ on:
     paths:
       - probes/bsd-predef/**
       - probes/bsd-abi/**
+      - probes/bsd-pp/**
       - scripts/bsd/**
       - .github/workflows/bsd-reference.yml
   workflow_dispatch:
@@ -73,6 +74,9 @@ jobs:
       - name: make the abi files
         run: |
           scripts/bsd/freebsd-vm.sh ssh 'sh /root/compat/probes/bsd-abi/freebsd.sh /root/sets /root/out/abi'
+      - name: make the pp files
+        run: |
+          scripts/bsd/freebsd-vm.sh ssh 'sh /root/compat/probes/bsd-pp/freebsd.sh /root/sets /root/out/pp'
       - name: copy the files out
         if: always()
         run: |
@@ -89,6 +93,7 @@ jobs:
         run: |
           scripts/bsd/same.sh out/predef probes/bsd-predef/expected
           scripts/bsd/same.sh out/abi probes/bsd-abi/expected
+          scripts/bsd/same.sh out/pp probes/bsd-pp/expected
       - name: power off
         if: always()
         run: scripts/bsd/freebsd-vm.sh down
@@ -127,7 +132,7 @@ jobs:
           python3 probes/bsd-predef/predef.py dump "$id" --cc "$NB_GCC" -o "out/predef/$id.txt" \
             --note "tools: build.sh tools of NetBSD/src $(cat /mnt/nb/tools/commit.txt)" \
             --note "host: $(uname -sr)"
-      # bsd-abi has rows for the 11.1 release only, so only the jobs of branch 11 make abi files.
+      # bsd-abi and bsd-pp have rows for the 11.1 release only, so only the jobs of branch 11 make their files.
       - name: make the abi file
         if: matrix.branch == '11'
         run: |
@@ -135,6 +140,15 @@ jobs:
           sets=$(python3 probes/bsd-abi/abi.py fetch "$id" /mnt/nb/sets | tail -1)
           mkdir -p out/abi
           python3 probes/bsd-abi/abi.py scan "$id" --cc "$NB_GCC" --sysroot "$sets" -o "out/abi/$id.txt" \
+            --note "tools: build.sh tools of NetBSD/src $(cat /mnt/nb/tools/commit.txt)" \
+            --note "host: $(uname -sr)"
+      - name: make the pp file
+        if: matrix.branch == '11'
+        run: |
+          id=netbsd-11.1-${{ matrix.arch }}
+          sets=$(python3 probes/bsd-abi/abi.py fetch "$id" /mnt/nb/sets | tail -1)
+          mkdir -p out/pp
+          python3 probes/bsd-pp/pp.py dump "$id" --cc "$NB_GCC" --sysroot "$sets" -o "out/pp/$id.txt" \
             --note "tools: build.sh tools of NetBSD/src $(cat /mnt/nb/tools/commit.txt)" \
             --note "host: $(uname -sr)"
       - name: keep the files
@@ -148,3 +162,4 @@ jobs:
         run: |
           scripts/bsd/same.sh out/predef probes/bsd-predef/expected
           if [ -d out/abi ]; then scripts/bsd/same.sh out/abi probes/bsd-abi/expected; fi
+          if [ -d out/pp ]; then scripts/bsd/same.sh out/pp probes/bsd-pp/expected; fi

@@ -1,0 +1,5 @@
+# The known differences of bsd-pp, each with the rucc issue that owns it.
+# A line is a row glob, a unit glob and the issue.
+# check fails on a difference that is not here, and on a line here that matches no difference.
+#
+# row    unit    issue
