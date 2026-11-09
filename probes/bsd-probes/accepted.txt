@@ -2,3 +2,46 @@
 # The columns are globs: row, key. check takes the first line that matches.
 #
 # row       key                                   issue
+#
+# The driver queries. GCC 15 answers -dumpmachine with the full release (freebsd15.1) and NetBSD GCC with the empty vendor (riscv64--netbsd).
+*           dumpmachine                           tamnd/rucc#4088
+*           dumpversion                           tamnd/rucc#4186
+*           print-multi-*                         tamnd/rucc#4186
+# The ports GCC installs its tools with the triple as a prefix, so it gives x86_64-unknown-freebsd15.1-ld. This is the layout of the host and not a rucc bug.
+freebsd-*   print-prog-name=*                     tamnd/rucc#4186
+*           fstack-usage                          tamnd/rucc#4184
+#
+# GCC rejects these C++ only flags in a C compile, and rucc takes them.
+*           werror-Wctor-dtor-privacy             tamnd/rucc#4185
+*           werror-Wno-c++20-extensions           tamnd/rucc#4185
+*           werror-Wno-dangling-reference         tamnd/rucc#4185
+*           werror-Wno-literal-suffix             tamnd/rucc#4185
+*           werror-Wno-missing-template-keyword   tamnd/rucc#4185
+*           werror-Wno-non-template-friend        tamnd/rucc#4185
+*           werror-Wno-pmf-conversions            tamnd/rucc#4185
+*           werror-Wno-register                   tamnd/rucc#4185
+*           werror-Wnon-virtual-dtor              tamnd/rucc#4185
+*           werror-Wold-style-cast                tamnd/rucc#4185
+*           werror-Woverloaded-virtual            tamnd/rucc#4185
+*           werror-Wreorder                       tamnd/rucc#4185
+*           werror-Wsign-promo                    tamnd/rucc#4185
+# The older reference GCCs reject these flags and gcc 16 takes them. rucc follows gcc 16.
+*           werror-Wsynth                         tamnd/rucc#4185
+netbsd-*    werror-Wabi                           tamnd/rucc#4185
+freebsd-*   werror-Wformat-nonliteral             tamnd/rucc#485
+freebsd-*   werror-Wformat-security               tamnd/rucc#485
+#
+# The FreeBSD GCC 14 and 15 crash (segmentation fault) on %b with a length modifier. This is a bug of the reference compiler, and rucc takes the call.
+freebsd-*   kprintf-b-h                           tamnd/rucc#4095
+freebsd-*   kprintf-b-hh                          tamnd/rucc#4095
+freebsd-*   kprintf-b-l                           tamnd/rucc#4095
+freebsd-*   kprintf-b-ll                          tamnd/rucc#4095
+freebsd-*   kprintf-b-q                           tamnd/rucc#4095
+freebsd-*   kprintf-b-z                           tamnd/rucc#4095
+freebsd-*   kprintf-b-int-for-long                tamnd/rucc#4095
+#
+# GCC 10 of NetBSD 10 does not know these kernel options, and GCC 10 and 12 for riscv64 do not know -mno-omit-leaf-frame-pointer. rucc follows gcc 16.
+netbsd-10-* min-pagesize                          tamnd/rucc#4096
+netbsd-10-* ftrivial-auto-var-init*               tamnd/rucc#4096
+netbsd-10-* fzero-call-used-regs                  tamnd/rucc#4096
+netbsd-1?-riscv64 fno-omit-frame-pointer          tamnd/rucc#4096
