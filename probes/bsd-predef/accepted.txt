@@ -12,27 +12,16 @@
 *           m32*        *                                     tamnd/rucc#4088
 *           boot-i386   *                                     tamnd/rucc#4088
 
-# Macros that depend on the GCC version of the persona. rucc gives one set for every -fgnuc-version.
+# Macros that still differ from the GCC of the persona: __bf16, the decimal float macros, and the _BitInt width.
+# rucc gives __BITINT_MAXWIDTH__ 128, the widest _BitInt it compiles, where GCC gives 65535.
 *           *           __BFLT16_*                            tamnd/rucc#4088
-*           *           __FLT16_*                             tamnd/rucc#4088
 *           *           __DEC*                                tamnd/rucc#4088
-*           *           *_IS_IEC_60559__                      tamnd/rucc#4088
-*           *           __STDC_EMBED_*                        tamnd/rucc#4088
-*           *           __STDC_UTF_*                          tamnd/rucc#4088
 *           *           __BITINT_MAXWIDTH__                   tamnd/rucc#4088
-*           *           __GXX_ABI_VERSION                     tamnd/rucc#4088
-*           *           __FLT_EVAL_METHOD_C99__               tamnd/rucc#4088
-*           *           __GCC_ATOMIC_CHAR8_T_LOCK_FREE        tamnd/rucc#4088
-*           *           __GCC_CONSTRUCTIVE_SIZE               tamnd/rucc#4088
-*           *           __GCC_DESTRUCTIVE_SIZE                tamnd/rucc#4088
-*           *           __GNUC_*EXECUTION_CHARSET_NAME        tamnd/rucc#4088
-*           *           __has_*                               tamnd/rucc#4088
 
 # x86_64: macros of the target that rucc does not give.
 *-x86_64    *           __SEG_[FG]S                           tamnd/rucc#4088
 *-x86_64    *           __SIZEOF_FLOAT80__                    tamnd/rucc#4088
 *           *           __HAVE_SPECULATION_SAFE_VALUE         tamnd/rucc#4088
-*           *           __GCC_HAVE_DWARF2_CFI_ASM             tamnd/rucc#4088
 *-x86_64    *           __tune_nocona__                       tamnd/rucc#4088
 
 # aarch64: the ACLE macros, their spelling (65 and 14, not 'A' and 0xe), SME keywords and 16-byte CAS.
