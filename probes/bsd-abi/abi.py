@@ -38,6 +38,9 @@ import urllib.request
 HERE = os.path.dirname(os.path.abspath(__file__))
 STD = "-std=gnu11"
 
+# The target of usr/include/machine in the base set of NetBSD 11.1, for each arch.
+NETBSD_MACHINE = {"x86_64": "amd64", "aarch64": "aarch64", "riscv64": "riscv"}
+
 
 def table(name):
     out = []
@@ -100,6 +103,10 @@ def cmd_fetch(a):
             t.extractall(root, members=wanted, filter="tar")
         except TypeError:
             t.extractall(root, members=wanted)
+    link = os.path.join(root, "usr", "include", "machine")
+    if row["system"] == "netbsd" and not os.path.lexists(link):
+        # The comp set of NetBSD does not hold the machine link. The base set holds it.
+        os.symlink(NETBSD_MACHINE[row["arch"]], link)
     print(root)
 
 
