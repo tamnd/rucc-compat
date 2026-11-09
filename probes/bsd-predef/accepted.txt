@@ -1,0 +1,58 @@
+# The known differences between rucc and the reference GCC, each with the rucc issue that owns it.
+# The columns are globs: row, flag set, key. check takes the first line that matches.
+#
+# row       set         key                                   issue
+
+# The kernel flag sets: no FPU on x86_64 and aarch64, the riscv64 kernel -march, and the macros that follow.
+*           kernel      *                                     tamnd/rucc#4096
+
+# -m32 on the x86_64 targets.
+# GCC gives the FreeBSD and NetBSD i386 defaults: 53-bit long double on FreeBSD, x87 math (FLT_EVAL_METHOD 2), -march=i386 without CAS, MMX or SSE.
+# rucc gives the i686 SSE defaults of Linux.
+*           m32*        *                                     tamnd/rucc#4088
+*           boot-i386   *                                     tamnd/rucc#4088
+
+# rucc lists the dynamic macros in -dM. GCC does not.
+*           *           __FILE__                              tamnd/rucc#4088
+*           *           __LINE__                              tamnd/rucc#4088
+*           *           __DATE__                              tamnd/rucc#4088
+*           *           __TIME__                              tamnd/rucc#4088
+*           *           __COUNTER__                           tamnd/rucc#4088
+*           *           __INCLUDE_LEVEL__                     tamnd/rucc#4088
+*           *           __BASE_FILE__                         tamnd/rucc#4088
+*           *           __FILE_NAME__                         tamnd/rucc#4088
+
+# Macros that depend on the GCC version of the persona. rucc gives one set for every -fgnuc-version.
+*           *           __BFLT16_*                            tamnd/rucc#4088
+*           *           __FLT16_*                             tamnd/rucc#4088
+*           *           __DEC*                                tamnd/rucc#4088
+*           *           *_IS_IEC_60559__                      tamnd/rucc#4088
+*           *           __STDC_EMBED_*                        tamnd/rucc#4088
+*           *           __STDC_UTF_*                          tamnd/rucc#4088
+*           *           __BITINT_MAXWIDTH__                   tamnd/rucc#4088
+*           *           __GXX_ABI_VERSION                     tamnd/rucc#4088
+*           *           __FLT_EVAL_METHOD_C99__               tamnd/rucc#4088
+*           *           __GCC_ATOMIC_CHAR8_T_LOCK_FREE        tamnd/rucc#4088
+*           *           __GCC_CONSTRUCTIVE_SIZE               tamnd/rucc#4088
+*           *           __GCC_DESTRUCTIVE_SIZE                tamnd/rucc#4088
+*           *           __GNUC_*EXECUTION_CHARSET_NAME        tamnd/rucc#4088
+*           *           __has_*                               tamnd/rucc#4088
+
+# x86_64: macros of the target that rucc does not give.
+*-x86_64    *           __SEG_[FG]S                           tamnd/rucc#4088
+*-x86_64    *           __SIZEOF_FLOAT80__                    tamnd/rucc#4088
+*           *           __HAVE_SPECULATION_SAFE_VALUE         tamnd/rucc#4088
+*           *           __GCC_HAVE_DWARF2_CFI_ASM             tamnd/rucc#4088
+*-x86_64    *           __tune_nocona__                       tamnd/rucc#4088
+
+# aarch64: the ACLE macros, their spelling (65 and 14, not 'A' and 0xe), SME keywords and 16-byte CAS.
+*-aarch64   *           __ARM_*                               tamnd/rucc#4088
+*-aarch64   *           __arm_*                               tamnd/rucc#4088
+*-aarch64   *           __GCC_HAVE_SYNC_COMPARE_AND_SWAP_16   tamnd/rucc#4088
+*-aarch64   *           __FP_FAST_FMA*                        tamnd/rucc#4088
+
+# riscv64: the BSD GCC defaults are rv64gc with -mcmodel=medany. rucc does not give the extension macros.
+*-riscv64   *           __riscv_*                             tamnd/rucc#4088
+*-riscv64   *           __FP_FAST_FMA*                        tamnd/rucc#4088
+*-riscv64   *           __GCC_ATOMIC_*_LOCK_FREE              tamnd/rucc#4088
+*-riscv64   *           __GCC_HAVE_SYNC_COMPARE_AND_SWAP_*    tamnd/rucc#4088

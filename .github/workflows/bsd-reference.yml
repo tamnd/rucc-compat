@@ -1,15 +1,14 @@
 # The reference output of the BSD suites (plan 15.2 of tamnd/rucc-bsd).
 #
-# No GitHub runner has a FreeBSD GCC or a NetBSD GCC. So this workflow makes the reference output on the systems
-# themselves, and the expected files in the repository are copies of what it makes.
+# No GitHub runner has a FreeBSD GCC or a NetBSD GCC.
+# So this workflow makes the reference output on the systems themselves, and the expected files in the repository are copies of what it makes.
 #
-# The FreeBSD job boots the FreeBSD 15.1 BASIC-CI image under QEMU with KVM and installs the cross GCC packages
-# (amd64-gcc15 and the others of rows.txt) from the release's package repository. The NetBSD jobs build the
-# in-tree GCC of each pinned branch with build.sh tools, one job for each branch and architecture.
+# The FreeBSD job boots the FreeBSD 15.1 BASIC-CI image under QEMU with KVM and installs the cross GCC packages (amd64-gcc15 and the others of rows.txt) from the release's package repository.
+# The NetBSD jobs build the in-tree GCC of each pinned branch with build.sh tools, one job for each branch and architecture.
 #
-# Each job compares what it made with the expected files and fails if a line is different. The comment lines
-# at the top of each file are not compared. To update the files, run the workflow by hand, download the
-# artifacts and commit them.
+# Each job compares what it made with the expected files and fails if a line is different.
+# The comment lines at the top of each file are not compared.
+# To update the files, run the workflow by hand, download the artifacts and commit them.
 
 name: bsd-reference
 

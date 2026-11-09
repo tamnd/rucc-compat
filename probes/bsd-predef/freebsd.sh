@@ -4,7 +4,8 @@
 #   freebsd.sh OUTDIR
 #
 # It installs the cross GCC packages that rows.txt names, from the default package repository of the release.
-# Then it runs predef.py dump for each FreeBSD row. Each file records the package version and its SHA-256.
+# Then it runs predef.py dump for each FreeBSD row.
+# Each file records the package version and its SHA-256.
 set -eu
 out=$1
 here=$(cd "$(dirname "$0")" && pwd)

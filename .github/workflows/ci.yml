@@ -694,6 +694,40 @@ jobs:
           path: results/
           if-no-files-found: ignore
 
+  # The BSD probes.
+  # Each probe compares rucc with the reference GCC of a FreeBSD or NetBSD target.
+  # The runner has no BSD GCC, so the reference output is in the repository.
+  # bsd-reference.yml makes it again.
+  # accepted.txt gives each known difference with the rucc issue that owns it, so the job is red only on a new difference.
+  # The job is not in the required check, because it builds rucc from its main branch.
+  bsd:
+    name: bsd probes
+    needs: quick
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: check out the compiler
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: tamnd/rucc
+          path: rucc
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: rucc
+      - name: build the compiler
+        run: cargo build --release --bin rucc --manifest-path rucc/Cargo.toml
+      - name: the predefined macros
+        run: |
+          mkdir -p results
+          python3 probes/bsd-predef/predef.py check --rucc rucc/target/release/rucc --report results/bsd-predef.txt
+      - name: keep the report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: bsd
+          path: results/
+          if-no-files-found: ignore
+
   # A single required check, so branch protection does not have to list every job above. The
   # differential, the pipeline, the execution and the torture suite are deliberately not in this
   # list: all four build rucc from its main branch, and a pull request here is about this

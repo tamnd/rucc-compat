@@ -3,8 +3,10 @@
 #
 #   netbsd-tools.sh BRANCH ARCH ROOT
 #
-# BRANCH is current, 11 or 10. ARCH is x86_64, aarch64 or riscv64. The source goes to ROOT/src and the tools to
-# ROOT/tools. The commits are the pins of tamnd/rucc-bsd (pins.toml), so the GCC is the GCC of that persona.
+# BRANCH is current, 11 or 10.
+# ARCH is x86_64, aarch64 or riscv64.
+# The source goes to ROOT/src and the tools to ROOT/tools.
+# The commits are the pins of tamnd/rucc-bsd (pins.toml), so the GCC is the GCC of that persona.
 # The script prints the path of the gcc driver on its last line.
 set -euo pipefail
 

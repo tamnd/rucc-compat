@@ -3,8 +3,8 @@
 #
 #   same.sh MADE EXPECTED
 #
-# For each file in MADE, the file of the same name in EXPECTED must have the same lines. The comment lines at the
-# top of a file name the host and the package, so they are not compared.
+# For each file in MADE, the file of the same name in EXPECTED must have the same lines.
+# The comment lines at the top of a file name the host and the package, so they are not compared.
 set -euo pipefail
 made=$1 expected=$2
 body() { awk 'done || !/^# / { done = 1; print }' "$1"; }

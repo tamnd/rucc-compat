@@ -5,8 +5,9 @@
 #   freebsd-vm.sh ssh CMD   run CMD as root in the VM
 #   freebsd-vm.sh down      power off the VM
 #
-# The image is the official FreeBSD 15.1-RELEASE BASIC-CI image. It is the builder image of tamnd/rucc-bsd
-# (conf/freebsd/builder.conf), with the same SHA-256. The image lets root log in with an empty password.
+# The image is the official FreeBSD 15.1-RELEASE BASIC-CI image.
+# It is the builder image of tamnd/rucc-bsd (conf/freebsd/builder.conf), with the same SHA-256.
+# The image lets root log in with an empty password.
 # The first login installs a key, and every later call uses the key.
 set -euo pipefail
 

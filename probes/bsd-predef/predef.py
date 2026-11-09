@@ -5,14 +5,15 @@
     predef.py check --rucc RUCC             run rucc for every row and compare it with the expected files
     predef.py show ROW --cc 'CMD'           print what CMD gives for ROW, in the format of the expected files
 
-rows.txt gives the rows, flags.txt the flag sets and features.txt the feature queries. Each flag set is one run of
-`-dM -E` on an empty file, and one run of `-E` on a file of feature queries. The expected file keeps the default set
-in full. For each other set it keeps only the lines that the flags add (+) or remove (-), so a difference in the
-default set shows once and not once for each set.
+rows.txt gives the rows, flags.txt the flag sets and features.txt the feature queries.
+Each flag set is one run of `-dM -E` on an empty file, and one run of `-E` on a file of feature queries.
+The expected file keeps the default set in full.
+For each other set it keeps only the lines that the flags add (+) or remove (-), so a difference in the default set shows once and not once for each set.
 
 The lines that name the compiler are not compared: __VERSION__ and every macro that starts with __rucc.
-accepted.txt lists the known differences, each with the issue that owns it. check fails on a difference that is not
-in the list, and on a line of the list that matches no difference.
+Spaces inside a line are not compared.
+accepted.txt lists the known differences, each with the issue that owns it.
+check fails on a difference that is not in the list, and on a line of the list that matches no difference.
 """
 
 import argparse
@@ -124,7 +125,8 @@ def parse(lines):
             order.append(cur)
             out[cur] = (int(head[1][3:]), set())
             continue
-        out[cur][1].add(line)
+        # GCC ends an empty definition with a space and rucc does not. The spaces are not compared.
+        out[cur][1].add(" ".join(line.split()))
     base = out[order[0]][1] if order else set()
     for name in order[1:]:
         rc, delta = out[name]
