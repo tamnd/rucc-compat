@@ -1,0 +1,6 @@
+# Known differences between rucc and the reference GCC.
+# Each line is a row glob, a question glob and the rucc issue that owns the difference.
+
+# rucc uses its own stddef.h, which makes max_align_t a 32-byte struct. The GCC of NetBSD uses the stddef.h of the system, which makes it a 16-byte union.
+netbsd-11.1-* sizeof(max_align_t) tamnd/rucc#4143
+netbsd-11.1-* __builtin_offsetof(max_align_t,* tamnd/rucc#4143

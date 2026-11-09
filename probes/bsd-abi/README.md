@@ -19,7 +19,7 @@ This probe compares the type layouts of the installed FreeBSD and NetBSD headers
 No GitHub runner has a BSD GCC, so the reference files are in `expected/`. The `bsd-reference` workflow made them, and the first lines of each file say how.
 
 - FreeBSD: `freebsd.sh` runs in the FreeBSD 15.1-RELEASE BASIC-CI VM with the cross GCC 15.2.0 packages (`amd64-gcc15`, `aarch64-gcc15`, `riscv64-gcc15`) from `pkg+https://pkg.FreeBSD.org/FreeBSD:15:amd64/quarterly`. The headers come from `base.txz` of each architecture.
-- NetBSD: the GCC 12.5.0 that `build.sh tools` builds at the netbsd-11 commit that tamnd/rucc-bsd pins. The headers come from `comp.tar.xz` (`comp.tgz` on riscv64) of NetBSD 11.1.
+- NetBSD: the GCC 12.5.0 that `build.sh tools` builds at the netbsd-11 commit that tamnd/rucc-bsd pins. The headers come from `comp.tar.xz` (`comp.tgz` on riscv64) of NetBSD 11.1. The comp set does not hold the `usr/include/machine` link. The base set holds it, so `fetch` makes the link with the same target.
 
 The check skips a row that has no file in `expected/`. To make the files again, run the `bsd-reference` workflow by hand. It fails if a file is different from the file in `expected/`. Download the artifacts and commit them.
 
@@ -30,4 +30,4 @@ python3 probes/bsd-abi/abi.py fetch freebsd-15.1-x86_64 /tmp/bsd-sets
 python3 probes/bsd-abi/abi.py check --rucc path/to/rucc --sets /tmp/bsd-sets --rows freebsd-15.1-x86_64 -v
 ```
 
-`accepted.txt` lists the known differences, each with the rucc issue that owns it. At the moment rucc gives the same answers as the reference, so the file does not exist. A line is a row glob, a question glob and the issue. The check fails on a difference that is not in the list. It also fails on a line of the list that matches no difference. The `bsd probes` job of `ci.yml` runs the check with rucc from its main branch.
+`accepted.txt` lists the known differences, each with the rucc issue that owns it. At the moment it holds one difference: on the NetBSD rows, rucc gives `max_align_t` the layout of its own `stddef.h` (tamnd/rucc#4143). A line is a row glob, a question glob and the issue. The check fails on a difference that is not in the list. It also fails on a line of the list that matches no difference. The `bsd probes` job of `ci.yml` runs the check with rucc from its main branch.

@@ -84,11 +84,18 @@ def cmd_fetch(a):
     row = find_row(a.row)
     os.makedirs(a.dir, exist_ok=True)
     root = os.path.join(a.dir, row["id"])
-    if os.path.isdir(os.path.join(root, "usr", "include")):
-        # Unpacked before, from a set with the right digest.
-        print(root)
-        return
-    name = os.path.join(a.dir, os.path.basename(row["url"]))
+    # A set unpacked before, from a set with the right digest, is used again.
+    if not os.path.isdir(os.path.join(root, "usr", "include")):
+        unpack(row, a.dir, root)
+    link = os.path.join(root, "usr", "include", "machine")
+    if row["system"] == "netbsd" and not os.path.lexists(link):
+        # The comp set of NetBSD does not hold the machine link. The base set holds it.
+        os.symlink(NETBSD_MACHINE[row["arch"]], link)
+    print(root)
+
+
+def unpack(row, top, root):
+    name = os.path.join(top, os.path.basename(row["url"]))
     algo, want = row["digest"].split(":")
     if not os.path.exists(name) or digest(name, algo) != want:
         print(f"fetch {row['url']}")
@@ -103,11 +110,6 @@ def cmd_fetch(a):
             t.extractall(root, members=wanted, filter="tar")
         except TypeError:
             t.extractall(root, members=wanted)
-    link = os.path.join(root, "usr", "include", "machine")
-    if row["system"] == "netbsd" and not os.path.lexists(link):
-        # The comp set of NetBSD does not hold the machine link. The base set holds it.
-        os.symlink(NETBSD_MACHINE[row["arch"]], link)
-    print(root)
 
 
 def digest(path, algo):
