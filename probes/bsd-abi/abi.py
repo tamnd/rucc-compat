@@ -356,7 +356,8 @@ def cmd_scan(a):
     for h in headers(row["system"]):
         rc, out, err = run(cc + [f"--sysroot={a.sysroot}", STD, "-E", "-x", "c", "-"], f"#include <{h}>\n")
         if rc != 0:
-            first = next((line for line in err.splitlines() if line.strip()), "no message")
+            lines = [line for line in err.splitlines() if line.strip()]
+            first = next((line for line in lines if "error" in line), lines[0] if lines else "no message")
             print(f"{row['id']}: {h} does not preprocess, left out: {first}")
             continue
         hdrs.append(h)
