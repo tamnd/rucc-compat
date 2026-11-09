@@ -1,0 +1,31 @@
+# The flag sets. Each set is one -dM -E run. A set applies to the systems and the architectures in its columns, or to all of them.
+# The kernel and boot lines come from 08 and 11 of the rucc-bsd plan, without the flags that change no macro.
+#
+# name          system   arch     flags
+default         all      all
+gnu99           all      all      -std=gnu99
+gnu11           all      all      -std=gnu11
+gnu17           all      all      -std=gnu17
+c99             all      all      -std=c99
+c11             all      all      -std=c11
+c17             all      all      -std=c17
+O1              all      all      -O1
+O2              all      all      -O2
+Os              all      all      -Os
+pic             all      all      -fPIC
+pie             all      all      -fPIE
+nopic           all      all      -fno-pic -fno-pie
+ssp-strong      all      all      -fstack-protector-strong
+ssp-all         all      all      -fstack-protector-all
+m32             all      x86_64   -m32
+m32-O2-pic      all      x86_64   -m32 -O2 -fPIC
+boot-i386       freebsd  x86_64   -m32 -march=i386 -Os -ffreestanding
+boot-i386       netbsd   x86_64   -m32 -march=i386 -Os -ffreestanding
+kernel          freebsd  x86_64   -std=gnu99 -ffreestanding -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse -msoft-float -fstack-protector-strong
+kernel          netbsd   x86_64   -std=gnu11 -ffreestanding -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse -mno-avx -msoft-float -fstack-protector-strong
+kernel          freebsd  aarch64  -std=gnu99 -ffreestanding -mgeneral-regs-only -ffixed-x18 -mbranch-protection=standard -mno-outline-atomics
+kernel          netbsd   aarch64  -std=gnu11 -ffreestanding -march=armv8-a+nofp+nosimd
+kernel          freebsd  riscv64  -std=gnu99 -ffreestanding -march=rv64imafdch_zifencei_svinval -mabi=lp64 -mcmodel=medany -mno-relax
+kernel          netbsd   riscv64  -std=gnu11 -ffreestanding -mabi=lp64 -mcmodel=medany
+bti             freebsd  aarch64  -mbranch-protection=standard
+lp64d           all      riscv64  -march=rv64imafdc -mabi=lp64d

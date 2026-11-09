@@ -1,0 +1,121 @@
+# The reference output of the BSD suites (plan 15.2 of tamnd/rucc-bsd).
+#
+# No GitHub runner has a FreeBSD GCC or a NetBSD GCC.
+# So this workflow makes the reference output on the systems themselves, and the expected files in the repository are copies of what it makes.
+#
+# The FreeBSD job boots the FreeBSD 15.1 BASIC-CI image under QEMU with KVM and installs the cross GCC packages (amd64-gcc15 and the others of rows.txt) from the release's package repository.
+# The NetBSD jobs build the in-tree GCC of each pinned branch with build.sh tools, one job for each branch and architecture.
+#
+# Each job compares what it made with the expected files and fails if a line is different.
+# The comment lines at the top of each file are not compared.
+# To update the files, run the workflow by hand, download the artifacts and commit them.
+
+name: bsd-reference
+
+on:
+  pull_request:
+    paths:
+      - probes/bsd-predef/**
+      - scripts/bsd/**
+      - .github/workflows/bsd-reference.yml
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  freebsd:
+    name: freebsd 15.1 packages
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      VM_CACHE: /mnt/vm-cache
+      VM_DIR: /mnt/freebsd-vm
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: let the runner user open /dev/kvm
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm || true
+          sudo mkdir -p "$VM_CACHE" "$VM_DIR"
+          sudo chown "$USER" "$VM_CACHE" "$VM_DIR"
+      - name: install QEMU
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends qemu-system-x86 qemu-utils sshpass
+      - name: cache the image
+        uses: actions/cache@v6.1.0
+        with:
+          path: /mnt/vm-cache/FreeBSD-*.raw.xz
+          key: freebsd-vm-${{ hashFiles('scripts/bsd/freebsd-vm.sh') }}
+      - name: boot the VM
+        run: |
+          scripts/bsd/freebsd-vm.sh up
+          tar -cf - probes scripts | scripts/bsd/freebsd-vm.sh ssh 'mkdir -p /root/compat && tar -xf - -C /root/compat'
+      - name: make the predef files
+        run: |
+          scripts/bsd/freebsd-vm.sh ssh 'sh /root/compat/probes/bsd-predef/freebsd.sh /root/out/predef'
+          mkdir -p out
+          scripts/bsd/freebsd-vm.sh ssh 'tar -cf - -C /root/out .' | tar -xf - -C out
+      - name: keep the files
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: bsd-reference-freebsd
+          path: out/
+          if-no-files-found: ignore
+      - name: the expected files are current
+        run: scripts/bsd/same.sh out/predef probes/bsd-predef/expected
+      - name: power off
+        if: always()
+        run: scripts/bsd/freebsd-vm.sh down
+
+  netbsd:
+    name: netbsd ${{ matrix.branch }} ${{ matrix.arch }} tools
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: [current, "11", "10"]
+        arch: [x86_64, aarch64, riscv64]
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: free disk
+        run: |
+          sudo mkdir -p /mnt/nb
+          sudo chown "$USER" /mnt/nb
+          df -h / /mnt
+      # The tools record absolute paths, so the cache restores them at the same path.
+      - name: cache the tools
+        uses: actions/cache@v6.1.0
+        with:
+          path: /mnt/nb/tools
+          key: netbsd-tools-${{ matrix.branch }}-${{ matrix.arch }}-${{ hashFiles('scripts/bsd/netbsd-tools.sh') }}
+      - name: build the tools
+        run: |
+          gcc=$(scripts/bsd/netbsd-tools.sh ${{ matrix.branch }} ${{ matrix.arch }} /mnt/nb | tail -1)
+          echo "NB_GCC=$gcc" >> "$GITHUB_ENV"
+          "$gcc" --version | head -1
+      - name: make the predef file
+        run: |
+          id=netbsd-${{ matrix.branch }}-${{ matrix.arch }}
+          mkdir -p out/predef
+          python3 probes/bsd-predef/predef.py dump "$id" --cc "$NB_GCC" -o "out/predef/$id.txt" \
+            --note "tools: build.sh tools of NetBSD/src $(cat /mnt/nb/tools/commit.txt)" \
+            --note "host: $(uname -sr)"
+      - name: keep the files
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: bsd-reference-netbsd-${{ matrix.branch }}-${{ matrix.arch }}
+          path: out/
+          if-no-files-found: ignore
+      - name: the expected files are current
+        run: scripts/bsd/same.sh out/predef probes/bsd-predef/expected

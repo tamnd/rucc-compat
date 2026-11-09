@@ -14,3 +14,6 @@
 .idea/
 .vscode/
 *.swp
+
+# Python byte code from running the probe scripts
+__pycache__/
