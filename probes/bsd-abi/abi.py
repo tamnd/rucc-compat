@@ -80,6 +80,11 @@ def run(argv, text=None, cwd=None):
 def cmd_fetch(a):
     row = find_row(a.row)
     os.makedirs(a.dir, exist_ok=True)
+    root = os.path.join(a.dir, row["id"])
+    if os.path.isdir(os.path.join(root, "usr", "include")):
+        # Unpacked before, from a set with the right digest.
+        print(root)
+        return
     name = os.path.join(a.dir, os.path.basename(row["url"]))
     algo, want = row["digest"].split(":")
     if not os.path.exists(name) or digest(name, algo) != want:
@@ -88,15 +93,13 @@ def cmd_fetch(a):
     got = digest(name, algo)
     if got != want:
         sys.exit(f"abi.py: {name}: {algo} is {got}, rows.txt says {want}")
-    root = os.path.join(a.dir, row["id"])
-    if not os.path.isdir(os.path.join(root, "usr", "include")):
-        with tarfile.open(name) as t:
-            wanted = [m for m in t.getmembers() if m.name.lstrip("./").startswith("usr/include/")
-                      and (m.isfile() or m.isdir() or m.issym())]
-            try:
-                t.extractall(root, members=wanted, filter="tar")
-            except TypeError:
-                t.extractall(root, members=wanted)
+    with tarfile.open(name) as t:
+        wanted = [m for m in t.getmembers() if m.name.lstrip("./").startswith("usr/include/")
+                  and (m.isfile() or m.isdir() or m.issym())]
+        try:
+            t.extractall(root, members=wanted, filter="tar")
+        except TypeError:
+            t.extractall(root, members=wanted)
     print(root)
 
 
@@ -353,10 +356,13 @@ def cmd_scan(a):
     for h in headers(row["system"]):
         rc, out, err = run(cc + [f"--sysroot={a.sysroot}", STD, "-E", "-x", "c", "-"], f"#include <{h}>\n")
         if rc != 0:
-            print(f"{row['id']}: {h} does not preprocess, left out")
+            first = next((line for line in err.splitlines() if line.strip()), "no message")
+            print(f"{row['id']}: {h} does not preprocess, left out: {first}")
             continue
         hdrs.append(h)
         types.update(find_types(own_text(out, a.sysroot)))
+    if not hdrs:
+        sys.exit(f"abi.py: {row['id']}: no header preprocesses")
     answers = measure(cc, a.sysroot, hdrs, questions(types))
     _, version, _ = run(cc + ["--version"])
     text = [f"# {row['id']}: {row['system']} {row['arch']}, reference {row['reference']}",
@@ -443,6 +449,9 @@ def cmd_check(a):
     report = []
     for row in rows():
         if a.rows and not any(fnmatch.fnmatch(row["id"], g) for g in a.rows):
+            continue
+        if not os.path.exists(os.path.join(HERE, "expected", row["id"] + ".txt")):
+            print(f"{row['id']}: no reference file in expected/, skipped")
             continue
         sysroot = os.path.join(a.sets, row["id"])
         if not os.path.isdir(os.path.join(sysroot, "usr", "include")):
