@@ -147,7 +147,9 @@ def preprocess(cc, sysroot, mode_flags, header):
 
 
 def answers(cc, row, sysroot, keep=None, jobs=None):
-    units = [(name, flags, h) for name, dirs, flags in modes(row["system"]) for h in headers(sysroot, dirs)]
+    # A compiler writes the line markers with the sysroot as it was given, and own() keeps only the absolute paths.
+    sysroot = os.path.abspath(sysroot)
+    units =[(name, flags, h) for name, dirs, flags in modes(row["system"]) for h in headers(sysroot, dirs)]
     with concurrent.futures.ThreadPoolExecutor(jobs or os.cpu_count()) as pool:
         done = list(pool.map(lambda u: preprocess(cc, sysroot, u[1], u[2]), units))
     out = []
