@@ -1,0 +1,558 @@
+# freebsd-gcc14-riscv64: freebsd riscv64, personas 14, reference riscv64-gcc14
+# command: /usr/local/bin/riscv64-unknown-freebsd15.1-gcc14
+# version: riscv64-unknown-freebsd15.1-gcc14 (FreeBSD Ports Collection for riscv64) 14.2.0
+# package: riscv64-gcc14 14.2.0_1, sha256 665f0783ffcdf425a7ee674813c940aae6c251e4da6b5f83c778ec736f9cf0e4, from pkg+https://pkg.FreeBSD.org/FreeBSD:15:amd64/quarterly
+# host: FreeBSD 15.1-RELEASE
+version gcc 140200
+gcc-version 14.2.0
+freebsd-cc-version rc=0 __FreeBSD_cc_version
+print-resource-dir rc=1
+dumpversion rc=0 14.2.0
+dumpfullversion rc=0 14.2.0
+dumpmachine rc=0 riscv64-unknown-freebsd15.1
+print-multi-os-directory rc=0 .
+print-multi-directory rc=0 .
+print-multi-lib rc=0 .;
+print-libgcc-file-name rc=0 libgcc.a
+print-prog-name=ld rc=0 riscv64-unknown-freebsd15.1-ld
+print-prog-name=as rc=0 riscv64-unknown-freebsd15.1-as
+print-file-name=libc.so rc=0
+print-search-dirs rc=0
+print-sysroot rc=0
+V rc=1
+qversion rc=1
+features-gnu11 rc=0 ext_c_static_assert=1 | ext_c_alignas=1 | ext_c_atomic=1 | ext_c_generic_selections=1 | ext_c_thread_local=1 | feature_c_static_assert=1 | feature_c_generic_selections=1 | feature_address_sanitizer=0 | feature_nullability=0 | builtin_align_up=0 | attribute_nonstring=1 | attribute_no_stack_protector=1
+features-gnu99 rc=0 ext_c_static_assert=1 | ext_c_alignas=1 | ext_c_atomic=1 | ext_c_generic_selections=1 | ext_c_thread_local=1 | feature_c_static_assert=0 | feature_c_generic_selections=0 | feature_address_sanitizer=0 | feature_nullability=0 | builtin_align_up=0 | attribute_nonstring=1 | attribute_no_stack_protector=1
+macros-default/__GNUC__ 14
+macros-default/__GNUC_MINOR__ 2
+macros-default/__GNUC_PATCHLEVEL__ 0
+macros-default/__GNUC_STDC_INLINE__ 1
+macros-default/__STDC__ 1
+macros-default/__STDC_VERSION__ 201710L
+macros-default/__STDC_HOSTED__ 1
+macros-default/__clang__ undefined
+macros-default/__FreeBSD__ 15
+macros-default/__FreeBSD_cc_version undefined
+macros-default/__NetBSD__ undefined
+macros-default/__ELF__ 1
+macros-default/__unix__ 1
+macros-default/__LP64__ 1
+macros-default/_LP64 1
+macros-default/__ILP32__ undefined
+macros-default/__CHAR_UNSIGNED__ 1
+macros-default/__SIZEOF_POINTER__ 8
+macros-default/__SIZEOF_LONG__ 8
+macros-default/__SIZEOF_LONG_DOUBLE__ 16
+macros-default/__SIZEOF_INT128__ 16
+macros-default/__PIC__ undefined
+macros-default/__pic__ undefined
+macros-default/__PIE__ undefined
+macros-default/__pie__ undefined
+macros-default/__OPTIMIZE__ undefined
+macros-default/__OPTIMIZE_SIZE__ undefined
+macros-default/__NO_INLINE__ 1
+macros-default/__SSP__ undefined
+macros-default/__SSP_STRONG__ undefined
+macros-default/__SSP_ALL__ undefined
+macros-default/__x86_64__ undefined
+macros-default/__amd64__ undefined
+macros-default/__i386__ undefined
+macros-default/__aarch64__ undefined
+macros-default/__riscv 1
+macros-default/__riscv_xlen 64
+macros-default/__riscv_float_abi_double 1
+macros-default/__riscv_float_abi_soft undefined
+macros-default/__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4 1
+macros-default/__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8 1
+macros-default/__GCC_ATOMIC_INT_LOCK_FREE 2
+macros-default/__GCC_ATOMIC_POINTER_LOCK_FREE 2
+macros-default/__WCHAR_TYPE__ int
+macros-default/__WINT_TYPE__ int
+macros-default/__SIZE_TYPE__ long unsigned int
+macros-default/__PTRDIFF_TYPE__ long int
+macros-default/__INTMAX_TYPE__ long int
+macros-default/__INT64_TYPE__ long int
+macros-default/__BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
+macros-default/__ORDER_LITTLE_ENDIAN__ 1234
+macros-default/__USER_LABEL_PREFIX__
+macros-default/__REGISTER_PREFIX__
+macros-gnu99-freestanding/__GNUC__ 14
+macros-gnu99-freestanding/__GNUC_MINOR__ 2
+macros-gnu99-freestanding/__GNUC_PATCHLEVEL__ 0
+macros-gnu99-freestanding/__GNUC_STDC_INLINE__ 1
+macros-gnu99-freestanding/__STDC__ 1
+macros-gnu99-freestanding/__STDC_VERSION__ 199901L
+macros-gnu99-freestanding/__STDC_HOSTED__ 0
+macros-gnu99-freestanding/__clang__ undefined
+macros-gnu99-freestanding/__FreeBSD__ 15
+macros-gnu99-freestanding/__FreeBSD_cc_version undefined
+macros-gnu99-freestanding/__NetBSD__ undefined
+macros-gnu99-freestanding/__ELF__ 1
+macros-gnu99-freestanding/__unix__ 1
+macros-gnu99-freestanding/__LP64__ 1
+macros-gnu99-freestanding/_LP64 1
+macros-gnu99-freestanding/__ILP32__ undefined
+macros-gnu99-freestanding/__CHAR_UNSIGNED__ 1
+macros-gnu99-freestanding/__SIZEOF_POINTER__ 8
+macros-gnu99-freestanding/__SIZEOF_LONG__ 8
+macros-gnu99-freestanding/__SIZEOF_LONG_DOUBLE__ 16
+macros-gnu99-freestanding/__SIZEOF_INT128__ 16
+macros-gnu99-freestanding/__PIC__ undefined
+macros-gnu99-freestanding/__pic__ undefined
+macros-gnu99-freestanding/__PIE__ undefined
+macros-gnu99-freestanding/__pie__ undefined
+macros-gnu99-freestanding/__OPTIMIZE__ undefined
+macros-gnu99-freestanding/__OPTIMIZE_SIZE__ undefined
+macros-gnu99-freestanding/__NO_INLINE__ 1
+macros-gnu99-freestanding/__SSP__ undefined
+macros-gnu99-freestanding/__SSP_STRONG__ undefined
+macros-gnu99-freestanding/__SSP_ALL__ undefined
+macros-gnu99-freestanding/__x86_64__ undefined
+macros-gnu99-freestanding/__amd64__ undefined
+macros-gnu99-freestanding/__i386__ undefined
+macros-gnu99-freestanding/__aarch64__ undefined
+macros-gnu99-freestanding/__riscv 1
+macros-gnu99-freestanding/__riscv_xlen 64
+macros-gnu99-freestanding/__riscv_float_abi_double 1
+macros-gnu99-freestanding/__riscv_float_abi_soft undefined
+macros-gnu99-freestanding/__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4 1
+macros-gnu99-freestanding/__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8 1
+macros-gnu99-freestanding/__GCC_ATOMIC_INT_LOCK_FREE 2
+macros-gnu99-freestanding/__GCC_ATOMIC_POINTER_LOCK_FREE 2
+macros-gnu99-freestanding/__WCHAR_TYPE__ int
+macros-gnu99-freestanding/__WINT_TYPE__ int
+macros-gnu99-freestanding/__SIZE_TYPE__ long unsigned int
+macros-gnu99-freestanding/__PTRDIFF_TYPE__ long int
+macros-gnu99-freestanding/__INTMAX_TYPE__ long int
+macros-gnu99-freestanding/__INT64_TYPE__ long int
+macros-gnu99-freestanding/__BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
+macros-gnu99-freestanding/__ORDER_LITTLE_ENDIAN__ 1234
+macros-gnu99-freestanding/__USER_LABEL_PREFIX__
+macros-gnu99-freestanding/__REGISTER_PREFIX__
+macros-pic/__GNUC__ 14
+macros-pic/__GNUC_MINOR__ 2
+macros-pic/__GNUC_PATCHLEVEL__ 0
+macros-pic/__GNUC_STDC_INLINE__ 1
+macros-pic/__STDC__ 1
+macros-pic/__STDC_VERSION__ 201710L
+macros-pic/__STDC_HOSTED__ 1
+macros-pic/__clang__ undefined
+macros-pic/__FreeBSD__ 15
+macros-pic/__FreeBSD_cc_version undefined
+macros-pic/__NetBSD__ undefined
+macros-pic/__ELF__ 1
+macros-pic/__unix__ 1
+macros-pic/__LP64__ 1
+macros-pic/_LP64 1
+macros-pic/__ILP32__ undefined
+macros-pic/__CHAR_UNSIGNED__ 1
+macros-pic/__SIZEOF_POINTER__ 8
+macros-pic/__SIZEOF_LONG__ 8
+macros-pic/__SIZEOF_LONG_DOUBLE__ 16
+macros-pic/__SIZEOF_INT128__ 16
+macros-pic/__PIC__ 2
+macros-pic/__pic__ 2
+macros-pic/__PIE__ undefined
+macros-pic/__pie__ undefined
+macros-pic/__OPTIMIZE__ undefined
+macros-pic/__OPTIMIZE_SIZE__ undefined
+macros-pic/__NO_INLINE__ 1
+macros-pic/__SSP__ undefined
+macros-pic/__SSP_STRONG__ undefined
+macros-pic/__SSP_ALL__ undefined
+macros-pic/__x86_64__ undefined
+macros-pic/__amd64__ undefined
+macros-pic/__i386__ undefined
+macros-pic/__aarch64__ undefined
+macros-pic/__riscv 1
+macros-pic/__riscv_xlen 64
+macros-pic/__riscv_float_abi_double 1
+macros-pic/__riscv_float_abi_soft undefined
+macros-pic/__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4 1
+macros-pic/__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8 1
+macros-pic/__GCC_ATOMIC_INT_LOCK_FREE 2
+macros-pic/__GCC_ATOMIC_POINTER_LOCK_FREE 2
+macros-pic/__WCHAR_TYPE__ int
+macros-pic/__WINT_TYPE__ int
+macros-pic/__SIZE_TYPE__ long unsigned int
+macros-pic/__PTRDIFF_TYPE__ long int
+macros-pic/__INTMAX_TYPE__ long int
+macros-pic/__INT64_TYPE__ long int
+macros-pic/__BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
+macros-pic/__ORDER_LITTLE_ENDIAN__ 1234
+macros-pic/__USER_LABEL_PREFIX__
+macros-pic/__REGISTER_PREFIX__
+macros-pie/__GNUC__ 14
+macros-pie/__GNUC_MINOR__ 2
+macros-pie/__GNUC_PATCHLEVEL__ 0
+macros-pie/__GNUC_STDC_INLINE__ 1
+macros-pie/__STDC__ 1
+macros-pie/__STDC_VERSION__ 201710L
+macros-pie/__STDC_HOSTED__ 1
+macros-pie/__clang__ undefined
+macros-pie/__FreeBSD__ 15
+macros-pie/__FreeBSD_cc_version undefined
+macros-pie/__NetBSD__ undefined
+macros-pie/__ELF__ 1
+macros-pie/__unix__ 1
+macros-pie/__LP64__ 1
+macros-pie/_LP64 1
+macros-pie/__ILP32__ undefined
+macros-pie/__CHAR_UNSIGNED__ 1
+macros-pie/__SIZEOF_POINTER__ 8
+macros-pie/__SIZEOF_LONG__ 8
+macros-pie/__SIZEOF_LONG_DOUBLE__ 16
+macros-pie/__SIZEOF_INT128__ 16
+macros-pie/__PIC__ 2
+macros-pie/__pic__ 2
+macros-pie/__PIE__ 2
+macros-pie/__pie__ 2
+macros-pie/__OPTIMIZE__ undefined
+macros-pie/__OPTIMIZE_SIZE__ undefined
+macros-pie/__NO_INLINE__ 1
+macros-pie/__SSP__ undefined
+macros-pie/__SSP_STRONG__ undefined
+macros-pie/__SSP_ALL__ undefined
+macros-pie/__x86_64__ undefined
+macros-pie/__amd64__ undefined
+macros-pie/__i386__ undefined
+macros-pie/__aarch64__ undefined
+macros-pie/__riscv 1
+macros-pie/__riscv_xlen 64
+macros-pie/__riscv_float_abi_double 1
+macros-pie/__riscv_float_abi_soft undefined
+macros-pie/__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4 1
+macros-pie/__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8 1
+macros-pie/__GCC_ATOMIC_INT_LOCK_FREE 2
+macros-pie/__GCC_ATOMIC_POINTER_LOCK_FREE 2
+macros-pie/__WCHAR_TYPE__ int
+macros-pie/__WINT_TYPE__ int
+macros-pie/__SIZE_TYPE__ long unsigned int
+macros-pie/__PTRDIFF_TYPE__ long int
+macros-pie/__INTMAX_TYPE__ long int
+macros-pie/__INT64_TYPE__ long int
+macros-pie/__BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
+macros-pie/__ORDER_LITTLE_ENDIAN__ 1234
+macros-pie/__USER_LABEL_PREFIX__
+macros-pie/__REGISTER_PREFIX__
+macros-O2/__GNUC__ 14
+macros-O2/__GNUC_MINOR__ 2
+macros-O2/__GNUC_PATCHLEVEL__ 0
+macros-O2/__GNUC_STDC_INLINE__ 1
+macros-O2/__STDC__ 1
+macros-O2/__STDC_VERSION__ 201710L
+macros-O2/__STDC_HOSTED__ 1
+macros-O2/__clang__ undefined
+macros-O2/__FreeBSD__ 15
+macros-O2/__FreeBSD_cc_version undefined
+macros-O2/__NetBSD__ undefined
+macros-O2/__ELF__ 1
+macros-O2/__unix__ 1
+macros-O2/__LP64__ 1
+macros-O2/_LP64 1
+macros-O2/__ILP32__ undefined
+macros-O2/__CHAR_UNSIGNED__ 1
+macros-O2/__SIZEOF_POINTER__ 8
+macros-O2/__SIZEOF_LONG__ 8
+macros-O2/__SIZEOF_LONG_DOUBLE__ 16
+macros-O2/__SIZEOF_INT128__ 16
+macros-O2/__PIC__ undefined
+macros-O2/__pic__ undefined
+macros-O2/__PIE__ undefined
+macros-O2/__pie__ undefined
+macros-O2/__OPTIMIZE__ 1
+macros-O2/__OPTIMIZE_SIZE__ undefined
+macros-O2/__NO_INLINE__ undefined
+macros-O2/__SSP__ undefined
+macros-O2/__SSP_STRONG__ undefined
+macros-O2/__SSP_ALL__ undefined
+macros-O2/__x86_64__ undefined
+macros-O2/__amd64__ undefined
+macros-O2/__i386__ undefined
+macros-O2/__aarch64__ undefined
+macros-O2/__riscv 1
+macros-O2/__riscv_xlen 64
+macros-O2/__riscv_float_abi_double 1
+macros-O2/__riscv_float_abi_soft undefined
+macros-O2/__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4 1
+macros-O2/__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8 1
+macros-O2/__GCC_ATOMIC_INT_LOCK_FREE 2
+macros-O2/__GCC_ATOMIC_POINTER_LOCK_FREE 2
+macros-O2/__WCHAR_TYPE__ int
+macros-O2/__WINT_TYPE__ int
+macros-O2/__SIZE_TYPE__ long unsigned int
+macros-O2/__PTRDIFF_TYPE__ long int
+macros-O2/__INTMAX_TYPE__ long int
+macros-O2/__INT64_TYPE__ long int
+macros-O2/__BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
+macros-O2/__ORDER_LITTLE_ENDIAN__ 1234
+macros-O2/__USER_LABEL_PREFIX__
+macros-O2/__REGISTER_PREFIX__
+macros-ssp-strong/__GNUC__ 14
+macros-ssp-strong/__GNUC_MINOR__ 2
+macros-ssp-strong/__GNUC_PATCHLEVEL__ 0
+macros-ssp-strong/__GNUC_STDC_INLINE__ 1
+macros-ssp-strong/__STDC__ 1
+macros-ssp-strong/__STDC_VERSION__ 201710L
+macros-ssp-strong/__STDC_HOSTED__ 1
+macros-ssp-strong/__clang__ undefined
+macros-ssp-strong/__FreeBSD__ 15
+macros-ssp-strong/__FreeBSD_cc_version undefined
+macros-ssp-strong/__NetBSD__ undefined
+macros-ssp-strong/__ELF__ 1
+macros-ssp-strong/__unix__ 1
+macros-ssp-strong/__LP64__ 1
+macros-ssp-strong/_LP64 1
+macros-ssp-strong/__ILP32__ undefined
+macros-ssp-strong/__CHAR_UNSIGNED__ 1
+macros-ssp-strong/__SIZEOF_POINTER__ 8
+macros-ssp-strong/__SIZEOF_LONG__ 8
+macros-ssp-strong/__SIZEOF_LONG_DOUBLE__ 16
+macros-ssp-strong/__SIZEOF_INT128__ 16
+macros-ssp-strong/__PIC__ undefined
+macros-ssp-strong/__pic__ undefined
+macros-ssp-strong/__PIE__ undefined
+macros-ssp-strong/__pie__ undefined
+macros-ssp-strong/__OPTIMIZE__ undefined
+macros-ssp-strong/__OPTIMIZE_SIZE__ undefined
+macros-ssp-strong/__NO_INLINE__ 1
+macros-ssp-strong/__SSP__ undefined
+macros-ssp-strong/__SSP_STRONG__ 3
+macros-ssp-strong/__SSP_ALL__ undefined
+macros-ssp-strong/__x86_64__ undefined
+macros-ssp-strong/__amd64__ undefined
+macros-ssp-strong/__i386__ undefined
+macros-ssp-strong/__aarch64__ undefined
+macros-ssp-strong/__riscv 1
+macros-ssp-strong/__riscv_xlen 64
+macros-ssp-strong/__riscv_float_abi_double 1
+macros-ssp-strong/__riscv_float_abi_soft undefined
+macros-ssp-strong/__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4 1
+macros-ssp-strong/__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8 1
+macros-ssp-strong/__GCC_ATOMIC_INT_LOCK_FREE 2
+macros-ssp-strong/__GCC_ATOMIC_POINTER_LOCK_FREE 2
+macros-ssp-strong/__WCHAR_TYPE__ int
+macros-ssp-strong/__WINT_TYPE__ int
+macros-ssp-strong/__SIZE_TYPE__ long unsigned int
+macros-ssp-strong/__PTRDIFF_TYPE__ long int
+macros-ssp-strong/__INTMAX_TYPE__ long int
+macros-ssp-strong/__INT64_TYPE__ long int
+macros-ssp-strong/__BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
+macros-ssp-strong/__ORDER_LITTLE_ENDIAN__ 1234
+macros-ssp-strong/__USER_LABEL_PREFIX__
+macros-ssp-strong/__REGISTER_PREFIX__
+finline-limit rc=0
+fdiagnostics-show-option rc=0
+inline-unit-growth rc=0
+large-function-growth rc=0
+min-pagesize rc=0
+fstack-usage rc=0
+ftrivial-auto-var-init rc=0
+ftrivial-auto-var-init-zero rc=0
+fno-delete-null-pointer rc=0
+fstack-protector-strong rc=0
+ffreestanding-nostdinc rc=0
+fno-common rc=0
+fno-strict-aliasing rc=0
+fno-omit-frame-pointer rc=0
+fno-builtin rc=0
+fdebug-prefix-map rc=0
+ffile-prefix-map rc=0
+fzero-call-used-regs rc=0
+fstack-clash-protection rc=0
+gdwarf-4 rc=0
+gz-zlib rc=0
+march-rv64-kernel rc=0
+mcmodel-medany rc=0
+mno-relax rc=0
+werror-Wall rc=0
+werror-Wcast-qual rc=0
+werror-Werror rc=0
+werror-Wextra rc=0
+werror-Wformat=2 rc=0
+werror-Wmissing-prototypes rc=0
+werror-Wnested-externs rc=0
+werror-Wno-address-of-packed-member rc=0
+werror-Wno-array-bounds rc=0
+werror-Wno-format-zero-length rc=0
+werror-Wno-pointer-sign rc=0
+werror-Wno-stringop-overread rc=0
+werror-Wno-uninitialized rc=0
+werror-Wno-unused-parameter rc=0
+werror-Wold-style-definition rc=0
+werror-Wpointer-arith rc=0
+werror-Wreturn-type rc=0
+werror-Wshadow rc=0
+werror-Wstack-protector rc=0
+werror-Wstrict-prototypes rc=0
+werror-Wswitch rc=0
+werror-Wsystem-headers rc=0
+werror-Wwrite-strings rc=0
+werror-Wcast-align rc=0
+werror-Wchar-subscripts rc=0
+werror-Wdate-time rc=0
+werror-Wformat-nonliteral rc=1
+werror-Wformat-security rc=1
+werror-Wmissing-include-dirs rc=0
+werror-Wmissing-variable-declarations rc=0
+werror-Wno-alloc-size-larger-than rc=0
+werror-Wno-array-parameter rc=0
+werror-Wno-attributes rc=0
+werror-Wno-bitwise-instead-of-logical rc=0
+werror-Wno-c++20-extensions rc=1
+werror-Wno-c++23-lambda-attributes rc=0
+werror-Wno-cast-qual rc=0
+werror-Wno-dangling-pointer rc=0
+werror-Wno-dangling-reference rc=1
+werror-Wno-default-const-init-field-unsafe rc=0
+werror-Wno-deprecated-declarations rc=0
+werror-Wno-deprecated-non-prototype rc=0
+werror-Wno-duplicate-decl-specifier rc=0
+werror-Wno-empty-body rc=0
+werror-Wno-enum-conversion rc=0
+werror-Wno-error=address rc=0
+werror-Wno-error=aggressive-loop-optimizations rc=0
+werror-Wno-error=alloca-larger-than= rc=0
+werror-Wno-error=array-bounds rc=0
+werror-Wno-error=attributes rc=0
+werror-Wno-error=bool-compare rc=0
+werror-Wno-error=bool-operation rc=0
+werror-Wno-error=cast-align rc=0
+werror-Wno-error=cast-function-type rc=0
+werror-Wno-error=cast-function-type-mismatch rc=1
+werror-Wno-error=cast-qual rc=0
+werror-Wno-error=catch-value rc=0
+werror-Wno-error=class-memaccess rc=0
+werror-Wno-error=clobbered rc=0
+werror-Wno-error=constant-conversion rc=1
+werror-Wno-error=deprecated rc=0
+werror-Wno-error=deprecated-declarations rc=0
+werror-Wno-error=empty-body rc=0
+werror-Wno-error=enum-compare rc=0
+werror-Wno-error=expansion-to-defined rc=0
+werror-Wno-error=extra rc=0
+werror-Wno-error=format-overflow rc=0
+werror-Wno-error=format-truncation rc=0
+werror-Wno-error=implicit-fallthrough rc=0
+werror-Wno-error=int-in-bool-context rc=0
+werror-Wno-error=logical-not-parentheses rc=0
+werror-Wno-error=maybe-uninitialized rc=0
+werror-Wno-error=memset-elt-size rc=0
+werror-Wno-error=misleading-indentation rc=0
+werror-Wno-error=multistatement-macros rc=0
+werror-Wno-error=noexcept-type rc=0
+werror-Wno-error=nonnull rc=0
+werror-Wno-error=nonnull-compare rc=0
+werror-Wno-error=overflow rc=0
+werror-Wno-error=packed-not-aligned rc=0
+werror-Wno-error=parentheses-equality rc=1
+werror-Wno-error=pointer-compare rc=0
+werror-Wno-error=pointer-sign rc=0
+werror-Wno-error=restrict rc=0
+werror-Wno-error=sequence-point rc=0
+werror-Wno-error=shift-negative-value rc=0
+werror-Wno-error=shift-overflow rc=0
+werror-Wno-error=sizeof-pointer-memaccess rc=0
+werror-Wno-error=sometimes-uninitialized rc=1
+werror-Wno-error=strict-aliasing rc=0
+werror-Wno-error=stringop-overflow rc=0
+werror-Wno-error=stringop-truncation rc=0
+werror-Wno-error=tautological-compare rc=0
+werror-Wno-error=uninitialized rc=0
+werror-Wno-error=unknown-pragmas rc=0
+werror-Wno-error=unneeded-internal-declaration rc=1
+werror-Wno-error=unused-but-set-global rc=1
+werror-Wno-error=unused-but-set-parameter rc=0
+werror-Wno-error=unused-const-variable rc=0
+werror-Wno-error=unused-function rc=0
+werror-Wno-error=unused-value rc=0
+werror-Wno-format rc=0
+werror-Wno-format-extra-args rc=0
+werror-Wno-format-nonliteral rc=0
+werror-Wno-format-y2k rc=0
+werror-Wno-infinite-recursion rc=0
+werror-Wno-knr-promoted-parameter rc=0
+werror-Wno-literal-suffix rc=1
+werror-Wno-misleading-indentation rc=0
+werror-Wno-missing-braces rc=0
+werror-Wno-missing-prototypes rc=0
+werror-Wno-nullability-completeness rc=0
+werror-Wno-parentheses rc=0
+werror-Wno-parentheses-equality rc=0
+werror-Wno-pointer-arith rc=0
+werror-Wno-return-type rc=0
+werror-Wno-self-assign rc=0
+werror-Wno-shift-count-negative rc=0
+werror-Wno-shift-count-overflow rc=0
+werror-Wno-strict-prototypes rc=0
+werror-Wno-string-plus-int rc=0
+werror-Wno-switch rc=0
+werror-Wno-switch-enum rc=0
+werror-Wno-system-headers rc=0
+werror-Wno-tautological-compare rc=0
+werror-Wno-tautological-pointer-compare rc=0
+werror-Wno-undef rc=0
+werror-Wno-unknown-pragmas rc=0
+werror-Wno-unused rc=0
+werror-Wno-unused-but-set-variable rc=0
+werror-Wno-unused-const-variable rc=0
+werror-Wno-unused-function rc=0
+werror-Wno-unused-local-typedef rc=0
+werror-Wno-unused-value rc=0
+werror-Wno-use-after-free rc=0
+werror-Wno-zero-length-bounds rc=0
+werror-Wthread-safety rc=1
+werror-Wundef rc=0
+werror-Wuninitialized rc=0
+werror-Wunused-parameter rc=0
+kprintf-b rc=0
+kprintf-b-width-precision rc=0
+kprintf-b-alt rc=0
+kprintf-b-hh rc=1 | error: Segmentation fault
+kprintf-b-h rc=1 | error: Segmentation fault
+kprintf-b-l rc=1 | error: Segmentation fault
+kprintf-b-ll rc=1 | error: Segmentation fault
+kprintf-b-q rc=1 | error: Segmentation fault
+kprintf-b-z rc=1 | error: Segmentation fault
+kprintf-b-zero-flag rc=0 | warning: '0' flag used with '%b' freebsd_kprintf format
+kprintf-b-plus-flag rc=0 | warning: '+' flag used with '%b' freebsd_kprintf format
+kprintf-b-pointer-value rc=0 | warning: format '%b' expects argument of type 'int', but argument 2 has type 'void *'
+kprintf-b-int-names rc=0 | warning: format '%b' expects argument of type 'char *', but argument 3 has type 'int'
+kprintf-b-long-for-int rc=0 | warning: format '%b' expects argument of type 'int', but argument 2 has type 'long int'
+kprintf-b-int-for-long rc=1 | error: Segmentation fault
+kprintf-b-no-names rc=0 | warning: format '%b' expects a matching 'char *' argument
+kprintf-b-L rc=0 | warning: unknown conversion type character 'L' in format | warning: too many arguments for format
+kprintf-D rc=0
+kprintf-D-star rc=0
+kprintf-D-left rc=0
+kprintf-D-alt-flag rc=0 | warning: '#' flag used with '%D' freebsd_kprintf format
+kprintf-D-zero-flag rc=0 | warning: '0' flag used with '%D' freebsd_kprintf format
+kprintf-D-l rc=0 | warning: use of 'l' length modifier with 'D' type character has either no effect or undefined behavior | warning: too many arguments for format
+kprintf-D-int-pointer rc=0 | warning: format '%D' expects argument of type 'void *', but argument 2 has type 'int'
+kprintf-D-int-separator rc=0 | warning: format '%D' expects argument of type 'char *', but argument 3 has type 'int'
+kprintf-D-no-separator rc=0 | warning: format '%D' expects a matching 'char *' argument
+kprintf-D-star-long rc=0 | warning: field width specifier '*' expects argument of type 'int', but argument 2 has type 'long int'
+kprintf-r rc=0
+kprintf-r-int rc=0
+kprintf-r-flags rc=0 | warning: ' ' flag ignored with '+' flag in freebsd_kprintf format | warning: '0' flag ignored with '-' flag in freebsd_kprintf format
+kprintf-r-l rc=0
+kprintf-r-ll rc=0
+kprintf-r-j rc=0 | warning: format '%jr' expects argument of type 'uintmax_t', but argument 2 has type 'long long int'
+kprintf-r-t rc=0
+kprintf-r-pointer rc=0 | warning: format '%r' expects argument of type 'unsigned int', but argument 2 has type 'void *'
+kprintf-r-long-for-int rc=0 | warning: format '%r' expects argument of type 'unsigned int', but argument 2 has type 'long int'
+kprintf-y rc=0
+kprintf-y-flags rc=0 | warning: ' ' flag ignored with '+' flag in freebsd_kprintf format | warning: '0' flag ignored with '-' flag in freebsd_kprintf format
+kprintf-y-alt-flag rc=0 | warning: '#' flag used with '%y' freebsd_kprintf format
+kprintf-y-hh rc=0
+kprintf-y-l rc=0
+kprintf-y-ll rc=0
+kprintf-y-z rc=0
+kprintf-y-long-for-int rc=0 | warning: format '%y' expects argument of type 'int', but argument 2 has type 'long int'
+kprintf-y-pointer rc=0 | warning: format '%y' expects argument of type 'int', but argument 2 has type 'void *'
+kprintf-all rc=0
+kprintf-too-many rc=0 | warning: too many arguments for format
+kprintf-printf-d rc=0
+kprintf-printf-n rc=0 | warning: unknown conversion type character 'n' in format | warning: too many arguments for format
+kprintf-printf-trick rc=0
+kprintf-printf-trick-wrong rc=0 | warning: format '%y' expects argument of type 'int', but argument 2 has type 'void *'
