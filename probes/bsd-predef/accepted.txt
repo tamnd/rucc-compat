@@ -10,14 +10,17 @@
 *           boot-i386   *                                     tamnd/rucc#4088
 
 # Macros that still differ from the GCC of the persona: __bf16, the decimal float macros, and the _BitInt width.
+# GCC on FreeBSD aarch64 has the decimal float types and rucc does not.
 # rucc gives __BITINT_MAXWIDTH__ 128, the widest _BitInt it compiles, where GCC gives 65535.
 *           *           __BFLT16_*                            tamnd/rucc#4088
-*           *           __DEC*                                tamnd/rucc#4088
-*           *           __BITINT_MAXWIDTH__                   tamnd/rucc#4088
+*           *           __DEC*                                tamnd/rucc#4224
+*           *           __BITINT_MAXWIDTH__                   tamnd/rucc#2490
 
-# x86_64 and aarch64: rucc does not have __builtin_speculation_safe_value.
+# aarch64: the SME keyword attributes and their macros.
+*-aarch64   *           __ARM_STATE_*                         tamnd/rucc#4225
+*-aarch64   *           __ARM_NEON_SVE_BRIDGE                 tamnd/rucc#4225
+*-aarch64   *           __arm_*                               tamnd/rucc#4225
 
-# aarch64: the ACLE macros, SME keywords and 16-byte CAS.
+# aarch64: the other ACLE macros and 16-byte CAS.
 *-aarch64   *           __ARM_*                               tamnd/rucc#4088
-*-aarch64   *           __arm_*                               tamnd/rucc#4088
 *-aarch64   *           __GCC_HAVE_SYNC_COMPARE_AND_SWAP_16   tamnd/rucc#4088
