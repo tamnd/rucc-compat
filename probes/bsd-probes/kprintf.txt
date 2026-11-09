@@ -1,0 +1,58 @@
+# The freebsd_kprintf probes. Each line is one call of a function with the freebsd_kprintf format, compiled with -Wall -Wformat=2.
+# The probe reads the exit status and the text of each warning and error, without the place and the option.
+# The archetype is the patch of the FreeBSD GCC ports (devel/freebsd-gcc15, files/patch-gcc_c-family_c-format.cc), so only the FreeBSD rows have these probes.
+# The decl column is k for a declaration with __freebsd_kprintf__, and p for one with __printf__ under -D__printf__=__freebsd_kprintf__, as the FreeBSD kernel builds.
+# The call can use: c (a char), s (a short), i (an int), u (an unsigned int), l (a long), ll (a long long), z (a size_t), p (a void *), b (a const unsigned char *) and n (a const char *).
+#
+# name                decl  call
+b                     k     "%b\n", i, "\020\1ONE\2TWO"
+b-width-precision     k     "%-8.4b\n", i, "\020\1ONE"
+b-alt                 k     "%#b\n", i, "\020\1ONE"
+b-hh                  k     "%hhb\n", c, "\020\1ONE"
+b-h                   k     "%hb\n", s, "\020\1ONE"
+b-l                   k     "%lb\n", l, "\020\1ONE"
+b-ll                  k     "%llb\n", ll, "\020\1ONE"
+b-q                   k     "%qb\n", ll, "\020\1ONE"
+b-z                   k     "%zb\n", z, "\020\1ONE"
+b-zero-flag           k     "%0b\n", i, "\020\1ONE"
+b-plus-flag           k     "%+b\n", i, "\020\1ONE"
+b-pointer-value       k     "%b\n", p, "\020\1ONE"
+b-int-names           k     "%b\n", i, i
+b-long-for-int        k     "%b\n", l, "\020\1ONE"
+b-int-for-long        k     "%lb\n", i, "\020\1ONE"
+b-no-names            k     "%b\n", i
+b-L                   k     "%Lb\n", i, "\020\1ONE"
+D                     k     "%6D\n", b, ":"
+D-star                k     "%*D\n", i, b, " "
+D-left                k     "%-6D\n", b, ":"
+D-alt-flag            k     "%#D\n", b, ":"
+D-zero-flag           k     "%06D\n", b, ":"
+D-l                   k     "%lD\n", b, ":"
+D-int-pointer         k     "%6D\n", i, ":"
+D-int-separator       k     "%6D\n", b, i
+D-no-separator        k     "%6D\n", b
+D-star-long           k     "%*D\n", l, b, " "
+r                     k     "%r\n", u
+r-int                 k     "%r\n", i
+r-flags               k     "%#+ -08r\n", u
+r-l                   k     "%lr\n", l
+r-ll                  k     "%llr\n", ll
+r-j                   k     "%jr\n", ll
+r-t                   k     "%tr\n", l
+r-pointer             k     "%r\n", p
+r-long-for-int        k     "%r\n", l
+y                     k     "%y\n", i
+y-flags               k     "%+ -08y\n", i
+y-alt-flag            k     "%#y\n", i
+y-hh                  k     "%hhy\n", c
+y-l                   k     "%ly\n", l
+y-ll                  k     "%lly\n", ll
+y-z                   k     "%zy\n", z
+y-long-for-int        k     "%y\n", l
+y-pointer             k     "%y\n", p
+all                   k     "%b %6D %r %y\n", i, "\020\1ONE", b, ":", u, i
+too-many              k     "%y\n", i, i
+printf-d              k     "%d %s %p\n", i, n, p
+printf-n              k     "%n\n", p
+printf-trick          p     "%b %6D %r %y\n", i, "\020\1ONE", b, ":", u, i
+printf-trick-wrong    p     "%y\n", p

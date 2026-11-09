@@ -7,6 +7,7 @@
 
 The rows are the rows of bsd-predef (../bsd-predef/rows.txt).
 probes.txt gives the probes, warnings.txt the warning flags and macros.txt the macros that the macros probes compare.
+kprintf.txt gives the calls of the freebsd_kprintf probes, which only the FreeBSD rows have.
 Each probe gives one or more answers, and each answer is one line of the expected file: a key and a value.
 The probes compare what the build reads, not the whole output.
 For example, bsd.compiler.mk reads the compiler type and a version number from --version, so the version probe compares those two and not the text.
@@ -50,6 +51,21 @@ attribute_no_stack_protector=__has_attribute(no_stack_protector)
 """
 INPUTS = {"none": "", "ccv": "__FreeBSD_cc_version\n", "features": FEATURES, "unit": UNIT}
 
+# The unit of a freebsd_kprintf probe. The call goes where CALL is.
+KPRINTF_UNIT = """\
+typedef __SIZE_TYPE__ size_t;
+int rb_kp(const char *, ...) __attribute__((__format__(ARCHETYPE, 1, 2)));
+void rb_probe(char c, short s, int i, unsigned int u, long l, long long ll, size_t z, void *p,
+    const unsigned char *b, const char *n);
+void rb_probe(char c, short s, int i, unsigned int u, long l, long long ll, size_t z, void *p,
+    const unsigned char *b, const char *n)
+{
+\t(void)c; (void)s; (void)i; (void)u; (void)l; (void)ll; (void)z; (void)p; (void)b; (void)n;
+\trb_kp(CALL);
+}
+"""
+KPRINTF_FLAGS = ["-Wall", "-Wformat=2", "-c", "-o", os.devnull, "-x", "c", "-"]
+
 
 def table(path):
     out = []
@@ -87,6 +103,34 @@ def probes(system, arch):
     for sys_, flag in table(os.path.join(HERE, "warnings.txt")):
         if sys_ in ("all", system):
             out.append(("werror" + flag, "unit", "status", ["-Werror", flag]))
+    if system == "freebsd":
+        for name, decl, call in kprintf_calls():
+            out.append(("kprintf-" + name, "kprintf", "diag", [decl, call]))
+    return out
+
+
+def kprintf_calls():
+    out = []
+    with open(os.path.join(HERE, "kprintf.txt")) as f:
+        for line in f:
+            if line.strip() and not line.startswith("#"):
+                name, decl, call = line.split(None, 2)
+                out.append((name, decl, call.strip()))
+    return out
+
+
+def diagnostics(text):
+    """The text of each warning and error, without the place and the option, in the C locale."""
+    out = []
+    for line in text.splitlines():
+        for kind in ("warning: ", "error: "):
+            at = line.find(kind)
+            if at >= 0:
+                msg = line[at:]
+                if msg.endswith("]") and " [" in msg:
+                    msg = msg[:msg.rindex(" [")]
+                out.append(" ".join(msg.replace("\u2018", "'").replace("\u2019", "'").split()))
+                break
     return out
 
 
@@ -96,7 +140,8 @@ def macro_names():
 
 def run(argv, text):
     try:
-        p = subprocess.run(argv, input=text, capture_output=True, text=True, timeout=120)
+        p = subprocess.run(argv, input=text, capture_output=True, text=True, timeout=120,
+                           env=dict(os.environ, LC_ALL="C"))
     except (OSError, subprocess.TimeoutExpired) as e:
         return 127, "", str(e)
     return p.returncode, p.stdout, p.stderr
@@ -151,6 +196,17 @@ def answers(cc, system, arch):
     for name, inp, reads, args in probes(system, arch):
         if reads == "identity":
             out.append((name, identity(cc)))
+            continue
+        if reads == "diag":
+            decl, call = args
+            if decl == "p":
+                src = KPRINTF_UNIT.replace("ARCHETYPE", "__printf__")
+                argv = cc + ["-D__printf__=__freebsd_kprintf__"] + KPRINTF_FLAGS
+            else:
+                src = KPRINTF_UNIT.replace("ARCHETYPE", "__freebsd_kprintf__")
+                argv = cc + KPRINTF_FLAGS
+            rc, _, se = run(argv, src.replace("CALL", call))
+            out.append((name, " | ".join([f"rc={rc}"] + diagnostics(se))))
             continue
         argv = cc + args
         if inp == "unit":
