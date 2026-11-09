@@ -16,7 +16,6 @@
 *           *           __BITINT_MAXWIDTH__                   tamnd/rucc#4088
 
 # x86_64 and aarch64: rucc does not have __builtin_speculation_safe_value.
-*           *           __HAVE_SPECULATION_SAFE_VALUE         tamnd/rucc#4088
 
 # aarch64: the ACLE macros, SME keywords and 16-byte CAS.
 *-aarch64   *           __ARM_*                               tamnd/rucc#4088
