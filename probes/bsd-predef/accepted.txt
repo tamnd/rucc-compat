@@ -21,6 +21,5 @@
 *-aarch64   *           __ARM_NEON_SVE_BRIDGE                 tamnd/rucc#4225
 *-aarch64   *           __arm_*                               tamnd/rucc#4225
 
-# aarch64: the other ACLE macros and 16-byte CAS.
+# aarch64: the other ACLE macros.
 *-aarch64   *           __ARM_*                               tamnd/rucc#4088
-*-aarch64   *           __GCC_HAVE_SYNC_COMPARE_AND_SWAP_16   tamnd/rucc#4088
