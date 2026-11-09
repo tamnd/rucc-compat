@@ -12,16 +12,6 @@
 *           m32*        *                                     tamnd/rucc#4088
 *           boot-i386   *                                     tamnd/rucc#4088
 
-# rucc lists the dynamic macros in -dM. GCC does not.
-*           *           __FILE__                              tamnd/rucc#4088
-*           *           __LINE__                              tamnd/rucc#4088
-*           *           __DATE__                              tamnd/rucc#4088
-*           *           __TIME__                              tamnd/rucc#4088
-*           *           __COUNTER__                           tamnd/rucc#4088
-*           *           __INCLUDE_LEVEL__                     tamnd/rucc#4088
-*           *           __BASE_FILE__                         tamnd/rucc#4088
-*           *           __FILE_NAME__                         tamnd/rucc#4088
-
 # Macros that depend on the GCC version of the persona. rucc gives one set for every -fgnuc-version.
 *           *           __BFLT16_*                            tamnd/rucc#4088
 *           *           __FLT16_*                             tamnd/rucc#4088
