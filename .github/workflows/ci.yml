@@ -737,6 +737,10 @@ jobs:
         run: |
           mkdir -p results
           python3 probes/bsd-abi/abi.py check --rucc rucc/target/release/rucc --sets bsd-sets --report results/bsd-abi.txt
+      - name: the preprocessed headers
+        if: always()
+        run: |
+          python3 probes/bsd-pp/pp.py check --rucc rucc/target/release/rucc --sets bsd-sets --report results/bsd-pp.txt
       - name: keep the report
         if: always()
         uses: actions/upload-artifact@v4.6.2

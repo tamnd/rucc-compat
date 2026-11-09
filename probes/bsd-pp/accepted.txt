@@ -1,0 +1,14 @@
+# The known differences of bsd-pp, each with the rucc issue that owns it.
+# A line is a row glob, a unit glob and the issue.
+# check fails on a difference that is not here, and on a line here that matches no difference.
+#
+# row    unit    issue
+# The FreeBSD GCC uses its own stddef.h and tgmath.h, which differ from rucc's, the float.h of the base system on amd64, and the unwind.h of the base system.
+freebsd-15.1-*        world:stddef.h     tamnd/rucc#4183
+freebsd-15.1-*        world:execinfo.h   tamnd/rucc#4183
+freebsd-15.1-*        world:atf-c.h      tamnd/rucc#4183
+freebsd-15.1-*        world:zconf.h      tamnd/rucc#4183
+freebsd-15.1-*        world:zlib.h       tamnd/rucc#4183
+freebsd-15.1-*        world:tgmath.h     tamnd/rucc#4183
+freebsd-15.1-x86_64   world:float.h      tamnd/rucc#4183
+freebsd-15.1-*        world:unwind.h     tamnd/rucc#4183

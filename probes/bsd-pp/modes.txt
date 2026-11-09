@@ -1,0 +1,10 @@
+# The modes. Each mode runs -E on every header of its directories, with its flags.
+# The directory . is usr/include itself.
+# world is the C of the base system: CSTD of FreeBSD's bsd.sys.mk and the -std of NetBSD's bsd.sys.mk, at -O2, which the headers test through __OPTIMIZE__.
+# kernel is the C of the kernel: the same with -D_KERNEL and -ffreestanding, on the sys headers.
+#
+# name     system   directories    flags
+world      freebsd  .,sys,arpa     -std=gnu17 -O2
+kernel     freebsd  sys            -std=gnu17 -O2 -D_KERNEL -ffreestanding
+world      netbsd   .,sys,arpa     -std=gnu11 -O2
+kernel     netbsd   sys            -std=gnu11 -O2 -D_KERNEL -ffreestanding
