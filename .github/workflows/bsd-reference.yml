@@ -16,6 +16,7 @@ on:
   pull_request:
     paths:
       - probes/bsd-predef/**
+      - probes/bsd-abi/**
       - scripts/bsd/**
       - .github/workflows/bsd-reference.yml
   workflow_dispatch:
@@ -54,13 +55,27 @@ jobs:
         with:
           path: /mnt/vm-cache/FreeBSD-*.raw.xz
           key: freebsd-vm-${{ hashFiles('scripts/bsd/freebsd-vm.sh') }}
+      # The VM gets only usr/include of each release set. The runner downloads the sets and checks their digests.
+      - name: fetch the release sets
+        run: |
+          for row in $(awk '$2 == "freebsd" { print $1 }' probes/bsd-abi/rows.txt); do
+            python3 probes/bsd-abi/abi.py fetch "$row" /mnt/vm-cache/sets
+          done
       - name: boot the VM
         run: |
           scripts/bsd/freebsd-vm.sh up
           tar -cf - probes scripts | scripts/bsd/freebsd-vm.sh ssh 'mkdir -p /root/compat && tar -xf - -C /root/compat'
+          tar -cf - -C /mnt/vm-cache/sets $(awk '$2 == "freebsd" { print $1 }' probes/bsd-abi/rows.txt) \
+            | scripts/bsd/freebsd-vm.sh ssh 'mkdir -p /root/sets && tar -xf - -C /root/sets'
       - name: make the predef files
         run: |
           scripts/bsd/freebsd-vm.sh ssh 'sh /root/compat/probes/bsd-predef/freebsd.sh /root/out/predef'
+      - name: make the abi files
+        run: |
+          scripts/bsd/freebsd-vm.sh ssh 'sh /root/compat/probes/bsd-abi/freebsd.sh /root/sets /root/out/abi'
+      - name: copy the files out
+        if: always()
+        run: |
           mkdir -p out
           scripts/bsd/freebsd-vm.sh ssh 'tar -cf - -C /root/out .' | tar -xf - -C out
       - name: keep the files
@@ -71,7 +86,9 @@ jobs:
           path: out/
           if-no-files-found: ignore
       - name: the expected files are current
-        run: scripts/bsd/same.sh out/predef probes/bsd-predef/expected
+        run: |
+          scripts/bsd/same.sh out/predef probes/bsd-predef/expected
+          scripts/bsd/same.sh out/abi probes/bsd-abi/expected
       - name: power off
         if: always()
         run: scripts/bsd/freebsd-vm.sh down
@@ -110,6 +127,16 @@ jobs:
           python3 probes/bsd-predef/predef.py dump "$id" --cc "$NB_GCC" -o "out/predef/$id.txt" \
             --note "tools: build.sh tools of NetBSD/src $(cat /mnt/nb/tools/commit.txt)" \
             --note "host: $(uname -sr)"
+      # bsd-abi has rows for the 11.1 release only, so only the jobs of branch 11 make abi files.
+      - name: make the abi file
+        if: matrix.branch == '11'
+        run: |
+          id=netbsd-11.1-${{ matrix.arch }}
+          sets=$(python3 probes/bsd-abi/abi.py fetch "$id" /mnt/nb/sets | tail -1)
+          mkdir -p out/abi
+          python3 probes/bsd-abi/abi.py scan "$id" --cc "$NB_GCC" --sysroot "$sets" -o "out/abi/$id.txt" \
+            --note "tools: build.sh tools of NetBSD/src $(cat /mnt/nb/tools/commit.txt)" \
+            --note "host: $(uname -sr)"
       - name: keep the files
         if: always()
         uses: actions/upload-artifact@v4.6.2
@@ -118,4 +145,6 @@ jobs:
           path: out/
           if-no-files-found: ignore
       - name: the expected files are current
-        run: scripts/bsd/same.sh out/predef probes/bsd-predef/expected
+        run: |
+          scripts/bsd/same.sh out/predef probes/bsd-predef/expected
+          if [ -d out/abi ]; then scripts/bsd/same.sh out/abi probes/bsd-abi/expected; fi

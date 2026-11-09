@@ -720,6 +720,23 @@ jobs:
         run: |
           mkdir -p results
           python3 probes/bsd-predef/predef.py check --rucc rucc/target/release/rucc --report results/bsd-predef.txt
+      # The release sets are large and do not change, so the cache keeps the headers that abi.py unpacks from them.
+      - name: reuse the BSD headers if we have them
+        uses: actions/cache@v6.1.0
+        with:
+          path: bsd-sets/*/usr/include
+          key: bsd-abi-sets-${{ hashFiles('probes/bsd-abi/rows.txt') }}
+      - name: fetch the BSD headers
+        run: |
+          for row in $(awk '!/^#/ && NF { print $1 }' probes/bsd-abi/rows.txt); do
+            python3 probes/bsd-abi/abi.py fetch "$row" bsd-sets > /dev/null
+            rm -f bsd-sets/*.t?z bsd-sets/*.tar.xz
+          done
+      - name: the type layouts
+        if: always()
+        run: |
+          mkdir -p results
+          python3 probes/bsd-abi/abi.py check --rucc rucc/target/release/rucc --sets bsd-sets --report results/bsd-abi.txt
       - name: keep the report
         if: always()
         uses: actions/upload-artifact@v4.6.2
