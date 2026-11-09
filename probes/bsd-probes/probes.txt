@@ -1,0 +1,92 @@
+# The probes. Each line is one run of the compiler.
+# The columns are: name, system, arch, input, reads, arguments.
+# The input is what the run gets on standard input:
+#   none      nothing
+#   ccv       the line __FreeBSD_cc_version, as bsd.compiler.mk sends it
+#   features  the feature tests of rb probes (__has_extension, __has_feature, __has_builtin, __has_attribute)
+#   unit      a one-line C unit, compiled with -c -o /dev/null -x c -
+# The reads column says what the build reads from the run:
+#   identity  COMPILER_TYPE and COMPILER_VERSION, as bsd.compiler.mk computes them from --version, and -v when --version names no compiler
+#   vline     the word after "gcc version" in the -v output
+#   line      the exit status and the first line of standard output
+#   base      the exit status and the last path part of the first line of standard output
+#   lines     the exit status and the lines of standard output that are not line markers
+#   macros    the macros of macros.txt in the -dM output
+#   status    the exit status only
+#
+# name                      system   arch     input     reads     arguments
+
+# bsd.compiler.mk of FreeBSD.
+version                     all      all      none      identity  --version
+gcc-version                 all      all      none      vline     -v
+freebsd-cc-version          all      all      ccv       lines     -E -
+print-resource-dir          all      all      none      status    -print-resource-dir
+
+# What configure scripts and libtool ask.
+dumpversion                 all      all      none      line      -dumpversion
+dumpfullversion             all      all      none      line      -dumpfullversion
+dumpmachine                 all      all      none      line      -dumpmachine
+print-multi-os-directory    all      all      none      line      -print-multi-os-directory
+print-multi-directory       all      all      none      line      -print-multi-directory
+print-multi-lib             all      all      none      line      -print-multi-lib
+print-libgcc-file-name      all      all      none      base      -print-libgcc-file-name
+print-prog-name=ld          all      all      none      base      -print-prog-name=ld
+print-prog-name=as          all      all      none      base      -print-prog-name=as
+print-file-name=libc.so     all      all      none      status    -print-file-name=libc.so
+print-search-dirs           all      all      none      status    -print-search-dirs
+print-sysroot               all      all      none      status    -print-sysroot
+V                           all      all      none      status    -V
+qversion                    all      all      none      status    -qversion
+
+# The feature tests of rb probes.
+features-gnu11              all      all      features  lines     -std=gnu11 -E -P -x c -
+features-gnu99              all      all      features  lines     -std=gnu99 -E -P -x c -
+
+# The macros that the mk files, the headers and configure scripts test, under the flags that change them.
+macros-default              all      all      none      macros    -dM -E -x c -
+macros-gnu99-freestanding   all      all      none      macros    -std=gnu99 -ffreestanding -dM -E -x c -
+macros-pic                  all      all      none      macros    -fPIC -dM -E -x c -
+macros-pie                  all      all      none      macros    -fPIE -dM -E -x c -
+macros-O2                   all      all      none      macros    -O2 -dM -E -x c -
+macros-ssp-strong           all      all      none      macros    -fstack-protector-strong -dM -E -x c -
+
+# The code flags of the kernel and boot command lines (plan 08 and 11 of tamnd/rucc-bsd), each on its own.
+# The first group is the FLAGS list of rb probes.
+finline-limit               all      all      unit      status    -finline-limit=8000
+fdiagnostics-show-option    all      all      unit      status    -fdiagnostics-show-option
+inline-unit-growth          all      all      unit      status    --param inline-unit-growth=100
+large-function-growth       all      all      unit      status    --param large-function-growth=1000
+min-pagesize                all      all      unit      status    --param min-pagesize=1024
+mrtd                        all      x86_64   unit      status    -mrtd
+mregparm                    all      x86_64   unit      status    -mregparm=3
+mrtd-m32                    all      x86_64   unit      status    -m32 -mrtd
+mregparm-m32                all      x86_64   unit      status    -m32 -mregparm=3
+fstack-usage                all      all      unit      status    -fstack-usage
+ftrivial-auto-var-init      all      all      unit      status    -ftrivial-auto-var-init=pattern
+ftrivial-auto-var-init-zero all      all      unit      status    -ftrivial-auto-var-init=zero
+mindirect-branch            all      x86_64   unit      status    -mindirect-branch=thunk -mindirect-branch-register
+mcmodel-kernel              all      x86_64   unit      status    -mcmodel=kernel
+no-fpu                      all      x86_64   unit      status    -mno-red-zone -mno-mmx -mno-sse -mno-avx -msoft-float
+fno-delete-null-pointer     all      all      unit      status    -fno-delete-null-pointer-checks
+fstack-protector-strong     all      all      unit      status    -fstack-protector-strong
+ffreestanding-nostdinc      all      all      unit      status    -ffreestanding -nostdinc
+# The rest of the kernel and boot lines.
+boot-i386                   all      x86_64   unit      status    -m32 -march=i386 -Os -ffreestanding
+fno-common                  all      all      unit      status    -fno-common
+fno-strict-aliasing         all      all      unit      status    -fno-strict-aliasing
+fno-omit-frame-pointer      all      all      unit      status    -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer
+fno-builtin                 all      all      unit      status    -fno-builtin
+fdebug-prefix-map           all      all      unit      status    -fdebug-prefix-map=/usr/src=/usr/src
+ffile-prefix-map            all      all      unit      status    -ffile-prefix-map=/usr/src=/usr/src
+fzero-call-used-regs        all      all      unit      status    -fzero-call-used-regs=used-gpr
+fstack-clash-protection     all      all      unit      status    -fstack-clash-protection
+gdwarf-4                    all      all      unit      status    -gdwarf-4
+gz-zlib                     all      all      unit      status    -g -gz=zlib
+mgeneral-regs-only          all      aarch64  unit      status    -mgeneral-regs-only
+ffixed-x18                  all      aarch64  unit      status    -ffixed-x18
+mbranch-protection          all      aarch64  unit      status    -mbranch-protection=standard
+mno-outline-atomics         all      aarch64  unit      status    -mno-outline-atomics
+march-nofp                  netbsd   aarch64  unit      status    -march=armv8-a+nofp+nosimd
+march-rv64-kernel           freebsd  riscv64  unit      status    -march=rv64imafdch_zifencei_svinval -mabi=lp64
+mcmodel-medany              all      riscv64  unit      status    -mcmodel=medany
+mno-relax                   all      riscv64  unit      status    -mno-relax

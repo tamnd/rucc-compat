@@ -720,6 +720,11 @@ jobs:
         run: |
           mkdir -p results
           python3 probes/bsd-predef/predef.py check --rucc rucc/target/release/rucc --report results/bsd-predef.txt
+      - name: the compiler probes
+        if: always()
+        run: |
+          mkdir -p results
+          python3 probes/bsd-probes/probes.py check --rucc rucc/target/release/rucc --report results/bsd-probes.txt
       # The release sets are large and do not change, so the cache keeps the headers that abi.py unpacks from them.
       - name: reuse the BSD headers if we have them
         uses: actions/cache@v6.1.0

@@ -18,6 +18,7 @@ on:
       - probes/bsd-predef/**
       - probes/bsd-abi/**
       - probes/bsd-pp/**
+      - probes/bsd-probes/**
       - scripts/bsd/**
       - .github/workflows/bsd-reference.yml
   workflow_dispatch:
@@ -77,6 +78,9 @@ jobs:
       - name: make the pp files
         run: |
           scripts/bsd/freebsd-vm.sh ssh 'sh /root/compat/probes/bsd-pp/freebsd.sh /root/sets /root/out/pp'
+      - name: make the probes files
+        run: |
+          scripts/bsd/freebsd-vm.sh ssh 'sh /root/compat/probes/bsd-probes/freebsd.sh /root/out/probes'
       - name: copy the files out
         if: always()
         run: |
@@ -94,6 +98,7 @@ jobs:
           scripts/bsd/same.sh out/predef probes/bsd-predef/expected
           scripts/bsd/same.sh out/abi probes/bsd-abi/expected
           scripts/bsd/same.sh out/pp probes/bsd-pp/expected
+          scripts/bsd/same.sh out/probes probes/bsd-probes/expected
       - name: power off
         if: always()
         run: scripts/bsd/freebsd-vm.sh down
@@ -132,6 +137,13 @@ jobs:
           python3 probes/bsd-predef/predef.py dump "$id" --cc "$NB_GCC" -o "out/predef/$id.txt" \
             --note "tools: build.sh tools of NetBSD/src $(cat /mnt/nb/tools/commit.txt)" \
             --note "host: $(uname -sr)"
+      - name: make the probes file
+        run: |
+          id=netbsd-${{ matrix.branch }}-${{ matrix.arch }}
+          mkdir -p out/probes
+          python3 probes/bsd-probes/probes.py dump "$id" --cc "$NB_GCC" -o "out/probes/$id.txt" \
+            --note "tools: build.sh tools of NetBSD/src $(cat /mnt/nb/tools/commit.txt)" \
+            --note "host: $(uname -sr)"
       # bsd-abi and bsd-pp have rows for the 11.1 release only, so only the jobs of branch 11 make their files.
       - name: make the abi file
         if: matrix.branch == '11'
@@ -161,5 +173,6 @@ jobs:
       - name: the expected files are current
         run: |
           scripts/bsd/same.sh out/predef probes/bsd-predef/expected
+          scripts/bsd/same.sh out/probes probes/bsd-probes/expected
           if [ -d out/abi ]; then scripts/bsd/same.sh out/abi probes/bsd-abi/expected; fi
           if [ -d out/pp ]; then scripts/bsd/same.sh out/pp probes/bsd-pp/expected; fi

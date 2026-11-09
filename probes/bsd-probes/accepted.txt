@@ -1,0 +1,4 @@
+# The known differences between rucc and the reference GCC, each with the rucc issue that owns it.
+# The columns are globs: row, key. check takes the first line that matches.
+#
+# row       key                                   issue
