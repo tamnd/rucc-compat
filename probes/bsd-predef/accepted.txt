@@ -9,13 +9,11 @@
 *           m32*        *                                     tamnd/rucc#4088
 *           boot-i386   *                                     tamnd/rucc#4088
 
-# Macros that still differ from the GCC of the persona: __bf16 and the _BitInt width.
+# Macros that still differ from the GCC of the persona: __bf16 on riscv64 and the _BitInt width.
+# GCC 15 on FreeBSD riscv64 has __bf16 and rucc does not, because rucc cannot move a half there yet.
 # rucc gives __BITINT_MAXWIDTH__ 128, the widest _BitInt it compiles, where GCC gives 65535.
-*           *           __BFLT16_*                            tamnd/rucc#4088
+*-riscv64   *           __BFLT16_*                            tamnd/rucc#4276
 *           *           __BITINT_MAXWIDTH__                   tamnd/rucc#2490
 
 # aarch64: __ARM_NEON_SVE_BRIDGE, which promises <arm_neon_sve_bridge.h> and the SVE types.
 *-aarch64   *           __ARM_NEON_SVE_BRIDGE                 tamnd/rucc#4225
-
-# aarch64: the other ACLE macros.
-*-aarch64   *           __ARM_*                               tamnd/rucc#4088
