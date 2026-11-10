@@ -1,0 +1,23 @@
+name = "gcc-plan9-ext"
+summary = "Programs that use the Plan 9 extensions of GCC, built by rucc and by GCC 16 with -fplan9-extensions and run."
+
+# The programs are ours and live next to this manifest, so there is nothing to fetch. They are
+# under the license of this repository.
+source = "local"
+
+# Each program uses one part of -fplan9-extensions: an unnamed member that is a typedef name,
+# the name of that member, and the conversion of a pointer to the outer struct to a pointer to
+# the type of the member in a call, an assignment, an initializer and a return. Each program
+# prints what it read, and the reference builds the same program. The reference must be GCC,
+# because clang does not have the flag, so run this corpus with --cc gcc-16.
+#
+# A rule that kencc has and GCC does not, such as an outer field that hides a field of the same
+# name in an unnamed member, is not here. GCC refuses it, and it is in rucc-corpus/kencc-members.
+oracle = "differential"
+timeout = 10
+
+[[unit]]
+name = "cases"
+kind = "source"
+dir = "cases"
+flags = ["-fplan9-extensions"]
