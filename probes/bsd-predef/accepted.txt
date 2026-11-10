@@ -4,10 +4,14 @@
 # row       set         key                                   issue
 
 # -m32 on the x86_64 targets.
-# GCC gives the FreeBSD and NetBSD i386 defaults: 53-bit long double on FreeBSD, x87 math (FLT_EVAL_METHOD 2), -march=i386 without CAS, MMX or SSE.
-# rucc gives the i686 SSE defaults of Linux.
-*           m32*        *                                     tamnd/rucc#4088
-*           boot-i386   *                                     tamnd/rucc#4088
+# GCC defines _Float16 there, and from GCC 14 also __bf16. rucc has neither type on 32 bit x86.
+# GCC for FreeBSD makes _Float64x the binary128 format there. rucc makes it the format of long double.
+*-x86_64    m32*        __FLT16_*                             tamnd/rucc#4324
+*-x86_64    boot-i386   __FLT16_*                             tamnd/rucc#4324
+*-x86_64    m32*        __BFLT16_*                            tamnd/rucc#4324
+*-x86_64    boot-i386   __BFLT16_*                            tamnd/rucc#4324
+freebsd-*   m32*        __FLT64X_*                            tamnd/rucc#4325
+freebsd-*   boot-i386   __FLT64X_*                            tamnd/rucc#4325
 
 # Macros that still differ from the GCC of the persona: __bf16 on riscv64 and the _BitInt width.
 # GCC 15 on FreeBSD riscv64 has __bf16 and rucc does not, because rucc cannot move a half there yet.
