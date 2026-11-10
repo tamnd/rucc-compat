@@ -14,10 +14,8 @@
 *           *           __BFLT16_*                            tamnd/rucc#4088
 *           *           __BITINT_MAXWIDTH__                   tamnd/rucc#2490
 
-# aarch64: the SME keyword attributes and their macros.
-*-aarch64   *           __ARM_STATE_*                         tamnd/rucc#4225
+# aarch64: __ARM_NEON_SVE_BRIDGE, which promises <arm_neon_sve_bridge.h> and the SVE types.
 *-aarch64   *           __ARM_NEON_SVE_BRIDGE                 tamnd/rucc#4225
-*-aarch64   *           __arm_*                               tamnd/rucc#4225
 
 # aarch64: the other ACLE macros.
 *-aarch64   *           __ARM_*                               tamnd/rucc#4088
