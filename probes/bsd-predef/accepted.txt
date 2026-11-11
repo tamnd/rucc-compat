@@ -10,8 +10,6 @@
 *-x86_64    m32*        __BFLT16_*                            tamnd/rucc#4324
 *-x86_64    boot-i386   __BFLT16_*                            tamnd/rucc#4324
 
-# Macros that still differ from the GCC of the persona: __bf16 on riscv64 and the _BitInt width.
-# GCC 15 on FreeBSD riscv64 has __bf16 and rucc does not, because rucc cannot move a half there yet.
+# A macro that still differs from the GCC of the persona: the _BitInt width.
 # rucc gives __BITINT_MAXWIDTH__ 128, the widest _BitInt it compiles, where GCC gives 65535.
-*-riscv64   *           __BFLT16_*                            tamnd/rucc#4276
 *           *           __BITINT_MAXWIDTH__                   tamnd/rucc#2490
