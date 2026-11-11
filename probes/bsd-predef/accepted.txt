@@ -9,7 +9,6 @@
 *-x86_64    boot-i386   __FLT16_*                             tamnd/rucc#4324
 *-x86_64    m32*        __BFLT16_*                            tamnd/rucc#4324
 *-x86_64    boot-i386   __BFLT16_*                            tamnd/rucc#4324
-
-# A macro that still differs from the GCC of the persona: the _BitInt width.
-# rucc gives __BITINT_MAXWIDTH__ 128, the widest _BitInt it compiles, where GCC gives 65535.
-*           *           __BITINT_MAXWIDTH__                   tamnd/rucc#2490
+# rucc gives __BITINT_MAXWIDTH__ 128, the widest _BitInt it compiles on 32 bit x86, where GCC gives 65535.
+*-x86_64    m32*        __BITINT_MAXWIDTH__                   tamnd/rucc#4333
+*-x86_64    boot-i386   __BITINT_MAXWIDTH__                   tamnd/rucc#4333
