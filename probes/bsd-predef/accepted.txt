@@ -2,8 +2,3 @@
 # The columns are globs: row, flag set, key. check takes the first line that matches.
 #
 # row       set         key                                   issue
-
-# -m32 on the x86_64 targets.
-# rucc gives __BITINT_MAXWIDTH__ 128, the widest _BitInt it compiles on 32 bit x86, where GCC gives 65535.
-*-x86_64    m32*        __BITINT_MAXWIDTH__                   tamnd/rucc#4333
-*-x86_64    boot-i386   __BITINT_MAXWIDTH__                   tamnd/rucc#4333
