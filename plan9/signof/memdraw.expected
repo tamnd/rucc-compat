@@ -1,0 +1,57 @@
+Memimage 2b63b348
+Memdata 76bf7ac8
+Memsubfont 00491be6
+Memcmap 09fdf977
+Memdrawparam 2aaed51f
+struct Memdata 76bf7ac8
+struct Memimage 2b63b348
+struct Memcmap 09fdf977
+struct Memsubfont 00491be6
+struct Memdrawparam 2aaed51f
+allocmemimage bcefc717
+allocmemimaged 6614b5b9
+readmemimage 6a3b2e0f
+creadmemimage 6a3b2e0f
+writememimage f9ab5184
+freememimage 011df8e1
+loadmemimage 101ebbe0
+cloadmemimage 101ebbe0
+unloadmemimage 101ebbe0
+wordaddr ee00511a
+byteaddr 0c53a9df
+_drawclipnorepl 6ba602b0
+drawclipnorepl 661e3ebe
+drawclip 661e3ebe
+memfillcolor 6bad5488
+memsetchan 68edfb46
+memdraw e6c5ef9b
+memline 4df052d3
+mempoly d17d6806
+memfillpoly 18d4516c
+_memfillpolysc 91647206
+memimagedraw e6c5ef9b
+hwdraw e26f501e
+memimageline 4df052d3
+_memimageline a9830a24
+memimagestring 783b00fa
+memellipse 66656239
+memarc a76312b3
+memlinebbox 44adafda
+memlineendsize bb29c315
+memaffinewarp e873c094
+memlaffinewarp e873c094
+allocmemimagekernel b09d568f
+memimagecorrelate 496c881a
+_memmkcmap 4c81a129
+memimageinit 49c247e7
+allocmemsubfont 06594660
+openmemsubfont 4f9c2460
+freememsubfont db83a6bf
+memsubfontwidth 39b9337c
+getmemdefont 7f83b7ff
+memwhite cd5f5cf7
+memblack cd5f5cf7
+memopaque cd5f5cf7
+memtransparent cd5f5cf7
+memdefcmap 21f55f66
+memimagemove 25e7559e

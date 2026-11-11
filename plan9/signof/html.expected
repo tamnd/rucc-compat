@@ -1,0 +1,68 @@
+Item ae011271
+Itext 690f31b9
+Irule a4cfbdc0
+Iimage e0527f92
+Iformfield 1ce139af
+Itable e108a752
+Ifloat 0626afa5
+Ispacer 791254ff
+Genattr 28fe7b74
+SEvent 2f655491
+Formfield 90f0a257
+Option fb6a41e6
+Form bb07dc87
+Table dea93fe8
+Tablecol 8470e82c
+Tablerow f246d601
+Tablecell b8b222d5
+Align 232290c7
+Dimen 91115a4c
+Anchor 61e484c3
+DestAnchor d7a846e3
+Map d2108d6a
+Area 3d7b01f6
+Background 0249b731
+Kidinfo 28f515d0
+Docinfo fc52a4a9
+struct Align 232290c7
+struct Dimen 91115a4c
+struct Background 0249b731
+struct Item ae011271
+struct Itext 690f31b9
+struct Irule a4cfbdc0
+struct Iimage e0527f92
+struct Iformfield 1ce139af
+struct Itable e108a752
+struct Ifloat 0626afa5
+struct Ispacer 791254ff
+struct Genattr 28fe7b74
+struct SEvent 2f655491
+struct Formfield 90f0a257
+struct Option fb6a41e6
+struct Form bb07dc87
+struct Table dea93fe8
+struct Tablecol 8470e82c
+struct Tablerow f246d601
+struct Tablecell b8b222d5
+struct Anchor 61e484c3
+struct DestAnchor d7a846e3
+struct Map d2108d6a
+struct Area 3d7b01f6
+struct Kidinfo 28f515d0
+struct Docinfo fc52a4a9
+fromStr d30301ad
+toStr 4563634d
+dimenkind 93959f5c
+dimenspec 93959f5c
+freedocinfo c4ec2cda
+freeitems d3698132
+parsehtml 3cb0498b
+printitems 8f682d8c
+targetid 52a3d5bd
+targetname ba6ae93d
+validitems d0aa27f0
+warn 4151d5bd
+dbglex 4151d5bd
+dbgbuild 4151d5bd
+emalloc 895c8ad8
+erealloc 604e9836

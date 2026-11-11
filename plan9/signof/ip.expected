@@ -1,0 +1,44 @@
+Ipifc c9a05b45
+Iplifc ec3a7d21
+Ipv6rp 3c990674
+Ip6hdr 4703e2f3
+Icmp6hdr 0858d733
+Udphdr 009d446b
+struct Iplifc ec3a7d21
+struct Ipv6rp 3c990674
+struct Ipifc c9a05b45
+struct Ip6hdr 4703e2f3
+struct Icmp6hdr 0858d733
+struct Udphdr 009d446b
+defmask 3fef5481
+maskip 94498f33
+eipfmt b865b9ae
+isv4 bdc6e4ab
+parseip 6d8394e8
+parseipmask a799a6cd
+parseipandmask 486627ed
+v4parseip 1ee4d692
+parseether 4076d515
+myipaddr 4076d515
+myetheraddr 4076d515
+equivip4 c5bd2646
+equivip6 c5bd2646
+readipifc 3e4c2360
+iplocalonifc 0fdee181
+ipremoteonifc 0fdee181
+hnputv b149c74d
+hnputl f2b55966
+hnputs 2e421898
+nhgetv 9c0b3836
+nhgetl 81613f07
+nhgets 591e8fa9
+ptclbsum b472876b
+v6tov4 c5bd2646
+v4tov6 c87c7f88
+IPv4bcast c77c426c
+IPv4bcastobs c77c426c
+IPv4allsys c77c426c
+IPv4allrouter c77c426c
+IPnoaddr c77c426c
+v4prefix c77c426c
+IPallbits c77c426c

@@ -1,0 +1,9 @@
+Pcmdesc eb8f36b6
+struct Pcmdesc eb8f36b6
+pcmdescdef eb8f36b6
+pcmdescfmt b865b9ae
+mkpcmdesc 466f8eb7
+allocpcmconv 9610eade
+freepcmconv d84d10f0
+pcmconv 88c911ff
+pcmratio 1b43a143

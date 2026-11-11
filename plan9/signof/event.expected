@@ -1,0 +1,26 @@
+Event 954d0772
+Menu 8d8ef0de
+struct Mouse 7c2da3bf
+struct Event 954d0772
+struct Menu 8d8ef0de
+einit ed7c2e39
+estart 72c21b43
+estartfn 3086afb0
+etimer 933fbd0e
+event 7ccf629b
+eread 5f5e46c2
+emouse 849e15e9
+ekbd 49c247e7
+ecanread eabcd4f7
+ecanmouse 49c247e7
+ecankbd 49c247e7
+eresized bde91c57
+emenuhit 709606f8
+eatomouse cfa8c81d
+getrect 53c447b7
+esetcursor d84d10f0
+emoveto 39fc7643
+egetrect 53c447b7
+edrawgetrect 8dec0900
+ereadmouse d58db7ae
+eenter 1d0826a7

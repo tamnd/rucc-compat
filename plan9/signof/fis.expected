@@ -1,0 +1,28 @@
+Sfis 38e25c39
+Cfis 931a8453
+struct Sfis 38e25c39
+struct Cfis 931a8453
+setfissig fc8c9bf0
+txmodefis 421559b7
+atapirwfis 12c562d8
+featfis 421559b7
+flushcachefis 82fa16a3
+identifyfis 82fa16a3
+nopfis 5d81fd28
+rwfis 09131a8a
+skelfis c0863ded
+sigtofis 85b96fe5
+fisrw afcaed77
+idmove 29215410
+idfeat 807086ba
+idwwn 87a2f22f
+idss 5363c6e7
+idpuis 8e3094ef
+id16 7652506f
+id32 9e94ffcd
+id64 b93ef8fc
+pflag d2a4ec61
+fistosig d75c16c4
+smpskelframe 54cace04
+sashash 0cc3b0b6
+sasbhash 376e3f34

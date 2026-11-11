@@ -1,0 +1,35 @@
+TTTable 04e96517
+TTChMap e9f16a8c
+TTPoint 6957df4d
+TTGlyph 089c517a
+TTGlyphInfo cefa8d0f
+TTFontU 0e2026be
+TTFont 53f01a87
+TTFunction d0bfa54f
+TTGState 5257cbb0
+TTBitmap 7755c9d9
+TTKern 40d23412
+struct TTTable 04e96517
+struct TTChMap e9f16a8c
+struct TTPoint 6957df4d
+struct TTBitmap 7755c9d9
+struct TTGlyph 089c517a
+struct TTGlyphInfo cefa8d0f
+struct TTFunction d0bfa54f
+struct TTGState 5257cbb0
+struct TTKern 40d23412
+struct TTFontU 0e2026be
+struct TTFont 53f01a87
+ttfopen 07e76145
+ttfscale c82cf978
+ttfclose fde0e808
+ttffindchar e656e27c
+ttfenumchar ce642f59
+ttfgetglyph eb89f09a
+ttfputglyph b3656103
+ttfgetcontour 0239b241
+ttfrender 84ac5a45
+ttfrunerender 0350af66
+ttfnewbitmap 257cff0d
+ttffreebitmap 6b927e9a
+ttfblit d644fee8

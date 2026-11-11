@@ -1,0 +1,86 @@
+Fid caaef8f6
+Req ae059c01
+Fidpool 35801541
+Reqpool 5100f9ea
+File 15562e36
+Tree c2bda054
+Srv 5a98a921
+Reqqueue 9b518bee
+Queueelem a29659b0
+Cmdbuf b7e939d7
+Cmdtab e9179fe3
+struct Queueelem a29659b0
+struct Reqqueue 9b518bee
+struct Fid caaef8f6
+struct Req ae059c01
+struct Fidpool 35801541
+struct Reqpool 5100f9ea
+struct File 15562e36
+struct Tree c2bda054
+struct Cmdbuf b7e939d7
+struct Cmdtab e9179fe3
+struct Srv 5a98a921
+allocmap a18b2710
+freemap 6bab2c1f
+lookupkey 0c890cf6
+insertkey eda75024
+caninsertkey 6b43e1e3
+deletekey 0c890cf6
+allocfidpool a32a8351
+freefidpool 7df02ff2
+allocfid ae57b8c1
+lookupfid ae57b8c1
+closefid f5824f8f
+removefid ae57b8c1
+allocreqpool ddb97d09
+freereqpool d06730a3
+allocreq a1e9f939
+lookupreq a1e9f939
+closereq 48952f52
+removereq a1e9f939
+dirread9p 1319de99
+alloctree 6a5d39f7
+freetree 01004d2d
+createfile c389b2c8
+removefile 96d1c58d
+closefile 99911ecf
+walkfile ade16240
+opendirfile be91b55e
+readdirfile b6910931
+closedirfile d84d10f0
+parsecmd 9ba67858
+respondcmderror b7ea5d3d
+lookupcmd 6f2d0b91
+srvforker b31468f4
+threadsrvforker b31468f4
+srv c94eabc2
+postsrv 0beea9da
+postmountsrv 2d7f780b
+postsharesrv aad64870
+listensrv 0eae031c
+threadsrv c94eabc2
+threadpostsrv 0beea9da
+threadpostmountsrv 2d7f780b
+threadpostsharesrv aad64870
+threadlistensrv 0eae031c
+chatty9p 4151d5bd
+respond 9730e1ac
+responderror 48952f52
+hasperm 2e81da9c
+emalloc9p 895c8ad8
+erealloc9p 604e9836
+estrdup9p 2765ebdf
+readstr 9730e1ac
+readbuf adfe1b0f
+walkandclone 67ea3b6e
+auth9p 48952f52
+authread 48952f52
+authwrite 48952f52
+authdestroy f5824f8f
+authattach 45d5d610
+srvacquire c94eabc2
+srvrelease c94eabc2
+reqqueuecreate e14ad957
+reqqueuepush 57d66164
+reqqueueflush 913e7c7d
+reqqueuefree a41dfcb7

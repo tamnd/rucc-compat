@@ -1,0 +1,92 @@
+#include <u.h>
+#include <libc.h>
+#include <mp.h>
+
+void
+main(void)
+{
+	print("mpint %.8lux\n", signof(mpint));
+	print("CRTres %.8lux\n", signof(CRTres));
+	print("Mfield %.8lux\n", signof(Mfield));
+	print("struct mpint %.8lux\n", signof(struct mpint));
+	print("struct CRTres %.8lux\n", signof(struct CRTres));
+	print("struct Mfield %.8lux\n", signof(struct Mfield));
+	print("mpsetminbits %.8lux\n", signof mpsetminbits);
+	print("mpnew %.8lux\n", signof mpnew);
+	print("mpfree %.8lux\n", signof mpfree);
+	print("mpbits %.8lux\n", signof mpbits);
+	print("mpnorm %.8lux\n", signof mpnorm);
+	print("mpcopy %.8lux\n", signof mpcopy);
+	print("mpassign %.8lux\n", signof mpassign);
+	print("mprand %.8lux\n", signof mprand);
+	print("mpnrand %.8lux\n", signof mpnrand);
+	print("strtomp %.8lux\n", signof strtomp);
+	print("mpfmt %.8lux\n", signof mpfmt);
+	print("mptoa %.8lux\n", signof mptoa);
+	print("letomp %.8lux\n", signof letomp);
+	print("mptole %.8lux\n", signof mptole);
+	print("mptolel %.8lux\n", signof mptolel);
+	print("betomp %.8lux\n", signof betomp);
+	print("mptobe %.8lux\n", signof mptobe);
+	print("mptober %.8lux\n", signof mptober);
+	print("mptoui %.8lux\n", signof mptoui);
+	print("uitomp %.8lux\n", signof uitomp);
+	print("mptoi %.8lux\n", signof mptoi);
+	print("itomp %.8lux\n", signof itomp);
+	print("mptouv %.8lux\n", signof mptouv);
+	print("uvtomp %.8lux\n", signof uvtomp);
+	print("mptov %.8lux\n", signof mptov);
+	print("vtomp %.8lux\n", signof vtomp);
+	print("mptod %.8lux\n", signof mptod);
+	print("dtomp %.8lux\n", signof dtomp);
+	print("mpdigdiv %.8lux\n", signof mpdigdiv);
+	print("mpadd %.8lux\n", signof mpadd);
+	print("mpsub %.8lux\n", signof mpsub);
+	print("mpleft %.8lux\n", signof mpleft);
+	print("mpright %.8lux\n", signof mpright);
+	print("mpmul %.8lux\n", signof mpmul);
+	print("mpexp %.8lux\n", signof mpexp);
+	print("mpmod %.8lux\n", signof mpmod);
+	print("mpand %.8lux\n", signof mpand);
+	print("mpbic %.8lux\n", signof mpbic);
+	print("mpor %.8lux\n", signof mpor);
+	print("mpnot %.8lux\n", signof mpnot);
+	print("mpxor %.8lux\n", signof mpxor);
+	print("mptrunc %.8lux\n", signof mptrunc);
+	print("mpxtend %.8lux\n", signof mpxtend);
+	print("mpasr %.8lux\n", signof mpasr);
+	print("mpmodadd %.8lux\n", signof mpmodadd);
+	print("mpmodsub %.8lux\n", signof mpmodsub);
+	print("mpmodmul %.8lux\n", signof mpmodmul);
+	print("mpdiv %.8lux\n", signof mpdiv);
+	print("mpcmp %.8lux\n", signof mpcmp);
+	print("mpsel %.8lux\n", signof mpsel);
+	print("mpfactorial %.8lux\n", signof mpfactorial);
+	print("mpextendedgcd %.8lux\n", signof mpextendedgcd);
+	print("mpinvert %.8lux\n", signof mpinvert);
+	print("mpsignif %.8lux\n", signof mpsignif);
+	print("mplowbits0 %.8lux\n", signof mplowbits0);
+	print("mpzero %.8lux\n", signof mpzero);
+	print("mpone %.8lux\n", signof mpone);
+	print("mptwo %.8lux\n", signof mptwo);
+	print("mpvecadd %.8lux\n", signof mpvecadd);
+	print("mpvecsub %.8lux\n", signof mpvecsub);
+	print("mpvecdigmuladd %.8lux\n", signof mpvecdigmuladd);
+	print("mpvecdigmulsub %.8lux\n", signof mpvecdigmulsub);
+	print("mpvecmul %.8lux\n", signof mpvecmul);
+	print("mpvectsmul %.8lux\n", signof mpvectsmul);
+	print("mpveccmp %.8lux\n", signof mpveccmp);
+	print("mpvectscmp %.8lux\n", signof mpvectscmp);
+	print("mpmagcmp %.8lux\n", signof mpmagcmp);
+	print("mpmagadd %.8lux\n", signof mpmagadd);
+	print("mpmagsub %.8lux\n", signof mpmagsub);
+	print("crtpre %.8lux\n", signof crtpre);
+	print("crtin %.8lux\n", signof crtin);
+	print("crtout %.8lux\n", signof crtout);
+	print("crtprefree %.8lux\n", signof crtprefree);
+	print("crtresfree %.8lux\n", signof crtresfree);
+	print("mpfield %.8lux\n", signof mpfield);
+	print("gmfield %.8lux\n", signof gmfield);
+	print("cnfield %.8lux\n", signof cnfield);
+	exits(nil);
+}

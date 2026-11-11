@@ -1,0 +1,105 @@
+u1int 552c4454
+SunAuthInfo 7840384e
+SunAuthUnix 3f8290bf
+SunRpc 434bc60f
+SunCall 823c721c
+SunStatus 4151d5bd
+SunCallType 4151d5bd
+SunProc 7f6e7655
+SunProg af445811
+SunMsg b0c2d71b
+SunSrv aab8fcd7
+SunClient 9c1d108e
+PortMap 04e96517
+PortTNull 76fb90cc
+PortRNull 76fb90cc
+PortTSet 877f4023
+PortRSet d7c21f60
+PortTUnset 877f4023
+PortRUnset d7c21f60
+PortTGetport 877f4023
+PortRGetport dd7ce2e2
+PortTDump 76fb90cc
+PortRDump da0ecdcf
+PortTCallit bbdab5b7
+PortRCallit 7c7f90ab
+PortCallType 4151d5bd
+struct SunAuthInfo 7840384e
+struct SunAuthUnix 3f8290bf
+struct SunRpc 434bc60f
+struct SunCall 823c721c
+struct SunProg af445811
+struct SunProc 7f6e7655
+struct SunMsg b0c2d71b
+struct SunSrv aab8fcd7
+struct SunClient 9c1d108e
+struct PortMap 04e96517
+struct PortTNull 76fb90cc
+struct PortRNull 76fb90cc
+struct PortTSet 877f4023
+struct PortRSet d7c21f60
+struct PortTUnset 877f4023
+struct PortRUnset d7c21f60
+struct PortTGetport 877f4023
+struct PortRGetport dd7ce2e2
+struct PortTDump 76fb90cc
+struct PortRDump da0ecdcf
+struct PortTCallit bbdab5b7
+struct PortRCallit 7c7f90ab
+sunErrstr bde91c57
+sunRpcPrint 2bec61e7
+sunRpcSize 5d62a457
+sunRpcPack 1ebb938e
+sunRpcUnpack 1ebb938e
+sunAuthInfoPrint 4aa74d55
+sunAuthInfoSize 45e4e5fe
+sunAuthInfoPack 073dd535
+sunAuthInfoUnpack 073dd535
+sunAuthUnixPrint 8da33cfe
+sunAuthUnixSize 88e0d5a7
+sunAuthUnixPack 4a39c4de
+sunAuthUnixUnpack 4a39c4de
+sunEnumPack b421a96c
+sunEnumUnpack b421a96c
+sunUint1Pack 98b505fb
+sunUint1Unpack 98b505fb
+sunStringPack ff32948f
+sunStringUnpack ff32948f
+sunStringSize 5215c593
+sunUint32Pack 2d91f70d
+sunUint32Unpack 2d91f70d
+sunUint64Pack ec2664f4
+sunUint64Unpack ec2664f4
+sunVarOpaquePack 4a3006dd
+sunVarOpaqueUnpack 4a3006dd
+sunVarOpaqueSize 4e2f42cf
+sunFixedOpaquePack 2fdda2a1
+sunFixedOpaqueUnpack 2fdda2a1
+sunFixedOpaqueSize 4e2f42cf
+sunCallPack 95f8c252
+sunCallUnpack 95f8c252
+sunCallUnpackAlloc f427be4f
+sunCallSize 4615581b
+sunCallSetup e91cbca8
+sunRpcFmt b865b9ae
+sunCallFmt b865b9ae
+sunFmtInstall f7c86892
+sunSrv cd65ddb0
+sunSrvProg 852342b0
+sunSrvAnnounce fe7c3970
+sunSrvUdp fe7c3970
+sunSrvNet fe7c3970
+sunSrvFd 8125690b
+sunSrvThreadCreate 11740aa5
+sunSrvClose cbc31338
+sunMsgReply 0aa16e3e
+sunMsgDrop d808621a
+sunMsgReplyError ba9443ef
+sunDial 4755a302
+sunClientRpc 56a6ca22
+sunClientClose cb491ac7
+sunClientFlushRpc efcae38e
+sunClientProg 1044fbfb
+emalloc 895c8ad8
+erealloc 604e9836
+portProg af445811

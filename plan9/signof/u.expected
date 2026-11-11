@@ -1,0 +1,24 @@
+ushort 32a45878
+uchar 552c4454
+ulong 36d8eb8f
+uint 5ae707d6
+schar 5cedd32b
+vlong 6e5e9590
+uvlong 75910105
+intptr 6e5e9590
+uintptr 75910105
+usize 75910105
+Rune 5ae707d6
+FPdbleword afd54ed5
+jmp_buf e7e0ff1d
+mpdigit 5ae707d6
+u8int 552c4454
+u16int 32a45878
+u32int 5ae707d6
+u64int 75910105
+s8int 5cedd32b
+s16int 63040b4b
+s32int 4151d5bd
+s64int 6e5e9590
+va_list f2611a7a
+union FPdbleword afd54ed5

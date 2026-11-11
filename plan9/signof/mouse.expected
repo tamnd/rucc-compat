@@ -1,0 +1,14 @@
+Menu 8d8ef0de
+Mousectl 4893c783
+struct Mouse 7c2da3bf
+struct Mousectl 4893c783
+struct Menu 8d8ef0de
+initmouse ccb7f086
+moveto ef6a6993
+readmouse 0d534312
+closemouse 10129c54
+setcursor 449f0942
+drawgetrect 8dec0900
+getrect 76adfa06
+menuhit 8e30cd0c
+enter 8952f609
