@@ -1,0 +1,12 @@
+struct Plumbmsg 56
+struct Plumbmsg.src 0
+struct Plumbmsg.dst 8
+struct Plumbmsg.wdir 16
+struct Plumbmsg.type 24
+struct Plumbmsg.attr 32
+struct Plumbmsg.ndata 40
+struct Plumbmsg.data 48
+struct Plumbattr 24
+struct Plumbattr.name 0
+struct Plumbattr.value 8
+struct Plumbattr.next 16

@@ -1,0 +1,15 @@
+struct pen_point 16
+struct pen_point.chaincode 8
+struct Stroke 16
+struct Stroke.npts 0
+struct Stroke.pts 8
+struct Scribble 64
+struct Scribble.pt 0
+struct Scribble.ppasize 8
+struct Scribble.ps 16
+struct Scribble.graf 32
+struct Scribble.capsLock 40
+struct Scribble.puncShift 44
+struct Scribble.tmpShift 48
+struct Scribble.ctrlShift 52
+struct Scribble.curCharSet 56

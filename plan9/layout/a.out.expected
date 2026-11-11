@@ -1,0 +1,14 @@
+struct Exec 32
+struct Exec.magic 0
+struct Exec.text 4
+struct Exec.data 8
+struct Exec.bss 12
+struct Exec.syms 16
+struct Exec.entry 20
+struct Exec.spsz 24
+struct Exec.pcsz 28
+struct Sym 24
+struct Sym.value 0
+struct Sym.sig 8
+struct Sym.type 12
+struct Sym.name 16

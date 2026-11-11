@@ -1,0 +1,15 @@
+struct Memscreen 32
+struct Memscreen.frontmost 0
+struct Memscreen.rearmost 8
+struct Memscreen.image 16
+struct Memscreen.fill 24
+struct Memlayer 80
+struct Memlayer.screenr 0
+struct Memlayer.delta 16
+struct Memlayer.screen 24
+struct Memlayer.front 32
+struct Memlayer.rear 40
+struct Memlayer.clear 48
+struct Memlayer.save 56
+struct Memlayer.refreshfn 64
+struct Memlayer.refreshptr 72

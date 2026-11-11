@@ -1,0 +1,9 @@
+struct Amlio 64
+struct Amlio.space 0
+struct Amlio.off 8
+struct Amlio.len 16
+struct Amlio.name 24
+struct Amlio.va 32
+struct Amlio.aux 40
+struct Amlio.read 48
+struct Amlio.write 56

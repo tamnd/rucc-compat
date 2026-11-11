@@ -1,0 +1,7 @@
+struct Pcmdesc 24
+struct Pcmdesc.rate 0
+struct Pcmdesc.channels 4
+struct Pcmdesc.framesz 8
+struct Pcmdesc.abits 12
+struct Pcmdesc.bits 16
+struct Pcmdesc.fmt 20

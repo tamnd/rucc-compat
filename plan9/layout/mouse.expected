@@ -1,0 +1,16 @@
+struct Mouse 24
+struct Mouse.buttons 0
+struct Mouse.xy 8
+struct Mouse.msec 16
+struct Mousectl 72
+struct Mousectl.c 24
+struct Mousectl.resizec 32
+struct Mousectl.file 40
+struct Mousectl.mfd 48
+struct Mousectl.cfd 52
+struct Mousectl.pid 56
+struct Mousectl.image 64
+struct Menu 24
+struct Menu.item 0
+struct Menu.gen 8
+struct Menu.lasthit 16

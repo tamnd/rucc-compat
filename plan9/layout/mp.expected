@@ -1,0 +1,11 @@
+struct mpint 32
+struct mpint.sign 0
+struct mpint.size 4
+struct mpint.top 8
+struct mpint.p 16
+struct mpint.flags 24
+struct CRTres 16
+struct CRTres.n 0
+struct CRTres.r 8
+struct Mfield 40
+struct Mfield.reduce 32

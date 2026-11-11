@@ -1,0 +1,17 @@
+struct Sfis 32
+struct Sfis.feat 0
+struct Sfis.udma 2
+struct Sfis.speeds 3
+struct Sfis.sig 4
+struct Sfis.lsectsz 8
+struct Sfis.physshift 12
+struct Sfis.physalign 16
+struct Sfis.c 20
+struct Sfis.h 24
+struct Sfis.s 28
+struct Cfis 32
+struct Cfis.phyid 0
+struct Cfis.encid 1
+struct Cfis.tsasaddr 9
+struct Cfis.ssasaddr 17
+struct Cfis.ict 25
