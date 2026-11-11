@@ -1,0 +1,12 @@
+struct coffsect 44a7180a
+struct mipsexec e4695fd3
+struct mips4kexec bc7c18f2
+struct sparcexec 671d7c8e
+struct nextexec 8b2c7bad
+struct nexthdr 739d7668
+struct nextcmd 35e7c3e1
+struct nextsect 9d3d622c
+struct nextsym 6e46f829
+struct i386exec de4c36dc
+struct i386coff 55750bba
+struct i386hdr 739d7668

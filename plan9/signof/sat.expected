@@ -1,0 +1,18 @@
+SATParam 5ba794e4
+SATSolve 1ed1a8e7
+SATBlock 1f785e97
+struct SATParam 5ba794e4
+struct SATBlock 1f785e97
+struct SATSolve 1ed1a8e7
+satnew 0db28dd0
+satadd1 bf880dc0
+sataddv 71d5ba70
+satrange1 7af0ecf0
+satrangev bc710da0
+satsolve c6c3db76
+satmore c6c3db76
+satval 8b68528b
+satfree c98334b8
+satreset c98334b8
+satget add081dc
+satvafix 3b3fecbc

@@ -1,0 +1,43 @@
+Ticket f9ddc1ca
+Ticketreq 65100c09
+Authenticator d1b5ecb9
+Nvrsafe 3c78c4a2
+Passwordreq 4362af0e
+OChapreply fc040319
+OMSchapreply e6702aa8
+NTLMreply 2d7b7ba7
+Authkey b7691ff6
+PAKpriv 2973a7e4
+struct Ticketreq 65100c09
+struct Ticket f9ddc1ca
+struct Authenticator d1b5ecb9
+struct Passwordreq 4362af0e
+struct OChapreply fc040319
+struct OMSchapreply e6702aa8
+struct NTLMreply 2d7b7ba7
+struct Authkey b7691ff6
+struct Nvrsafe 3c78c4a2
+struct PAKpriv 2973a7e4
+convT2M d37e75bd
+convM2T c84e2b2d
+convA2M b6826278
+convM2A d570ac48
+convTR2M 178a34d7
+convM2TR 81b17fa7
+convPR2M 6b52cd25
+convM2PR 41b9c715
+passtokey 97d95f29
+passtodeskey 2ed600f6
+passtoaeskey 43362e57
+nvcsum 8a60211a
+readnvram f573454e
+readcons dbd95f86
+authdial 2c16a7b4
+_asgetpakkey be9ba9fa
+_asgetticket 9d97479c
+_asrequest e04f528d
+_asgetresp cf9b749b
+_asrdresp 38d5e324
+authpak_hash 97d95f29
+authpak_new 0523088a
+authpak_finish e1c322c3

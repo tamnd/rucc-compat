@@ -1,0 +1,13 @@
+Resub 880e6907
+Reprog f4e86e6f
+struct Resub 880e6907
+struct Reprog f4e86e6f
+regcomp 8aac43e3
+regcomplit 8aac43e3
+regcompnl 8aac43e3
+regerror 3b3fecbc
+regexec 8b271fac
+regsub 731f93d6
+rregexec e19de80f
+rregsub eb27c24c
+reprogfmt b865b9ae

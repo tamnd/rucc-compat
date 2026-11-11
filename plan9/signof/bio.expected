@@ -1,0 +1,34 @@
+Bstr 7eb25ad9
+Biobuf 7eb25ad9
+Biobufhdr 61073f95
+struct Biobufhdr 61073f95
+struct Biobuf 7eb25ad9
+struct Bstr 7eb25ad9
+Bbuffered 0f9b3864
+Bfildes 0f9b3864
+Bflush 0f9b3864
+Bgetc 0f9b3864
+Bgetd 16c0c67d
+Bgetrune 2d3b71ee
+Binit ce449e92
+Binits 6753688e
+Blinelen 0f9b3864
+Boffset 3ca7f837
+Bopen 63f5472a
+Bfdopen 7b44e08d
+Bstropen da289e7e
+Bprint 81206839
+Bvprint aca58778
+Bputc 5bfec619
+Bputrune 93ab2373
+Brdline 4e674e8a
+Brdstr 34728a43
+Bread 4c61292b
+Bseek 9dd3ea4c
+Bterm 0f9b3864
+Bungetc 0f9b3864
+Bungetrune 0f9b3864
+Bwrite 4c61292b
+Blethal 061094e1
+Berror 83dfc17b
+Biofn f7eda18a

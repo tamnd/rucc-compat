@@ -6,6 +6,7 @@ Each case is a whole program for the guest. It includes `u.h` and `libc.h`, prin
 
 - `const` has 32 cases of the type of an integer constant and of the usual arithmetic conversions. Each case prints the size of an expression, whether its negation is below zero, and its value as a `vlong`. These are the rules of `lex.c` of kencc, such as `2147483648L`, which is a `ulong`.
 - `cpp` has 18 cases of the kencc preprocessor: a parameter in a string literal or a character constant of the body, `#` and `##` as text, `#line`, `#pragma varargck`, and the directives that kencc does not have. kencc has no `#if` and no `#elif`, and it stops on a macro that names itself.
+- `signof` has 47 cases of the type signatures of kencc, one for each header of `/sys/include` and for `u.h`. Each case includes the header and the headers that it needs, and prints `signof` of each typedef, tag, function and variable that the header declares, 2546 lines in total. These are the values that `-T` puts in an object, and `6l` compares them across the objects. Many headers have `#pragma incomplete`, which changes the signature of the record that it names. The `NAME.expected` files of this directory are from `6c` on 9front amd64.
 
 ## Running them
 
@@ -16,4 +17,4 @@ The runner is in the rucc-plan9 repository. `guest/compat/run.rc` builds, links 
 3. Run `r9 boot --row arm64 --net --in DIR --run smoke/compat.rc --collect 16 --out OUT`.
 4. Compare each `OUT/collected/compat/DIR/NAME.R` with `NAME.expected` here.
 
-On 9front arm64 and amd64 at the pin of rucc-plan9, each of the 50 cases prints the same under G and R, and the same as its `NAME.expected`.
+On 9front arm64 and amd64 at the pin of rucc-plan9, each of the 50 cases of `const` and `cpp` prints the same under G and R, and the same as its `NAME.expected`. On 9front amd64 at the same pin, each of the 47 cases of `signof` prints the same under G and R.
