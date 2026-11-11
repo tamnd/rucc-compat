@@ -4,11 +4,6 @@
 # row       set         key                                   issue
 
 # -m32 on the x86_64 targets.
-# GCC defines _Float16 there, and from GCC 14 also __bf16. rucc has neither type on 32 bit x86.
-*-x86_64    m32*        __FLT16_*                             tamnd/rucc#4324
-*-x86_64    boot-i386   __FLT16_*                             tamnd/rucc#4324
-*-x86_64    m32*        __BFLT16_*                            tamnd/rucc#4324
-*-x86_64    boot-i386   __BFLT16_*                            tamnd/rucc#4324
 # rucc gives __BITINT_MAXWIDTH__ 128, the widest _BitInt it compiles on 32 bit x86, where GCC gives 65535.
 *-x86_64    m32*        __BITINT_MAXWIDTH__                   tamnd/rucc#4333
 *-x86_64    boot-i386   __BITINT_MAXWIDTH__                   tamnd/rucc#4333
