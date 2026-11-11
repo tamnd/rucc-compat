@@ -1,0 +1,6 @@
+struct Keyboardctl 32
+struct Keyboardctl.c 0
+struct Keyboardctl.file 8
+struct Keyboardctl.consfd 16
+struct Keyboardctl.ctlfd 20
+struct Keyboardctl.pid 24

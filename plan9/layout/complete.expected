@@ -1,0 +1,7 @@
+struct Completion 32
+struct Completion.advance 0
+struct Completion.complete 1
+struct Completion.string 8
+struct Completion.nmatch 16
+struct Completion.nfile 20
+struct Completion.filename 24

@@ -1,0 +1,112 @@
+way rk
+in f0
+a0 S1 4504 73 -122
+a1 int -1779274604
+ret f0 long 1606240368
+in f1
+a0 short 9138
+ret f1 uchar 138
+in f2
+a0 ulong 1652929528
+a1 ushort 11689
+a2 char -90
+in f3
+a0 vlong 456177568
+in f4
+a0 S0 -3.25 23
+a1 S0 17.75 107
+a2 S3 52110
+a3 int 745360738
+ret f4 int 1769078462
+in f5
+a0 S3 23976
+a1 uchar 80
+a2 uint 2139872001
+a3 short -21682
+a4 S1 24444 -45 94
+a5 char 99
+ret f5 S1 24447 -42 97
+in f6
+a0 float -18.875
+a1 uchar 90
+a2 double -16.625
+a3 uchar 188
+in f7
+a0 uvlong 253320194
+ret f7 short 4826
+in f8
+a0 S3 27720
+a1 char -28
+a2 long 98723789
+a3 short 24958
+a4 long -1112628015
+a5 float -12
+ret f8 short 8992
+in f9
+a0 S2 58662 2063359703 136 21049 1436732394 1943690338053528 -303152972 14589 46 -95 9744 193
+a1 int 958031610
+ret f9 S1 4826 -11 60
+in vf 1
+v0 894859072
+back x S0 14.5 53
+back 2.5 -7
+cb got S0 29 56
+back x S0 29 56
+back -1.25 1099511627776
+ret cb S0 58 59
+way kr
+in f0
+a0 S1 4504 73 -122
+a1 int -1779274604
+ret f0 long 1606240368
+in f1
+a0 short 9138
+ret f1 uchar 138
+in f2
+a0 ulong 1652929528
+a1 ushort 11689
+a2 char -90
+in f3
+a0 vlong 456177568
+in f4
+a0 S0 -3.25 23
+a1 S0 17.75 107
+a2 S3 52110
+a3 int 745360738
+ret f4 int 1769078462
+in f5
+a0 S3 23976
+a1 uchar 80
+a2 uint 2139872001
+a3 short -21682
+a4 S1 24444 -45 94
+a5 char 99
+ret f5 S1 24447 -42 97
+in f6
+a0 float -18.875
+a1 uchar 90
+a2 double -16.625
+a3 uchar 188
+in f7
+a0 uvlong 253320194
+ret f7 short 4826
+in f8
+a0 S3 27720
+a1 char -28
+a2 long 98723789
+a3 short 24958
+a4 long -1112628015
+a5 float -12
+ret f8 short 8992
+in f9
+a0 S2 58662 2063359703 136 21049 1436732394 1943690338053528 -303152972 14589 46 -95 9744 193
+a1 int 958031610
+ret f9 S1 4826 -11 60
+in vf 1
+v0 894859072
+back x S0 14.5 53
+back 2.5 -7
+cb got S0 29 56
+back x S0 29 56
+back -1.25 1099511627776
+ret cb S0 58 59

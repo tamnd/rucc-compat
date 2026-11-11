@@ -1,0 +1,98 @@
+#include <u.h>
+#include <libc.h>
+#include <httpd.h>
+
+void
+main(void)
+{
+	print("struct Htmlesc %d\n", sizeof(struct Htmlesc));
+	print("struct Htmlesc.name %lud\n", offsetof(struct Htmlesc, name));
+	print("struct Htmlesc.value %lud\n", offsetof(struct Htmlesc, value));
+	print("struct HContent %d\n", sizeof(struct HContent));
+	print("struct HContent.next %lud\n", offsetof(struct HContent, next));
+	print("struct HContent.generic %lud\n", offsetof(struct HContent, generic));
+	print("struct HContent.specific %lud\n", offsetof(struct HContent, specific));
+	print("struct HContent.q %lud\n", offsetof(struct HContent, q));
+	print("struct HContent.mxb %lud\n", offsetof(struct HContent, mxb));
+	print("struct HContents %d\n", sizeof(struct HContents));
+	print("struct HContents.type %lud\n", offsetof(struct HContents, type));
+	print("struct HContents.encoding %lud\n", offsetof(struct HContents, encoding));
+	print("struct HFields %d\n", sizeof(struct HFields));
+	print("struct HFields.s %lud\n", offsetof(struct HFields, s));
+	print("struct HFields.params %lud\n", offsetof(struct HFields, params));
+	print("struct HFields.next %lud\n", offsetof(struct HFields, next));
+	print("struct HSPairs %d\n", sizeof(struct HSPairs));
+	print("struct HSPairs.s %lud\n", offsetof(struct HSPairs, s));
+	print("struct HSPairs.t %lud\n", offsetof(struct HSPairs, t));
+	print("struct HSPairs.next %lud\n", offsetof(struct HSPairs, next));
+	print("struct HRange %d\n", sizeof(struct HRange));
+	print("struct HRange.suffix %lud\n", offsetof(struct HRange, suffix));
+	print("struct HRange.start %lud\n", offsetof(struct HRange, start));
+	print("struct HRange.stop %lud\n", offsetof(struct HRange, stop));
+	print("struct HRange.next %lud\n", offsetof(struct HRange, next));
+	print("struct HETag %d\n", sizeof(struct HETag));
+	print("struct HETag.etag %lud\n", offsetof(struct HETag, etag));
+	print("struct HETag.weak %lud\n", offsetof(struct HETag, weak));
+	print("struct HETag.next %lud\n", offsetof(struct HETag, next));
+	print("struct Hio %d\n", sizeof(struct Hio));
+	print("struct Hio.hh %lud\n", offsetof(struct Hio, hh));
+	print("struct Hio.fd %lud\n", offsetof(struct Hio, fd));
+	print("struct Hio.seek %lud\n", offsetof(struct Hio, seek));
+	print("struct Hio.state %lud\n", offsetof(struct Hio, state));
+	print("struct Hio.xferenc %lud\n", offsetof(struct Hio, xferenc));
+	print("struct Hio.pos %lud\n", offsetof(struct Hio, pos));
+	print("struct Hio.stop %lud\n", offsetof(struct Hio, stop));
+	print("struct Hio.start %lud\n", offsetof(struct Hio, start));
+	print("struct Hio.bodylen %lud\n", offsetof(struct Hio, bodylen));
+	print("struct Hio.buf %lud\n", offsetof(struct Hio, buf));
+	print("struct HttpReq %d\n", sizeof(struct HttpReq));
+	print("struct HttpReq.meth %lud\n", offsetof(struct HttpReq, meth));
+	print("struct HttpReq.uri %lud\n", offsetof(struct HttpReq, uri));
+	print("struct HttpReq.urihost %lud\n", offsetof(struct HttpReq, urihost));
+	print("struct HttpReq.search %lud\n", offsetof(struct HttpReq, search));
+	print("struct HttpReq.vermaj %lud\n", offsetof(struct HttpReq, vermaj));
+	print("struct HttpReq.vermin %lud\n", offsetof(struct HttpReq, vermin));
+	print("struct HttpReq.searchpairs %lud\n", offsetof(struct HttpReq, searchpairs));
+	print("struct HttpHead %d\n", sizeof(struct HttpHead));
+	print("struct HttpHead.closeit %lud\n", offsetof(struct HttpHead, closeit));
+	print("struct HttpHead.persist %lud\n", offsetof(struct HttpHead, persist));
+	print("struct HttpHead.expectcont %lud\n", offsetof(struct HttpHead, expectcont));
+	print("struct HttpHead.expectother %lud\n", offsetof(struct HttpHead, expectother));
+	print("struct HttpHead.contlen %lud\n", offsetof(struct HttpHead, contlen));
+	print("struct HttpHead.transenc %lud\n", offsetof(struct HttpHead, transenc));
+	print("struct HttpHead.client %lud\n", offsetof(struct HttpHead, client));
+	print("struct HttpHead.host %lud\n", offsetof(struct HttpHead, host));
+	print("struct HttpHead.okencode %lud\n", offsetof(struct HttpHead, okencode));
+	print("struct HttpHead.oklang %lud\n", offsetof(struct HttpHead, oklang));
+	print("struct HttpHead.oktype %lud\n", offsetof(struct HttpHead, oktype));
+	print("struct HttpHead.okchar %lud\n", offsetof(struct HttpHead, okchar));
+	print("struct HttpHead.ifmodsince %lud\n", offsetof(struct HttpHead, ifmodsince));
+	print("struct HttpHead.ifunmodsince %lud\n", offsetof(struct HttpHead, ifunmodsince));
+	print("struct HttpHead.ifrangedate %lud\n", offsetof(struct HttpHead, ifrangedate));
+	print("struct HttpHead.ifmatch %lud\n", offsetof(struct HttpHead, ifmatch));
+	print("struct HttpHead.ifnomatch %lud\n", offsetof(struct HttpHead, ifnomatch));
+	print("struct HttpHead.ifrangeetag %lud\n", offsetof(struct HttpHead, ifrangeetag));
+	print("struct HttpHead.range %lud\n", offsetof(struct HttpHead, range));
+	print("struct HttpHead.authuser %lud\n", offsetof(struct HttpHead, authuser));
+	print("struct HttpHead.authpass %lud\n", offsetof(struct HttpHead, authpass));
+	print("struct HttpHead.cookie %lud\n", offsetof(struct HttpHead, cookie));
+	print("struct HttpHead.authinfo %lud\n", offsetof(struct HttpHead, authinfo));
+	print("struct HttpHead.fresh_thresh %lud\n", offsetof(struct HttpHead, fresh_thresh));
+	print("struct HttpHead.fresh_have %lud\n", offsetof(struct HttpHead, fresh_have));
+	print("struct HConnect %d\n", sizeof(struct HConnect));
+	print("struct HConnect.private %lud\n", offsetof(struct HConnect, private));
+	print("struct HConnect.replog %lud\n", offsetof(struct HConnect, replog));
+	print("struct HConnect.scheme %lud\n", offsetof(struct HConnect, scheme));
+	print("struct HConnect.port %lud\n", offsetof(struct HConnect, port));
+	print("struct HConnect.req %lud\n", offsetof(struct HConnect, req));
+	print("struct HConnect.head %lud\n", offsetof(struct HConnect, head));
+	print("struct HConnect.bin %lud\n", offsetof(struct HConnect, bin));
+	print("struct HConnect.reqtime %lud\n", offsetof(struct HConnect, reqtime));
+	print("struct HConnect.xferbuf %lud\n", offsetof(struct HConnect, xferbuf));
+	print("struct HConnect.header %lud\n", offsetof(struct HConnect, header));
+	print("struct HConnect.hpos %lud\n", offsetof(struct HConnect, hpos));
+	print("struct HConnect.hstop %lud\n", offsetof(struct HConnect, hstop));
+	print("struct HConnect.hin %lud\n", offsetof(struct HConnect, hin));
+	print("struct HConnect.hout %lud\n", offsetof(struct HConnect, hout));
+	exits(nil);
+}

@@ -1,0 +1,14 @@
+struct Mouse 24
+struct Mouse.buttons 0
+struct Mouse.xy 8
+struct Mouse.msec 16
+struct Event 8368
+struct Event.kbdc 0
+struct Event.mouse 8
+struct Event.n 32
+struct Event.v 40
+struct Event.data 48
+struct Menu 24
+struct Menu.item 0
+struct Menu.gen 8
+struct Menu.lasthit 16

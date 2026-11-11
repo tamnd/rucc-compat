@@ -1,0 +1,4 @@
+union FPdbleword 8
+union FPdbleword.x 0
+union FPdbleword.lo 0
+union FPdbleword.hi 4

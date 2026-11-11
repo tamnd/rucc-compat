@@ -1,0 +1,11 @@
+struct Resub 16
+struct Resub.sp 0
+struct Resub.rsp 0
+struct Resub.ep 8
+struct Resub.rep 8
+struct Reprog 32
+struct Reprog.startinst 0
+struct Reprog.threads 8
+struct Reprog.regstr 16
+struct Reprog.len 24
+struct Reprog.nthr 28

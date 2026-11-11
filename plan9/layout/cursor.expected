@@ -1,0 +1,4 @@
+struct Cursor 72
+struct Cursor.offset 0
+struct Cursor.clr 8
+struct Cursor.set 40

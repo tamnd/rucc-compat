@@ -1,0 +1,8 @@
+struct ar_hdr 64
+struct ar_hdr.name 0
+struct ar_hdr.date 16
+struct ar_hdr.uid 28
+struct ar_hdr.gid 34
+struct ar_hdr.mode 40
+struct ar_hdr.size 48
+struct ar_hdr.fmag 58

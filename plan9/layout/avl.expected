@@ -1,0 +1,7 @@
+struct Avl 32
+struct Avl.c 0
+struct Avl.p 16
+struct Avl.balance 24
+struct Avltree 16
+struct Avltree.cmp 0
+struct Avltree.root 8

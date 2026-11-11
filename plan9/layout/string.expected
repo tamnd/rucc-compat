@@ -1,0 +1,6 @@
+struct String 40
+struct String.base 8
+struct String.end 16
+struct String.ptr 24
+struct String.ref 32
+struct String.fixed 34

@@ -1,0 +1,9 @@
+struct JSONEl 24
+struct JSONEl.name 0
+struct JSONEl.val 8
+struct JSONEl.next 16
+struct JSON 16
+struct JSON.t 0
+struct JSON.n 8
+struct JSON.s 8
+struct JSON.first 8
