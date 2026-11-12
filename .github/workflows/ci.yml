@@ -742,6 +742,23 @@ jobs:
         run: |
           mkdir -p results
           python3 probes/bsd-abi/abi.py check --rucc rucc/target/release/rucc --sets bsd-sets --report results/bsd-abi.txt
+      # bsd-asm needs only the files of sys/ that the expected files list, so the cache keeps those.
+      - name: reuse the FreeBSD sources if we have them
+        uses: actions/cache@v6.1.0
+        with:
+          path: bsd-src/*/usr/src/sys
+          key: bsd-asm-src-${{ hashFiles('probes/bsd-asm/rows.txt', 'probes/bsd-asm/expected/*') }}
+      - name: fetch the FreeBSD sources
+        run: |
+          for row in $(awk '!/^#/ && NF { print $1 }' probes/bsd-asm/rows.txt); do
+            python3 probes/bsd-asm/asm.py fetch "$row" bsd-src > /dev/null
+            rm -f bsd-src/*.txz
+          done
+      - name: the kernel assembler units
+        if: always()
+        run: |
+          mkdir -p results
+          python3 probes/bsd-asm/asm.py check --rucc rucc/target/release/rucc --src bsd-src --report results/bsd-asm.txt
       - name: the preprocessed headers
         if: always()
         run: |

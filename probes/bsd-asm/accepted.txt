@@ -1,0 +1,4 @@
+# Known differences between rucc and the reference GCC and GNU as.
+# Each line is a row glob, a unit glob and the rucc issue that owns the difference.
+# A unit is named by its owner and its path under sys/, as kernel:amd64/amd64/locore.S or linux64:amd64/linux/linux_support.S.
+

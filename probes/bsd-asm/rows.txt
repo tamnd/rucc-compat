@@ -1,0 +1,10 @@
+# The rows of bsd-asm. Each row is one kernel configuration of one release on one architecture.
+#
+# id: the name of the expected file.
+# target and gnuc: what rucc is run with, the persona of the release.
+# reference: the compiler package that made the expected file. Its driver runs the GNU as of the package's binutils.
+# kernconf: the kernel configuration. Its .S units and the .S units of the modules the release builds with it are the units.
+# url and digest: the source set that holds usr/src/sys, with the digest the release publishes in its MANIFEST.
+#
+# id                  system  arch    target                      gnuc   reference   kernconf url digest
+freebsd-15.1-x86_64   freebsd x86_64  x86_64-unknown-freebsd15.1  15.2.0 amd64-gcc15 GENERIC  https://download.freebsd.org/releases/amd64/15.1-RELEASE/src.txz sha256:cf5762da53fd52e1eaf0f9ceee9bf58cbe314c821031d0d9ffa76823185a89e1
