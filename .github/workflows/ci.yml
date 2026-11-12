@@ -727,11 +727,13 @@ jobs:
           python3 probes/bsd-probes/probes.py check --rucc rucc/target/release/rucc --report results/bsd-probes.txt
       # The release sets are large and do not change, so the cache keeps the headers that abi.py unpacks from them.
       - name: reuse the BSD headers if we have them
+        if: always()
         uses: actions/cache@v6.1.0
         with:
           path: bsd-sets/*/usr/include
           key: bsd-abi-sets-${{ hashFiles('probes/bsd-abi/rows.txt') }}
       - name: fetch the BSD headers
+        if: always()
         run: |
           for row in $(awk '!/^#/ && NF { print $1 }' probes/bsd-abi/rows.txt); do
             python3 probes/bsd-abi/abi.py fetch "$row" bsd-sets > /dev/null
@@ -742,13 +744,16 @@ jobs:
         run: |
           mkdir -p results
           python3 probes/bsd-abi/abi.py check --rucc rucc/target/release/rucc --sets bsd-sets --report results/bsd-abi.txt
+      # The inputs are fetched even when a check above failed, so that each check below still runs.
       # bsd-asm needs only the files of sys/ that the expected files list, so the cache keeps those.
       - name: reuse the FreeBSD sources if we have them
+        if: always()
         uses: actions/cache@v6.1.0
         with:
           path: bsd-src/*/usr/src/sys
           key: bsd-asm-src-${{ hashFiles('probes/bsd-asm/rows.txt', 'probes/bsd-asm/expected/*') }}
       - name: fetch the FreeBSD sources
+        if: always()
         run: |
           for row in $(awk '!/^#/ && NF { print $1 }' probes/bsd-asm/rows.txt); do
             python3 probes/bsd-asm/asm.py fetch "$row" bsd-src > /dev/null
