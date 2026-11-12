@@ -1,0 +1,9 @@
+# Known differences between rucc and the reference GCC and GNU as.
+# Each line is a row glob, a unit glob and the rucc issue that owns the difference.
+# A unit is named by its owner and its path under sys/, as kernel:amd64/amd64/locore.S or linux64:amd64/linux/linux_support.S.
+
+
+# .cfi_escape is dropped, so the .eh_frame of the OpenSSL perlasm is short.
+freebsd-15.1-x86_64   ossl:crypto/openssl/amd64/sha1-x86_64.S     tamnd/rucc#4502
+freebsd-15.1-x86_64   ossl:crypto/openssl/amd64/sha256-x86_64.S   tamnd/rucc#4502
+freebsd-15.1-x86_64   ossl:crypto/openssl/amd64/sha512-x86_64.S   tamnd/rucc#4502

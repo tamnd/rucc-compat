@@ -4,6 +4,7 @@
 # So this workflow makes the reference output on the systems themselves, and the expected files in the repository are copies of what it makes.
 #
 # The FreeBSD job boots the FreeBSD 15.1 BASIC-CI image under QEMU with KVM and installs the cross GCC packages (amd64-gcc15 and the others of rows.txt) from the release's package repository.
+# For bsd-asm it also configures the GENERIC kernel of the release's src.txz and builds the .S units of the kernel and its modules.
 # The NetBSD jobs build the in-tree GCC of each pinned branch with build.sh tools, one job for each branch and architecture.
 #
 # Each job compares what it made with the expected files and fails if a line is different.
@@ -17,6 +18,7 @@ on:
     paths:
       - probes/bsd-predef/**
       - probes/bsd-abi/**
+      - probes/bsd-asm/**
       - probes/bsd-pp/**
       - probes/bsd-probes/**
       - scripts/bsd/**
@@ -34,7 +36,7 @@ jobs:
   freebsd:
     name: freebsd 15.1 packages
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 120
     env:
       VM_CACHE: /mnt/vm-cache
       VM_DIR: /mnt/freebsd-vm
@@ -69,6 +71,14 @@ jobs:
           tar -cf - probes scripts | scripts/bsd/freebsd-vm.sh ssh 'mkdir -p /root/compat && tar -xf - -C /root/compat'
           tar -cf - -C /mnt/vm-cache/sets $(awk '$2 == "freebsd" { print $1 }' probes/bsd-abi/rows.txt) \
             | scripts/bsd/freebsd-vm.sh ssh 'mkdir -p /root/sets && tar -xf - -C /root/sets'
+      # bsd-asm builds the .S units of the kernel in the VM, so the VM gets sys/ of each source set.
+      # The runner downloads the set and checks its digest.
+      - name: give the VM the FreeBSD sources
+        run: |
+          for row in $(awk '$2 == "freebsd" { print $1 }' probes/bsd-asm/rows.txt); do
+            txz=$(python3 probes/bsd-asm/asm.py fetch "$row" /mnt/vm-cache/src --archive | tail -1)
+            scripts/bsd/freebsd-vm.sh ssh "mkdir -p /root/src/$row && tar -xf - -C /root/src/$row usr/src/sys usr/src/share/mk" < "$txz"
+          done
       - name: make the predef files
         run: |
           scripts/bsd/freebsd-vm.sh ssh 'sh /root/compat/probes/bsd-predef/freebsd.sh /root/out/predef'
@@ -81,6 +91,9 @@ jobs:
       - name: make the probes files
         run: |
           scripts/bsd/freebsd-vm.sh ssh 'sh /root/compat/probes/bsd-probes/freebsd.sh /root/out/probes'
+      - name: make the asm files
+        run: |
+          scripts/bsd/freebsd-vm.sh ssh 'sh /root/compat/probes/bsd-asm/freebsd.sh /root/src /root/out/asm'
       - name: copy the files out
         if: always()
         run: |
@@ -99,6 +112,7 @@ jobs:
           scripts/bsd/same.sh out/abi probes/bsd-abi/expected
           scripts/bsd/same.sh out/pp probes/bsd-pp/expected
           scripts/bsd/same.sh out/probes probes/bsd-probes/expected
+          scripts/bsd/same.sh out/asm probes/bsd-asm/expected
       - name: power off
         if: always()
         run: scripts/bsd/freebsd-vm.sh down
