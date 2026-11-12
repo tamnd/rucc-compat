@@ -4,7 +4,7 @@ This probe compares rucc with the reference GCC and GNU as on the `.S` files of 
 
 ## The rows
 
-`rows.txt` has one row for each kernel configuration: FreeBSD 15.1 `GENERIC` on x86_64 at the moment. Each row names the source set that holds `usr/src/sys` and `usr/src/share/mk`, the make files buildkernel uses, and the digest that the release's `MANIFEST` gives for it. The units are the `.S` and `.s` files of the configuration's `SFILES` and those in the `SRCS` of each module that `sys/modules` builds for the architecture. A unit is named by its owner and its path under `sys/`, as `kernel:amd64/amd64/locore.S` or `linux64:amd64/linux/linux_support.S`.
+`rows.txt` has one row for each kernel configuration: FreeBSD 15.1 `GENERIC` on x86_64 at the moment. Each row names the source set that holds `usr/src/sys` and `usr/src/share/mk`, the make files buildkernel uses, and the digest that the release's `MANIFEST` gives for it. The units are the `.S` and `.s` files of the configuration's `SFILES` and those in the `SRCS` of each module that `sys/modules` builds for the architecture. A `.S` file that only `.incbin`s an object the build links from C, such as `linux_vdso_inc.S` of `linux64`, is not a unit: the VDSO it holds is built with the headers of the base system, which the reference cross compiler does not have, and its bytes are what the C compiler made. A unit is named by its owner and its path under `sys/`, as `kernel:amd64/amd64/locore.S` or `linux64:amd64/linux/linux_support.S`.
 
 ## How it works
 
