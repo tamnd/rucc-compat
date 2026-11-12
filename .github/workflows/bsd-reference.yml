@@ -77,7 +77,7 @@ jobs:
         run: |
           for row in $(awk '$2 == "freebsd" { print $1 }' probes/bsd-asm/rows.txt); do
             txz=$(python3 probes/bsd-asm/asm.py fetch "$row" /mnt/vm-cache/src --archive | tail -1)
-            scripts/bsd/freebsd-vm.sh ssh "mkdir -p /root/src/$row && tar -xf - -C /root/src/$row usr/src/sys" < "$txz"
+            scripts/bsd/freebsd-vm.sh ssh "mkdir -p /root/src/$row && tar -xf - -C /root/src/$row usr/src/sys usr/src/share/mk" < "$txz"
           done
       - name: make the predef files
         run: |

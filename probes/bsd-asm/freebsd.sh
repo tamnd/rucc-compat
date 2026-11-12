@@ -3,7 +3,7 @@
 #
 #   freebsd.sh SRC OUTDIR
 #
-# SRC holds the source set of each FreeBSD row, unpacked as SRC/ROW/usr/src/sys.
+# SRC holds the source set of each FreeBSD row, unpacked as SRC/ROW/usr/src/sys and SRC/ROW/usr/src/share/mk.
 # It installs the cross GCC packages that rows.txt names, from the default package repository of the release.
 # Then it runs asm.py scan for each FreeBSD row, which configures the kernel and builds its .S units and those of the modules.
 # Each file records the package version and its SHA-256.

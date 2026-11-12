@@ -457,7 +457,8 @@ def make(cwd, targets, env, extra=()):
         return
     rc, out, err = run(["make", "-k", *extra, *targets], cwd=cwd, env=env, timeout=3600)
     if rc != 0:
-        print(f"  make {' '.join(targets)} in {cwd}: exit {rc}: " + " | ".join((out + err).strip().splitlines()[-6:]))
+        print(f"  make {' '.join(targets)} in {cwd}: exit {rc}: "
+              + " | ".join(err.strip().splitlines()[-4:] + [x[:300] for x in out.strip().splitlines()[-2:]]))
 
 
 def build_kernel(row, sysdir, work, env, wrapper):
@@ -565,6 +566,12 @@ def cmd_scan(a):
         f.write(WRAPPER)
     os.chmod(wrapper, 0o755)
     env = dict(os.environ, ASM_LOG=log, ASM_CC=a.cc)
+    # The make files of the release, as buildkernel uses them: those of the base system can be older
+    # and lack kmod.opts.mk, and they set SRCTOP from where they are.
+    mk = os.path.join(os.path.dirname(sysdir), "share", "mk")
+    if not os.path.isfile(os.path.join(mk, "sys.mk")):
+        sys.exit(f"asm.py: no share/mk next to {sysdir}")
+    env["MAKESYSPATH"] = mk
     kdir = build_kernel(row, sysdir, work, env, wrapper)
     build_modules(sysdir, work, kdir, env, wrapper)
 
