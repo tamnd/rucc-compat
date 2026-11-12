@@ -446,6 +446,7 @@ def make_values(cwd, exprs, env, extra=()):
         argv += ["-V", e]
     rc, out, err = run(argv, cwd=cwd, env=env)
     if rc != 0:
+        print(f"  make -V in {cwd}: exit {rc}: " + " | ".join((out + err).strip().splitlines()[-3:]))
         return None
     lines = out.split("\n")
     return [(lines[n] if n < len(lines) else "").split() for n in range(len(exprs))]
@@ -456,7 +457,7 @@ def make(cwd, targets, env, extra=()):
         return
     rc, out, err = run(["make", "-k", *extra, *targets], cwd=cwd, env=env, timeout=3600)
     if rc != 0:
-        print(f"  make in {cwd}: exit {rc}: " + " | ".join(err.strip().splitlines()[-3:]))
+        print(f"  make {' '.join(targets)} in {cwd}: exit {rc}: " + " | ".join((out + err).strip().splitlines()[-6:]))
 
 
 def build_kernel(row, sysdir, work, env, wrapper):
@@ -583,7 +584,7 @@ def cmd_scan(a):
         name = f"{owner}:{os.path.relpath(source, sysdir)}"
         if name in units:
             continue
-        flags = clean_flags(args[1:])
+        flags = clean_flags(args)
         obj = os.path.join(scratch, "unit.o")
         dep = os.path.join(scratch, "unit.d")
         for p in (obj, dep):
@@ -591,7 +592,7 @@ def cmd_scan(a):
                 os.remove(p)
         rc, _, err = run([a.cc, *flags, "-o", obj], cwd=cwd)
         if rc != 0:
-            print(f"  {name}: the reference did not assemble it, left out: {first_line(err)}")
+            print(f"  {name}: the reference did not assemble it, left out: " + " | ".join(err.strip().splitlines()[:6]))
             continue
         rc, _, err = run([a.cc, *[x for x in flags if x != "-c"], "-M", "-MF", dep], cwd=cwd)
         if rc != 0:
