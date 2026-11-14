@@ -10,6 +10,8 @@ Each case is a whole program for the guest. It includes `u.h` and `libc.h`, prin
 - `layout` has 45 cases, one for each header of `/sys/include` that defines a struct or a union, and for `u.h` and `ureg.h` of amd64. Each case prints the `sizeof` of each struct and union, and the `offsetof` of each named member, with the members of an unnamed struct or union in it, 2360 lines in total. The headers have no bit-fields. `scripts/plan9_layout.py` makes the cases. The `NAME.expected` files of this directory are from `6c` on 9front amd64.
 - `abi` has 40 cases of calls between two objects, with 12 call shapes in each case, 480 in total. A shape has 1 to 8 arguments of the integer types, `float`, `double` and structs of 1 to 64 bytes, and returns one of them or nothing. Each case also has a variadic function that reads its arguments with `va_arg`, and a function that calls back through a function pointer. With `-DCALLEE` a case is the half with the called functions, and without it is the half with `main`. Each half prints what it gets. `scripts/plan9_abi.py` makes the cases. The `NAME.expected` files of this directory are from `6c` on 9front amd64.
 
+- `asm` has the manifest of the assembler files of the tree. The tree at the pin has 440 `.s` files, and the manifest has a line for each file with `6a` and for each file with `7a`, 880 lines in total. A line has the SHA-256 of the source, the status, and the SHA-256 of the object and of the messages from the assembler of 9front. The files are not copied here. `scripts/plan9_asm.py` makes the manifest from a run in the guest, and it checks rucc against the manifest on the host.
+
 ## Running them
 
 The runner is in the rucc-plan9 repository. `guest/compat/run.rc` builds, links and runs each `DIR/NAME.c` under the current directory and writes what it printed to `DIR/NAME.SIDE`. For a case under `abi`, `run.rc` links the two halves twice: first with `main` from rucc and the callee from kencc, then the other way. `smoke/compat.rc` runs it twice in a guest. The first run, G, uses the compiler of the image. The second run, R, is under `r9-build` with `r9ccd` set, so each compile goes to rucc on the host through `r9 ccd`.
@@ -20,3 +22,12 @@ The runner is in the rucc-plan9 repository. `guest/compat/run.rc` builds, links 
 4. Compare each `OUT/collected/compat/DIR/NAME.R` with `NAME.expected` here.
 
 On 9front arm64 and amd64 at the pin of rucc-plan9, each of the 50 cases of `const` and `cpp` prints the same under G and R, and the same as its `NAME.expected`. On 9front amd64 at the same pin, each of the 47 cases of `signof` prints the same under G and R. On 9front amd64 at the same pin, each of the 45 cases of `layout` and each of the 40 cases of `abi` prints the same under G and R.
+
+## Running the asm corpus
+
+The asm corpus runs on the host. It needs the tree of the pin, such as the tree that `r9 fetch` writes, and a rucc that has the `plan9-as` driver.
+
+1. Run `python3 -I scripts/plan9_asm.py check plan9/asm/manifest ROOT RUCC WORK`, where ROOT is the root of the tree and WORK is an empty directory.
+2. The script prints each run where the status, the object or the messages are not the same as in the manifest, and the count of the runs.
+
+To make the manifest again, run `r9 boot --row amd64 --image IMAGE --in guest --run smoke/asm.rc --collect 64 --out OUT` in rucc-plan9, where IMAGE is the image of the G build of the pin. Then run `python3 -I scripts/plan9_asm.py make OUT/collected ROOT > plan9/asm/manifest`.
